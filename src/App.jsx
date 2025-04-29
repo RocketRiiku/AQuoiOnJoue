@@ -27,10 +27,8 @@ function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-purple-400 to-blue-600 overflow-x-hidden">
-      
-      {/* Gradient animé */}
-      <div className="absolute inset-0 animate-gradient opacity-30 z-0" />
+    <div className="relative min-h-screen bg-soft-stars overflow-x-hidden">
+      <div className="star-overlay" />
 
       {/* Flou au clic sur une carte */}
       <AnimatePresence>
@@ -45,18 +43,36 @@ function App() {
         )}
       </AnimatePresence>
 
-{/* HEADER - Titre en haut totalement à gauche */}
-<motion.h1
-  initial={{ x: -30, opacity: 0 }}
-  animate={{ x: 0, opacity: 1 }}
-  transition={{ type: "spring", stiffness: 100 }}
-  className="text-4xl font-bold text-white drop-shadow-lg pl-8 pt-6 absolute left-0 top-0"
+{/* Titre avec cartes autour */}
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.2 }}
+  className="flex justify-center items-center gap-4 mt-16 mb-2"
 >
-  À quoi on joue ? 🎉
-</motion.h1>
+  <img
+    src="/CarteRenard.png"
+    alt="Carte renard"
+    className="w-14 h-auto rotate-[-10deg] drop-shadow"
+  />
+<h1 className="font-title text-[#123f50] text-5xl font-bold">
+  À quoi on joue
+</h1>
+  <img
+    src="/CarteInterrogation.png"
+    alt="Carte mystère"
+    className="w-10 h-auto rotate-[8deg] drop-shadow"
+  />
+</motion.div>
+
+<p className="font-subtitle text-[#EF793D] text-center mt-2 text-xl italic font-light">
+  Pour toujours avoir des cartes à jouer en soirée
+</p>
 
 {/* Recherche centrée */}
-<div className="relative flex justify-center mt-20 mb-8">
+<div className="relative flex justify-center mt-8
+ mb-8
+">
   <motion.div
     initial={{ y: -20, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
@@ -95,17 +111,23 @@ function App() {
 
       {/* BOUTON SURPRENDS-MOI */}
       {!selectedGame && (
-        <div className="flex justify-center my-6 relative z-30">
+        <div className="flex justify-center my-6 relative z-10">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSurprise}
-            className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl shadow-md hover:bg-purple-100 transition-all"
+            className="px-6 py-3 bg-[#f8dea8] text-[#db4f22] font-bold rounded-xl shadow-md hover:bg-purple-100 transition-all"
           >
             🎉 Surprends-moi !
           </motion.button>
         </div>
       )}
+
+{!selectedGame && (
+  <p className="text-[#205262] text-sm text-center mb-2">
+    {filteredGames.length} jeu(x) trouvé(s)
+  </p>
+)}
 
       {/* LISTE DES JEUX OU GAME DETAIL */}
       <div className="relative z-30 mt-8 px-4">

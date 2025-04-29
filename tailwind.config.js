@@ -6,7 +6,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        handwritten: ['"Patrick Hand"', 'cursive'],
+        title: ['"Averia Serif Libre"', 'serif'],
+        subtitle: ['"Kalam"', 'cursive'],
       },
     },
   },
