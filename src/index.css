@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Animations Globales ---- */
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 50%;
+    background-image: linear-gradient(270deg, #10F9FC, #D657CB);
+  }
+  50% {
+    background-position: 100% 50%;
+    background-image: linear-gradient(270deg, #D657CB, #10F9FC);
+  }
+  100% {
+    background-position: 0% 50%;
+    background-image: linear-gradient(270deg, #10F9FC, #D657CB);
+  }
+}
+
+/* ---- Utilities Personnalisées ---- */
+@layer utilities {
+  .animate-gradient {
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+
+  .rotate-on-hover {
+    transition: transform 0.6s ease;
+  }
+  
+  .rotate-on-hover:hover {
+    animation: rotateOnce 0.6s ease forwards;
+  }
+}
+
+/* ---- Styles Custom pour les sliders ---- */
+input[type="range"] {
+  @apply w-40 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply w-4 h-4 bg-purple-500 rounded-full appearance-none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply w-4 h-4 bg-purple-500 rounded-full appearance-none;
+}
