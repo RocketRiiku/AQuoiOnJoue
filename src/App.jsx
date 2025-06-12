@@ -4,6 +4,7 @@ import GameCard from './components/GameCard';
 import GameDetail from './components/GameDetail';
 import { gamesList } from './data/games';
 import { AnimatePresence, motion } from 'framer-motion';
+import { filterGames } from './utils/filterGames';
 
 function App() {
   const [selectedGame, setSelectedGame] = useState(null);
@@ -18,43 +19,7 @@ function App() {
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredGames = gamesList.filter((game) => {
-    const matchesSearch =
-      game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      game.description.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesPlayers =
-      !filters.players || game.players.includes(filters.players.toString());
-
-    const matchesAlcohol =
-      !filters.alcohol || game.alcohol === filters.alcohol;
-
-    const gameDuration = game.duration === '30+' ? 30 : parseInt(game.duration);
-    const matchesDuration =
-      (!filters.minDuration && !filters.maxDuration) ||
-      (gameDuration >= (filters.minDuration || 0) &&
-       gameDuration <= (filters.maxDuration || Infinity));
-
-    const matchesMaterial =
-      !filters.material || filters.material.length === 0 ||
-      (game.material && filters.material.every(mat => game.material.includes(mat)));
-
-    const matchesTypeGame =
-      !filters.typeGame || game.typeGame?.includes(filters.typeGame);
-
-    const matchesLevel =
-      !filters.level || game.level === filters.level;
-
-    return (
-      matchesSearch &&
-      matchesPlayers &&
-      matchesAlcohol &&
-      matchesDuration &&
-      matchesMaterial &&
-      matchesTypeGame &&
-      matchesLevel
-    );
-  });
+  const filteredGames = filterGames(gamesList, filters, searchTerm);
 
   const handleSurprise = () => {
     if (filteredGames.length > 0) {
