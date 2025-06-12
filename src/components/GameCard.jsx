@@ -37,7 +37,7 @@ function GameCard({ game, onSelect }) {
 
 
       {/* Contenu texte */}
-      <div className="flex flex-col overflow-hidden gap-0.1">
+      <div className="flex flex-col overflow-hidden gap-1">
       <h2 className="text-[1.50rem] font-[berlin] text-[#a64331] leading-tight line-clamp-2">
   {game.title}
 </h2>
