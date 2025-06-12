@@ -4,6 +4,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Kalam&display=swap');
 
+@font-face {
+  font-family: 'berlin';
+  src: url('/fonts/BerlinSansFB-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'corsiva';
+  src: url('/fonts/MonotypeCorsiva-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'acumin';
+  src: url('/fonts/AcuminVariableConcept.ttf') format('truetype');
+}
+
 
 /* ---- Animations Globales ---- */
 @keyframes gradientBG {
@@ -64,15 +77,6 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
-.bg-soft-stars {
-  background: #C7E3D2 !important; /* Plus doux que #ADD7BB */
-  background-image:
-    radial-gradient(#FAE9B4 1px, transparent 1px),
-    radial-gradient(#FAE9B4 1px, transparent 1px);
-  background-size: 80px 80px, 160px 160px;
-  animation: starDrift 40s linear infinite;
-}
-
 @keyframes starTwinkle {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
@@ -93,3 +97,36 @@ input[type="range"]::-moz-range-thumb {
 }
 
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&display=swap');
+.bg-stars {
+  background-image: url('/etoiles_fond.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+}
+
+.bg-hill {
+  background-image: url('/hill_transition.png');
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+.bg-nature {
+  background-image: url('/nature_background.png');
+  background-repeat: repeat-y;
+  background-size: cover;
+  background-position: top;
+}
+
+.acumin-fine {
+  font-family: 'acumin';
+  font-variation-settings: "wght" 300;
+}
+
+input[type="checkbox"].custom-check:checked,
+input[type="radio"].custom-check:checked {
+  background-image: url("/Croix.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+}

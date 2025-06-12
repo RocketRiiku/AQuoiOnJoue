@@ -7,16 +7,53 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 function App() {
   const [selectedGame, setSelectedGame] = useState(null);
-  const [filters, setFilters] = useState({ players: '', alcohol: '', duration: '' });
+  const [filters, setFilters] = useState({
+    players: '',
+    alcohol: '',
+    minDuration: null,
+    maxDuration: null,
+    material: [],
+    typeGame: '',
+    level: ''
+  });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredGames = gamesList.filter(game => {
-    const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase())
-      || game.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return (!filters.players || game.players.includes(filters.players)) &&
-           (!filters.alcohol || game.alcohol === filters.alcohol) &&
-           (!filters.duration || game.duration === filters.duration) &&
-           matchesSearch;
+  const filteredGames = gamesList.filter((game) => {
+    const matchesSearch =
+      game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      game.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesPlayers =
+      !filters.players || game.players.includes(filters.players.toString());
+
+    const matchesAlcohol =
+      !filters.alcohol || game.alcohol === filters.alcohol;
+
+    const gameDuration = game.duration === '30+' ? 30 : parseInt(game.duration);
+    const matchesDuration =
+      (!filters.minDuration && !filters.maxDuration) ||
+      (gameDuration >= (filters.minDuration || 0) &&
+       gameDuration <= (filters.maxDuration || Infinity));
+
+    const matchesMaterial =
+      !filters.material || filters.material.length === 0 ||
+      (game.material && filters.material.every(mat => game.material.includes(mat)));
+
+    const matchesTypeGame =
+      !filters.typeGame || game.typeGame?.includes(filters.typeGame);
+
+    const matchesLevel =
+      !filters.level || game.level === filters.level;
+
+    return (
+      matchesSearch &&
+      matchesPlayers &&
+      matchesAlcohol &&
+      matchesDuration &&
+      matchesMaterial &&
+      matchesTypeGame &&
+      matchesLevel
+    );
   });
 
   const handleSurprise = () => {
@@ -27,73 +64,50 @@ function App() {
   };
 
   return (
-    <div className="relative min-h-screen bg-soft-stars overflow-x-hidden">
-      <div className="star-overlay" />
+    <div className="relative min-h-screen w-full overflow-x-hidden">
+      {/* Fond étoiles + colline */}
+      <div className="absolute top-0 left-0 w-full bg-stars bg-no-repeat bg-top bg-cover z-0" style={{ height: '1400px' }} />
+      <div className="absolute left-0 w-full min-h-[2000px] bg-nature bg-repeat-y bg-top z-0" style={{ top: '1400px' }} />
 
-      {/* Flou au clic sur une carte */}
-      <AnimatePresence>
-        {selectedGame && (
+      {/* Contenu principal */}
+      <div className="relative z-20">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex flex-col items-center text-center leading-tight pt-20"
+        >
+          <div className="flex items-center gap-3">
+            <h1 className="text-[#133f50] text-6xl font-[berlin]">À quoi on joue</h1>
+            <img src="/CarteInterrogation.png" alt="?" className="w-12 h-auto rotate-6" />
+          </div>
+          <p className="text-[#a64331] font-[corsiva] text-3xl leading-tight mt-1">
+            Pour toujours avoir des cartes<br />à jouer en soirée
+          </p>
+        </motion.div>
+
+        {/* Barre de recherche */}
+        <div className="relative flex justify-center mt-8 mb-8">
           <motion.div
-            initial={{ backdropFilter: 'blur(0px)', opacity: 0 }}
-            animate={{ backdropFilter: 'blur(12px)', opacity: 1 }}
-            exit={{ backdropFilter: 'blur(0px)', opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/20 z-20"
-          />
-        )}
-      </AnimatePresence>
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
+            className="relative w-full max-w-md"
+          >
+            <input
+              type="text"
+              placeholder="Rechercher un jeu..."
+              className="w-full py-2 pl-4 pr-10 rounded-full bg-white/80 text-black focus:outline-none shadow-md"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+              🔍
+            </span>
+          </motion.div>
+        </div>
 
-{/* Titre avec cartes autour */}
-<motion.div
-  initial={{ opacity: 0, y: -10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: 0.2 }}
-  className="flex justify-center items-center gap-4 mt-16 mb-2"
->
-  <img
-    src="/CarteRenard.png"
-    alt="Carte renard"
-    className="w-14 h-auto rotate-[-10deg] drop-shadow"
-  />
-<h1 className="font-title text-[#123f50] text-5xl font-bold">
-  À quoi on joue
-</h1>
-  <img
-    src="/CarteInterrogation.png"
-    alt="Carte mystère"
-    className="w-10 h-auto rotate-[8deg] drop-shadow"
-  />
-</motion.div>
-
-<p className="font-subtitle text-[#EF793D] text-center mt-2 text-xl italic font-light">
-  Pour toujours avoir des cartes à jouer en soirée
-</p>
-
-{/* Recherche centrée */}
-<div className="relative flex justify-center mt-8
- mb-8
-">
-  <motion.div
-    initial={{ y: -20, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ delay: 0.2, type: "spring", stiffness: 100 }}
-    className="relative w-full max-w-md"
-  >
-    <input
-      type="text"
-      placeholder="Rechercher un jeu..."
-      className="w-full py-2 pl-4 pr-10 rounded-full bg-white/80 text-black focus:outline-none shadow-md"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-    <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-      🔍
-    </span>
-  </motion.div>
-</div>
-
-      {/* HEADER - Filtres */}
-      <div className="relative z-30">
+        {/* Filtres */}
         {!selectedGame && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -107,75 +121,72 @@ function App() {
             </motion.div>
           </AnimatePresence>
         )}
-      </div>
 
-      {/* BOUTON SURPRENDS-MOI */}
-      {!selectedGame && (
-        <div className="flex justify-center my-6 relative z-10">
+        {/* Bouton Surprends-moi */}
+        <div className="flex justify-center my-6">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSurprise}
-            className="px-6 py-3 bg-[#f8dea8] text-[#db4f22] font-bold rounded-xl shadow-md hover:bg-purple-100 transition-all"
+            className="flex items-center gap-2 px-6 py-1 bg-[#a64331] text-[#f4efe6] text-2xl font-[berlin] rounded-full shadow-md transition-all"
           >
-            🎉 Surprends-moi !
+            <img src="/star.png" alt="étoile gauche" className="w-5 h-5" />
+            Surprends-moi !
+            <img src="/star.png" alt="étoile droite" className="w-5 h-5" />
           </motion.button>
         </div>
-      )}
 
-{!selectedGame && (
-  <p className="text-[#205262] text-sm text-center mb-2">
-    {filteredGames.length} jeu(x) trouvé(s)
-  </p>
-)}
-
-      {/* LISTE DES JEUX OU GAME DETAIL */}
-      <div className="relative z-30 mt-8 px-4">
-        {!selectedGame ? (
-          <motion.div
-            key="list"
-            layout
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredGames.length > 0 ? (
-              filteredGames.map((game) => (
-                <motion.div
-                  key={game.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <GameCard
-                    game={game}
-                    onSelect={() => setSelectedGame(game)}
-                  />
-                </motion.div>
-              ))
-            ) : (
-              <div className="col-span-3 text-center text-white font-semibold text-xl">
-                Aucun jeu trouvé 😢
-              </div>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="detail"
-            layout
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.3 }}
-            className="flex justify-center items-center min-h-[60vh]"
-          >
-            <GameDetail game={selectedGame} goBack={() => setSelectedGame(null)} />
-          </motion.div>
+        {!selectedGame && (
+          <p className="text-[#205262] text-sm text-center mb-4">
+            {filteredGames.length} jeu(x) trouvé(s)
+          </p>
         )}
+
+        {/* Liste des jeux ou détail */}
+        <div className="relative z-30 px-4 pb-10">
+          {!selectedGame ? (
+            <motion.div
+              key="list"
+              layout
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-10 justify-items-center mx-auto"
+            >
+              {filteredGames.length > 0 ? (
+                filteredGames.map((game) => (
+                  <motion.div
+                    key={game.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <GameCard game={game} onSelect={() => setSelectedGame(game)} />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-3 text-center text-white font-semibold text-xl">
+                  Aucun jeu trouvé 😢
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="detail"
+              layout
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="flex justify-center items-center min-h-[60vh]"
+            >
+              <GameDetail game={selectedGame} goBack={() => setSelectedGame(null)} />
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );
