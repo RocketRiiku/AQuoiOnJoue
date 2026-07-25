@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import GameThumb from './GameThumb';
+import { asset } from '../utils/asset';
 import { iconeDeRepli } from '../utils/formatGame';
 
 const base = {
@@ -15,7 +16,9 @@ describe('GameThumb', () => {
     render(<GameThumb game={base} />);
     const img = document.querySelector('img');
     expect(img).not.toBeNull();
-    expect(img.getAttribute('src')).toBe('/CarteUndercover.png');
+    // Résolue via le chemin de base, pour survivre à un hébergement
+    // en sous-dossier.
+    expect(img.getAttribute('src')).toBe(asset('/CarteUndercover.png'));
     // Vignette décorative : le titre est déjà annoncé par la carte.
     expect(img.getAttribute('alt')).toBe('');
   });

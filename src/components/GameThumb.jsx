@@ -1,3 +1,4 @@
+import { asset } from '../utils/asset';
 import { iconeDeRepli } from '../utils/formatGame';
 
 /**
@@ -11,7 +12,7 @@ function GameThumb({ game, className = '', tailleIcone = 'text-2xl' }) {
   if (game.image) {
     return (
       <img
-        src={game.image}
+        src={asset(game.image)}
         alt=""
         loading="lazy"
         className={`w-full h-full object-cover ${className}`}

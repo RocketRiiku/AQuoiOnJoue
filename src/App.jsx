@@ -9,6 +9,7 @@ import SoireePage from './components/SoireePage';
 import SoireeLancement from './components/SoireeLancement';
 import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
+import { asset } from './utils/asset';
 import { filterGames } from './utils/filterGames';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
@@ -77,7 +78,7 @@ function App() {
             <div className="flex items-center gap-3">
               <h1 className="text-encre text-4xl sm:text-6xl font-titre">À quoi on joue</h1>
               <img
-                src="/CarteInterrogation.png"
+                src={asset('/CarteInterrogation.png')}
                 alt=""
                 aria-hidden="true"
                 className="w-10 sm:w-12 h-auto rotate-6"
@@ -204,9 +205,9 @@ function App() {
                       disabled={aucunResultat}
                       className="flex items-center gap-2 px-6 py-1 bg-brique text-creme text-2xl font-titre rounded-full shadow-md transition-opacity disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                     >
-                      <img src="/star.png" alt="" aria-hidden="true" className="w-5 h-5" />
+                      <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
                       Surprends-moi !
-                      <img src="/star.png" alt="" aria-hidden="true" className="w-5 h-5" />
+                      <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
                     </m.button>
 
                     {/* Toujours visible, même vide : sa présence fait découvrir
