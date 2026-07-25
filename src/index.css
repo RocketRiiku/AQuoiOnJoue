@@ -1,132 +1,74 @@
+/* Aucun @import de police distante : tout est auto-hébergé. Cela évite une
+   requête vers un tiers, et donc de transmettre l'adresse IP des visiteurs. */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Kalam&display=swap');
 
+/* ---- Polices locales ---- */
+/* Les familles portent des noms d'usage (« titre », « manuscrit », « texte »)
+   et non des noms de fonderie : changer de police ne touche alors que ce
+   fichier, sans renommer une classe dans tout le projet.
+   Actuellement Jost, Petit Formal Script et Source Sans 3 — les trois sous
+   licence SIL Open Font, régénérées par `npm run build:fonts`.
+   font-display: swap → le texte reste lisible pendant le chargement. */
 @font-face {
-  font-family: 'berlin';
-  src: url('/fonts/BerlinSansFB-Regular.ttf') format('truetype');
+  font-family: 'titre';
+  src: url('/fonts/titre.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
 }
 @font-face {
-  font-family: 'corsiva';
-  src: url('/fonts/MonotypeCorsiva-Regular.ttf') format('truetype');
+  font-family: 'manuscrit';
+  src: url('/fonts/manuscrit.woff2') format('woff2');
+  font-display: swap;
 }
 @font-face {
-  font-family: 'acumin';
-  src: url('/fonts/AcuminVariableConcept.ttf') format('truetype');
+  /* Instance figée : plus besoin de font-variation-settings. */
+  font-family: 'texte';
+  src: url('/fonts/texte.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
 }
 
+/* La croix dessinée à la main (/Croix.png) est désormais appliquée
+   directement sur la case des pastilles de filtre, via un utilitaire Tailwind
+   dans Header.jsx : plus besoin de règle dédiée ici. */
 
-/* ---- Animations Globales ---- */
-@keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-    background-image: linear-gradient(270deg, #10F9FC, #D657CB);
+/* ---- Animations d'entrée (CSS, sans JS) ---- */
+/* Le titre et la barre de recherche sont au-dessus de la ligne de flottaison :
+   les animer via Framer Motion les rendait invisibles jusqu'au chargement du
+   chunk d'animation. En CSS, ils s'affichent dès le premier rendu. */
+@keyframes entree-haut {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  50% {
-    background-position: 100% 50%;
-    background-image: linear-gradient(270deg, #D657CB, #10F9FC);
-  }
-  100% {
-    background-position: 0% 50%;
-    background-image: linear-gradient(270deg, #10F9FC, #D657CB);
-  }
-}
-
-@keyframes starScroll {
-  from { background-position: 0 0, 30px 30px; }
-  to { background-position: 60px 60px, 90px 90px; }
-}
-
-/* ---- Utilities Personnalisées ---- */
-@layer utilities {
-  .animate-gradient {
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-  }
-
-  .rotate-on-hover {
-    transition: transform 0.6s ease;
-  }
-  
-  .rotate-on-hover:hover {
-    animation: rotateOnce 0.6s ease forwards;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* ---- Styles Custom pour les sliders ---- */
-input[type="range"] {
-  @apply w-40 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer;
+.anim-entree {
+  animation: entree-haut 0.45s ease-out 0.1s both;
 }
 
-input[type="range"]::-webkit-slider-thumb {
-  @apply w-4 h-4 bg-purple-500 rounded-full appearance-none;
+/* ---- Confort de lecture ---- */
+:root {
+  scroll-behavior: smooth;
 }
 
-input[type="range"]::-moz-range-thumb {
-  @apply w-4 h-4 bg-purple-500 rounded-full appearance-none;
-}
-
-@keyframes starDrift {
-  0% {
-    background-position: 0 0, 40px 40px;
+/* Respecte le réglage système « réduire les animations ». */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
   }
-  100% {
-    background-position: 80px 80px, 0px 0px;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-}
-
-@keyframes starTwinkle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.star-overlay {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(#FAE9B4 1px, transparent 1px),
-    radial-gradient(#FAE9B4 1px, transparent 1px);
-  background-size: 80px 80px, 160px 160px;
-  background-position: 20px 40px, 60px 80px;
-  animation: starTwinkle 4s ease-in-out infinite;
-  opacity: 0.3;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&display=swap');
-.bg-stars {
-  background-image: url('/etoiles_fond.png');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-}
-
-.bg-hill {
-  background-image: url('/hill_transition.png');
-  background-size: 100% auto;
-  background-repeat: no-repeat;
-  background-position: bottom center;
-}
-
-.bg-nature {
-  background-image: url('/nature_background.png');
-  background-repeat: repeat-y;
-  background-size: cover;
-  background-position: top;
-}
-
-.acumin-fine {
-  font-family: 'acumin';
-  font-variation-settings: "wght" 300;
-}
-
-input[type="checkbox"].custom-check:checked,
-input[type="radio"].custom-check:checked {
-  background-image: url("/Croix.png");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  background-position: center;
 }

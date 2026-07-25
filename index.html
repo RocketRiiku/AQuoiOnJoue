@@ -2,12 +2,38 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/CarteInterrogation-Favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>À quoi on joue</title>
-    
-    <!-- ICI le lien Google Fonts doit être dans <head> -->
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/CarteInterrogation-Favicon.png" />
+
+    <title>À quoi on joue ? — Des jeux à sortir en soirée</title>
+    <meta
+      name="description"
+      content="Trouvez le jeu de soirée qu'il vous faut : filtrez par nombre de joueurs, durée, matériel et ambiance, ou laissez le hasard choisir pour vous."
+    />
+    <meta name="theme-color" content="#133f50" />
+
+    <!-- Site en ligne mais non référencé : à retirer, avec public/robots.txt,
+         le jour où vous voulez qu'il soit trouvable. Attention : cela empêche
+         l'indexation, pas l'accès — toute personne ayant l'adresse peut voir
+         le site. -->
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Aperçu lors d'un partage (WhatsApp, Messenger, Discord…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="À quoi on joue ?" />
+    <meta
+      property="og:description"
+      content="Pour toujours avoir des cartes à jouer en soirée. Filtrez par joueurs, durée et matériel."
+    />
+    <meta property="og:image" content="/CarteInterrogation.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Les polices locales portent le titre et les cartes : on les précharge
+         pour éviter un passage visible par la police de secours. -->
+    <link rel="preload" href="/fonts/titre.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/manuscrit.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/texte.woff2" as="font" type="font/woff2" crossorigin />
   </head>
 
   <body>

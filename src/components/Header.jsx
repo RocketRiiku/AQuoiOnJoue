@@ -1,136 +1,304 @@
-import { RotateCw } from "lucide-react";
+import { useId, useState } from 'react';
+import { AnimatePresence, m } from 'framer-motion';
+import { ChevronDown, RotateCw, SlidersHorizontal } from 'lucide-react';
 import * as Slider from '@radix-ui/react-slider';
+import {
+  compterFiltresActifs,
+  compterFiltresSecondaires,
+  DEFAULT_FILTERS,
+  DURATION_CEIL,
+  DURATION_FLOOR,
+  DURATION_STEP,
+  HAS_ALCOHOL_GAMES,
+  LEVEL_OPTIONS,
+  MATERIAL_OPTIONS,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  TYPE_OPTIONS
+} from '../data/filterOptions';
+
+const CARTE =
+  'bg-paille rounded-xl px-3 py-3 h-40 shadow-md flex flex-col items-center justify-center';
+const TITRE_CARTE = 'text-[1.2rem] font-titre text-encre text-center leading-tight';
+
+/**
+ * Pastille de filtre, avec sa case à cocher.
+ *
+ * Les filtres secondaires étaient présentés comme quatre cartes de cases à
+ * cocher, soit près de 400 px occupés en permanence. Les pastilles disent la
+ * même chose en quatre lignes et absorbent les nouvelles options du catalogue
+ * en passant simplement à la ligne.
+ *
+ * La petite case conserve le geste d'origine — cocher d'une croix sur une
+ * feuille — en réutilisant la croix dessinée à la main (/Croix.png). Une fois
+ * cochée, la pastille passe sur le fond paille des cartes en papier plutôt que
+ * sur un aplat plein, pour rester dans la même métaphore.
+ *
+ * `aria-pressed` plutôt qu'un vrai <input> : un bouton bascule se décoche
+ * naturellement d'un second clic, sans le contournement qu'imposaient les
+ * boutons radio.
+ */
+function Pastille({ actif, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={actif}
+      className={`inline-flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full border text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-1 ${
+        actif
+          ? 'bg-paille border-orange text-encre'
+          : 'bg-white/70 border-encre/20 text-encre hover:border-orange hover:text-orange'
+      }`}
+    >
+      <span
+        aria-hidden="true"
+        className={`w-4 h-4 shrink-0 rounded-[3px] border-2 border-encre bg-white/80 ${
+          actif ? "bg-[url('/Croix.png')] bg-contain bg-center bg-no-repeat" : ''
+        }`}
+      />
+      {children}
+    </button>
+  );
+}
+
+function GroupePastilles({ label, children }) {
+  const id = useId();
+  return (
+    <div role="group" aria-labelledby={id} className="flex flex-wrap items-baseline gap-2">
+      <span
+        id={id}
+        className="font-titre text-encre text-sm w-full sm:w-28 sm:shrink-0 sm:text-right"
+      >
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
 
 function Header({ filters, setFilters }) {
-  const handleReset = () => {
-    setFilters({
-      players: '',
-      alcohol: '',
-      minDuration: null,
-      maxDuration: null,
-      material: [],
-      typeGame: '',
-      level: ''
-    });
-  };
+  const [deplie, setDeplie] = useState(false);
+  const idPanneau = useId();
 
-  const toggleMaterial = (mat) => {
-    const set = new Set(filters.material || []);
-    set.has(mat) ? set.delete(mat) : set.add(mat);
-    setFilters(f => ({ ...f, material: Array.from(set) }));
-  };
+  const nbSecondaires = compterFiltresSecondaires(filters);
+  const nbActifs = compterFiltresActifs(filters);
+
+  const handleReset = () => setFilters({ ...DEFAULT_FILTERS, material: [] });
+
+  const basculerMateriel = (mat) =>
+    setFilters((f) => {
+      const actuels = f.material ?? [];
+      return {
+        ...f,
+        material: actuels.includes(mat)
+          ? actuels.filter((m) => m !== mat)
+          : [...actuels, mat]
+      };
+    });
+
+  // Un second clic sur une valeur déjà retenue la remet à « indifférent ».
+  const basculerSimple = (cle, valeur) =>
+    setFilters((f) => ({ ...f, [cle]: f[cle] === valeur ? '' : valeur }));
+
+  const stepPlayers = (delta) =>
+    setFilters((f) => {
+      const current = parseInt(f.players, 10);
+      // Premier clic : on démarre au minimum jouable, pas à 1 (aucun jeu ne se
+      // joue seul, et le compteur restait bloqué sur un résultat vide).
+      if (!Number.isFinite(current)) {
+        return { ...f, players: String(delta > 0 ? MIN_PLAYERS : MAX_PLAYERS) };
+      }
+      const next = current + delta;
+      if (next < MIN_PLAYERS) return { ...f, players: '' }; // repasse à « indifférent »
+      return { ...f, players: String(Math.min(MAX_PLAYERS, next)) };
+    });
+
+  // Aux extrémités, la borne devient nulle = « sans limite », ce qui évite de
+  // rabattre un jeu long sur le maximum du curseur.
+  const setDuration = ([min, max]) =>
+    setFilters((f) => ({
+      ...f,
+      minDuration: min <= DURATION_FLOOR ? null : min,
+      maxDuration: max >= DURATION_CEIL ? null : max
+    }));
+
+  const sliderMin = filters.minDuration ?? DURATION_FLOOR;
+  const sliderMax = filters.maxDuration ?? DURATION_CEIL;
 
   return (
-    <div className="relative z-30 max-w-6xl mx-auto px-4 py-6">
-      <div className="flex gap-4 justify-center flex-wrap items-start relative">
-        {/* Joueurs */}
-        <div className="bg-[#fae9b4] rounded-xl w-32 h-40 px-2 py-3 shadow-md flex flex-col items-center justify-center -rotate-3">
-          <span className="text-[1.2rem] font-[berlin] text-[#133f50] text-center">Joueurs</span>
+    <section aria-label="Filtres" className="relative z-30 max-w-3xl mx-auto px-4 py-4">
+      {/* Niveau 1 : les deux critères qu'on renseigne presque toujours. */}
+      <div className="flex gap-4 justify-center items-stretch">
+        <div className={`${CARTE} w-32 -rotate-3`}>
+          <span className={TITRE_CARTE}>Joueurs</span>
           <div className="flex items-center gap-2 mt-2">
-            <button className="text-[1.6rem] text-[#db4f22] font-bold" onClick={() => setFilters(f => ({ ...f, players: Math.max(1, (parseInt(f.players) || 1) - 1).toString() }))}>
+            <button
+              type="button"
+              aria-label="Moins de joueurs"
+              className="text-[1.6rem] text-orange font-bold leading-none px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded"
+              onClick={() => stepPlayers(-1)}
+            >
               &lt;
             </button>
-            <span className="text-[#123f50] text-3xl font-[berlin]">
-              {filters.players || "-"}
+            <span
+              className="text-encre text-3xl font-titre tabular-nums"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {filters.players || '–'}
+              <span className="sr-only">
+                {filters.players ? ' joueurs' : ' nombre de joueurs indifférent'}
+              </span>
             </span>
-            <button className="text-[1.6rem] text-[#db4f22] font-bold" onClick={() => setFilters(f => ({ ...f, players: Math.min(10, (parseInt(f.players) || 1) + 1).toString() }))}>
+            <button
+              type="button"
+              aria-label="Plus de joueurs"
+              className="text-[1.6rem] text-orange font-bold leading-none px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded"
+              onClick={() => stepPlayers(1)}
+            >
               &gt;
             </button>
           </div>
         </div>
 
-        {/* Durée */}
-        <div className="bg-[#fae9b4] rounded-xl w-40 h-40 px-3 py-3 shadow-md flex flex-col items-center justify-center rotate-2">
-          <span className="text-[1.2rem] font-[berlin] text-[#133f50] text-center">Durée</span>
+        <div className={`${CARTE} w-40 rotate-2`}>
+          <span className={TITRE_CARTE}>Durée</span>
           <Slider.Root
-            className="w-full mt-3 flex items-center relative h-5"
-            value={[filters.minDuration || 5, filters.maxDuration || 30]}
-            min={5}
-            max={30}
-            step={1}
-            onValueChange={([min, max]) => setFilters(f => ({ ...f, minDuration: min, maxDuration: max }))}
+            className="w-full mt-3 flex items-center relative h-5 touch-none select-none"
+            value={[sliderMin, sliderMax]}
+            min={DURATION_FLOOR}
+            max={DURATION_CEIL}
+            step={DURATION_STEP}
+            minStepsBetweenThumbs={1}
+            onValueChange={setDuration}
           >
             <Slider.Track className="bg-[#cccccc] relative grow rounded-full h-1">
-              <Slider.Range className="absolute bg-[#123f50] rounded-full h-full" />
+              <Slider.Range className="absolute bg-encre rounded-full h-full" />
             </Slider.Track>
-            <Slider.Thumb className="block w-4 h-4 bg-white border-2 border-[#123f50] rounded-full" />
-            <Slider.Thumb className="block w-4 h-4 bg-white border-2 border-[#123f50] rounded-full" />
+            <Slider.Thumb
+              aria-label="Durée minimum"
+              className="block w-4 h-4 bg-white border-2 border-encre rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            />
+            <Slider.Thumb
+              aria-label="Durée maximum"
+              className="block w-4 h-4 bg-white border-2 border-encre rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            />
           </Slider.Root>
-          <span className="text-[#123f50] text-xs mt-2 text-center">
-            Entre {filters.minDuration || 5} et {filters.maxDuration || 30} min
-          </span>
-        </div>
-
-        {/* Matériel */}
-        <div className="bg-[#fae9b4] rounded-xl w-40 h-40 px-3 py-3 shadow-md flex flex-col items-center justify-center -rotate-2">
-          <span className="text-[1.2rem] font-[berlin] text-[#133f50] text-center">Matériel</span>
-          <div className="flex flex-col gap-1 mt-2 text-sm">
-            {["Papier & stylo", "Cartes à jouer", "Dé classique"].map(mat => (
-              <label key={mat} className="text-[#123f50] flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 border-2 border-[#123f50] appearance-none relative custom-check"
-                  checked={filters.material?.includes(mat)}
-                  onChange={() => toggleMaterial(mat)}
-                />
-                {mat}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Type de jeu */}
-        <div className="bg-[#fae9b4] rounded-xl w-32 h-40 px-3 py-3 shadow-md flex flex-col items-center justify-center rotate-3">
-          <span className="text-[1.2rem] font-[berlin] text-[#133f50] text-center">Type de jeu</span>
-          <div className="flex flex-col gap-1 mt-2 text-sm">
-            {["coopératif", "compétitif", "par équipe", "à traîtres"].map(type => (
-              <label key={type} className="text-[#123f50] flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="typeGame"
-                  className="w-4 h-4 border-2 border-[#123f50] appearance-none rounded-full relative custom-check"
-                  checked={filters.typeGame === type}
-                  onChange={() => setFilters(f => ({ ...f, typeGame: type }))}
-                />
-                {type}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Type de joueurs */}
-        <div className="bg-[#fae9b4] rounded-xl w-32 h-40 px-3 py-3 shadow-md flex flex-col items-center justify-center -rotate-1">
-          <span className="text-[1.2rem] font-[berlin] text-[#133f50] text-center">Type de joueurs</span>
-          <div className="flex flex-col gap-1 mt-2 text-sm">
-            {["Débutant", "Intermédiaire", "Expert"].map(level => (
-              <label key={level} className="text-[#123f50] flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="level"
-                  className="w-4 h-4 border-2 border-[#123f50] appearance-none rounded-full relative custom-check"
-                  checked={filters.level === level}
-                  onChange={() => setFilters(f => ({ ...f, level }))}
-                />
-                {level}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Reset dans une carte */}
-        <div className="bg-[#fae9b4] rounded-xl w-28 h-40 px-2 py-4 shadow-md flex flex-col items-center justify-center rotate-1">
-          <button
-            onClick={handleReset}
-            className="rounded-full border-2 border-[#db4f22] p-3 transform transition-transform duration-700 hover:rotate-[360deg]"
-          >
-            <RotateCw className="text-[#db4f22] w-6 h-6" />
-          </button>
-          <span className="mt-2 text-[#133f50] text-sm font-[berlin] transform rotate-[-3deg] group-hover:rotate-0 transition-all">
-            Réinitialiser
+          <span className="text-encre text-xs mt-2 text-center">
+            Entre {sliderMin} et {sliderMax}
+            {filters.maxDuration == null ? '+' : ''} min
           </span>
         </div>
       </div>
-    </div>
+
+      {/* Niveau 2 : tout le reste, replié par défaut. */}
+      <div className="flex flex-wrap justify-center items-center gap-3 mt-5">
+        <button
+          type="button"
+          onClick={() => setDeplie((v) => !v)}
+          aria-expanded={deplie}
+          aria-controls={idPanneau}
+          className="inline-flex items-center gap-2 px-4 py-1.5 bg-creme/90 text-encre font-titre rounded-full shadow-sm hover:bg-creme transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-orange" aria-hidden="true" />
+          Plus de filtres
+          {nbSecondaires > 0 && (
+            <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-brique text-creme text-xs">
+              {nbSecondaires}
+            </span>
+          )}
+          <ChevronDown
+            aria-hidden="true"
+            className={`w-4 h-4 transition-transform ${deplie ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {/* N'apparaît que lorsqu'il a quelque chose à réinitialiser : la carte
+            dédiée occupait une place permanente pour rien. */}
+        {nbActifs > 0 && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-ardoise hover:text-brique focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
+          >
+            <RotateCw className="w-4 h-4" aria-hidden="true" />
+            Réinitialiser
+            <span className="sr-only">
+              {nbActifs} filtre{nbActifs > 1 ? 's' : ''} actif{nbActifs > 1 ? 's' : ''}
+            </span>
+          </button>
+        )}
+      </div>
+
+      <AnimatePresence initial={false}>
+        {deplie && (
+          <m.div
+            id={idPanneau}
+            key="panneau"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 bg-paille/90 rounded-2xl shadow-md px-4 py-4 flex flex-col gap-3">
+              <GroupePastilles label="Matériel dispo">
+                {MATERIAL_OPTIONS.map((mat) => (
+                  <Pastille
+                    key={mat}
+                    actif={filters.material?.includes(mat) ?? false}
+                    onClick={() => basculerMateriel(mat)}
+                  >
+                    {mat}
+                  </Pastille>
+                ))}
+              </GroupePastilles>
+
+              <GroupePastilles label="Type de jeu">
+                {TYPE_OPTIONS.map((type) => (
+                  <Pastille
+                    key={type}
+                    actif={filters.typeGame === type}
+                    onClick={() => basculerSimple('typeGame', type)}
+                  >
+                    {type}
+                  </Pastille>
+                ))}
+              </GroupePastilles>
+
+              <GroupePastilles label="Type de joueurs">
+                {LEVEL_OPTIONS.map((level) => (
+                  <Pastille
+                    key={level}
+                    actif={filters.level === level}
+                    onClick={() => basculerSimple('level', level)}
+                  >
+                    {level}
+                  </Pastille>
+                ))}
+              </GroupePastilles>
+
+              {HAS_ALCOHOL_GAMES && (
+                <GroupePastilles label="Alcool">
+                  {[
+                    ['oui', 'Avec'],
+                    ['non', 'Sans']
+                  ].map(([valeur, libelle]) => (
+                    <Pastille
+                      key={valeur}
+                      actif={filters.alcohol === valeur}
+                      onClick={() => basculerSimple('alcohol', valeur)}
+                    >
+                      {libelle}
+                    </Pastille>
+                  ))}
+                </GroupePastilles>
+              )}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </section>
   );
 }
 

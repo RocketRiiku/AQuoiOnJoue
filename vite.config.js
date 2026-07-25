@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: '/AQuoiOnJoue/',
   test: {
+    globals: true,
     environment: 'jsdom',
     setupFiles: './vitest.setup.js'
   }
