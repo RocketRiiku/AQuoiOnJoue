@@ -54,6 +54,21 @@
   animation: entree-haut 0.45s ease-out 0.1s both;
 }
 
+/* Apparition d'une vue (liste, fiche, soirée, déroulé). Rejouée à chaque
+   changement de vue grâce à la clé React posée sur le conteneur. */
+@keyframes apparition {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.anim-vue {
+  animation: apparition 0.2s ease-out both;
+}
+
 /* ---- Confort de lecture ---- */
 :root {
   scroll-behavior: smooth;

@@ -23,7 +23,6 @@ function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
 
   return (
     <m.div
-      layout
       whileHover={{ scale: 1.05 }}
       className="relative w-full max-w-[400px]"
     >

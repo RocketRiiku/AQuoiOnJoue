@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AnimatePresence, m } from 'framer-motion';
+import { m } from 'framer-motion';
 import { PartyPopper, Search } from 'lucide-react';
 import Header from './components/Header';
 import GameCard from './components/GameCard';
@@ -97,43 +97,32 @@ function App() {
         </header>
 
         <main>
-          {/* Une vue = un seul enfant d'AnimatePresence, bandeau de recherche et
-              filtres compris. Rendus à l'extérieur, ils disparaissaient d'un
-              coup pendant que la liste, elle, mettait 200 ms à s'effacer : le
-              décalage entre les deux était le « saut » visible au retour. */}
-          {/* Le retrait sous l'en-tête est porté ici plutôt que par la barre de
-              recherche : toutes les vues en bénéficient, pas seulement la liste. */}
+          {/* Une vue s'affiche d'un bloc, bandeau de recherche et filtres
+              compris : rendus à l'extérieur, ils disparaissaient d'un coup
+              pendant que la liste mettait 200 ms à s'effacer, et ce décalage
+              était le « saut » visible au retour.
+              Le retrait sous l'en-tête est porté ici plutôt que par la barre de
+              recherche, pour que toutes les vues en bénéficient. */}
           <div className="relative z-30 px-4 pt-8 pb-16 min-h-[70vh]">
-            {/* initial={false} : pas de fondu au tout premier rendu. Sinon la
-                vue démarre à opacité 0 et reste invisible jusqu'au chargement
-                du module d'animation, différé exprès. Les changements de vue
-                suivants, eux, s'animent normalement. */}
-            <AnimatePresence mode="wait" initial={false}>
+            {/* Une clé par vue : React remonte le conteneur, ce qui rejoue
+                l'animation CSS d'apparition.
+                AnimatePresence a été retiré d'ici : son animation de sortie
+                pouvait ne jamais se terminer, et comme `mode="wait"` attend
+                cette fin pour monter la vue suivante, la fiche d'un jeu ne
+                s'ouvrait alors jamais. Un fondu CSS ne dépend d'aucun cycle
+                de vie JavaScript et ne peut pas rester bloqué. */}
+            <div key={vue} className="anim-vue">
               {vue === 'lancement' ? (
-                <m.div
-                  key="lancement"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-center items-start min-h-[60vh]"
-                >
+                <div className="flex justify-center items-start min-h-[60vh]">
                   <SoireeLancement
                     soiree={soiree}
                     etape={etape}
                     onEtape={allerEtape}
                     onQuitter={quitterLancement}
                   />
-                </m.div>
+                </div>
               ) : vue === 'soiree' ? (
-                <m.div
-                  key="soiree"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-center items-start min-h-[60vh]"
-                >
+                <div className="flex justify-center items-start min-h-[60vh]">
                   <SoireePage
                     soiree={soiree}
                     onRetour={fermerSoiree}
@@ -143,31 +132,18 @@ function App() {
                     onDeplacer={deplacerDansSoiree}
                     onOuvrirJeu={ouvrirJeu}
                   />
-                </m.div>
+                </div>
               ) : vue === 'jeu' ? (
-                <m.div
-                  key="detail"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-center items-start min-h-[60vh]"
-                >
+                <div className="flex justify-center items-start min-h-[60vh]">
                   <GameDetail
                     game={jeuAffiche}
                     goBack={fermerJeu}
                     dansSoiree={estDansSoiree(jeuAffiche.slug)}
                     onBasculerSoiree={basculerSoiree}
                   />
-                </m.div>
+                </div>
               ) : (
-                <m.div
-                  key="list"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
+                <div>
                   <Introduction
                     visible={introduction.visible}
                     onMasquer={introduction.masquer}
@@ -252,7 +228,12 @@ function App() {
                       </li>
                     ) : (
                       filteredGames.map((game) => (
-                        <m.li key={game.id} layout className="w-full flex justify-center">
+                        // Pas de `layout` ici : il animait le repositionnement
+                        // des cartes au changement de filtre, mais réagissait
+                        // aussi au repli de l'explication — et la projection
+                        // restait figée sur un translateY de la hauteur du
+                        // panneau, poussant toute la liste hors de l'écran.
+                        <m.li key={game.id} className="w-full flex justify-center">
                           <GameCard
                             game={game}
                             onSelect={() => ouvrirJeu(game)}
@@ -263,9 +244,9 @@ function App() {
                       ))
                     )}
                   </ul>
-                </m.div>
+                </div>
               )}
-            </AnimatePresence>
+            </div>
           </div>
         </main>
       </div>
