@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Clock, PartyPopper, Users, X } from 'lucide-react';
-import BoutonDiscret from './BoutonDiscret';
+import { Bouton } from './Bouton';
 import GameThumb from './GameThumb';
 import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGame';
 
@@ -46,9 +46,9 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
         <p className="font-titre text-lg text-ardoise" role="status" aria-live="polite">
           Jeu {etape} sur {soiree.length}
         </p>
-        <BoutonDiscret icon={X} onClick={onQuitter} ton="attention">
+        <Bouton variante="discret" destructeur icone={X} onClick={onQuitter}>
           Quitter
-        </BoutonDiscret>
+        </Bouton>
       </div>
 
       <ol className="flex gap-1.5 mt-3" aria-hidden="true">
@@ -102,36 +102,31 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
         </p>
       </div>
 
-      <div className="mt-10 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          onClick={() => onEtape(etape - 1)}
-          disabled={etape === 1}
-          className="inline-flex items-center gap-2 px-5 py-2 border-2 border-brique text-brique font-titre text-lg rounded-full disabled:opacity-30 disabled:cursor-not-allowed hover:enabled:bg-brique hover:enabled:text-creme transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-        >
-          <ChevronLeft className="w-5 h-5" aria-hidden="true" />
-          Précédent
-        </button>
-
+      {/* Le principal d'abord, à gauche : « avancer » est l'action attendue,
+          « précédent » n'est qu'un repli (docs/boutons.md). */}
+      <div className="mt-10 flex flex-wrap items-center gap-3">
         {dernier ? (
-          <button
-            type="button"
-            onClick={onQuitter}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-          >
-            <PartyPopper className="w-5 h-5" aria-hidden="true" />
+          <Bouton variante="principal" icone={PartyPopper} onClick={onQuitter}>
             Terminer la soirée
-          </button>
+          </Bouton>
         ) : (
-          <button
-            type="button"
+          <Bouton
+            variante="principal"
+            iconeApres={ChevronRight}
             onClick={() => onEtape(etape + 1)}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
           >
             Jeu suivant
-            <ChevronRight className="w-5 h-5" aria-hidden="true" />
-          </button>
+          </Bouton>
         )}
+
+        <Bouton
+          variante="secondaire"
+          icone={ChevronLeft}
+          onClick={() => onEtape(etape - 1)}
+          disabled={etape === 1}
+        >
+          Précédent
+        </Bouton>
       </div>
     </section>
   );

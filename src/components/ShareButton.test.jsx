@@ -52,7 +52,8 @@ describe('ShareButton', () => {
 
     // Ni copie de repli, ni message d'erreur : l'annulation est volontaire.
     expect(writeText).not.toHaveBeenCalled();
-    expect(screen.getByRole('button')).toHaveTextContent('Partager');
+    // Le bouton est réduit à une icône : son libellé est le nom accessible.
+    expect(screen.getByRole('button')).toHaveAccessibleName('Partager');
   });
 
   it('avertit quand même la copie échoue', async () => {

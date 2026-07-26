@@ -39,6 +39,14 @@ Leur limite : jsdom ne calcule pas de rendu. Un défaut purement visuel — l'un
 des deux régressions décalait les cartes par une transformation CSS — reste hors
 de leur portée et demande un vrai navigateur.
 
+## Boutons
+
+Toute action passe par [`src/components/Bouton.jsx`](src/components/Bouton.jsx),
+suivant les règles de **[`docs/boutons.md`](docs/boutons.md)** — à lire avant
+d'ajouter une action à l'interface. Quatre niveaux d'emphase, trois
+emplacements fixes, et une règle qui tranche les cas ambigus : c'est le *rôle*
+de l'action qui décide de sa forme, jamais la place disponible.
+
 ## Animations
 
 Aucune bibliothèque d'animation : survols, fondus d'apparition et dépliage du

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Share2 } from 'lucide-react';
+import { BoutonIcone } from './Bouton';
 
 /**
  * Partage un lien.
@@ -9,15 +10,11 @@ import { Check, Share2 } from 'lucide-react';
  * passer son téléphone. Ailleurs, on retombe sur la copie dans le presse-papier,
  * puis sur une sélection manuelle si même celle-ci est refusée (contexte non
  * sécurisé, permission bloquée).
+ *
+ * Toujours rendu en icône : partager porte sur l'objet affiché, et ces
+ * actions-là vivent dans le groupe en haut à droite du panneau (docs/boutons.md).
  */
-function ShareButton({
-  url,
-  titre,
-  texte,
-  libelle = 'Partager',
-  iconeSeule = false,
-  className = ''
-}) {
+function ShareButton({ url, titre, texte, libelle = 'Partager' }) {
   const [etat, setEtat] = useState('pret'); // pret | copie | echec
   const timer = useRef(null);
 
@@ -57,23 +54,16 @@ function ShareButton({
     echec: 'Copie impossible'
   };
 
-  const Icone = etat === 'copie' ? Check : Share2;
-
   return (
     <>
-      <button
-        type="button"
+      <BoutonIcone
+        icone={etat === 'copie' ? Check : Share2}
+        infobulle={messages[etat]}
+        actif={etat === 'copie'}
         onClick={handleClick}
-        // En variante icône seule, le libellé passe en nom accessible : le
-        // bouton reste annoncé « Partager ce jeu » aux lecteurs d'écran.
-        aria-label={iconeSeule ? messages[etat] : undefined}
-        className={`inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 ${className}`}
-      >
-        <Icone className="w-5 h-5" aria-hidden="true" />
-        {!iconeSeule && messages[etat]}
-      </button>
+      />
 
-      {/* Le changement d'état du bouton doit aussi être annoncé vocalement. */}
+      {/* Le changement d'état doit aussi être annoncé vocalement. */}
       <span role="status" aria-live="polite" className="sr-only">
         {etat === 'copie' ? 'Lien copié dans le presse-papier' : ''}
         {etat === 'echec' ? `Copie impossible. Le lien est ${url ?? ''}` : ''}

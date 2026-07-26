@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PartyPopper, Search } from 'lucide-react';
+import { Bouton } from './components/Bouton';
 import Header from './components/Header';
 import GameCard from './components/GameCard';
 import GameDetail from './components/GameDetail';
@@ -197,21 +198,24 @@ function App() {
                   <Header filters={filters} setFilters={setFilters} />
 
                   <div className="flex flex-wrap justify-center items-center gap-3 my-6">
-                    <button
-                      type="button"
+                    <Bouton
+                      variante="principal"
                       onClick={() => tirerAuHasard()}
                       disabled={aucunResultat}
-                      className="flex items-center gap-2 px-6 py-1 bg-brique text-creme text-2xl font-titre rounded-full shadow-md transition-transform duration-150 hover:enabled:scale-105 active:enabled:scale-95 disabled:opacity-40 disabled:cursor-not-allowed motion-reduce:transition-none motion-reduce:hover:enabled:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+                      className="text-2xl hover:enabled:scale-105 active:enabled:scale-95 transition-transform duration-150 motion-reduce:transition-none motion-reduce:hover:enabled:scale-100"
                     >
                       <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
                       Surprends-moi !
                       <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
-                    </button>
+                    </Bouton>
 
                     {/* Toujours visible, même vide : sa présence fait découvrir
                         la fonction. Désactivé tant qu'aucun jeu n'est retenu. */}
-                    <button
-                      type="button"
+                    {/* Secondaire : « Surprends-moi ! » est l'action principale
+                        de la liste, une seule par vue (docs/boutons.md). */}
+                    <Bouton
+                      variante="secondaire"
+                      icone={PartyPopper}
                       onClick={ouvrirSoiree}
                       disabled={soiree.length === 0}
                       title={
@@ -219,16 +223,14 @@ function App() {
                           ? 'Ajoutez des jeux avec le bouton + d’une carte pour composer votre soirée'
                           : 'Voir le programme de la soirée'
                       }
-                      className="flex items-center gap-2 px-5 py-1 bg-paille text-encre text-xl font-titre rounded-full shadow-md transition-opacity hover:enabled:bg-[#f2d599] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                     >
-                      <PartyPopper className="w-5 h-5 text-orange" aria-hidden="true" />
                       Notre soirée
                       {soiree.length > 0 && (
                         <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-brique text-creme text-sm">
                           {soiree.length}
                         </span>
                       )}
-                    </button>
+                    </Bouton>
                   </div>
 
                   <p

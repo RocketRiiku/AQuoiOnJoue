@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { Bouton } from './Bouton';
 
 /**
  * Filet de sécurité contre l'écran blanc.
@@ -47,13 +48,9 @@ class ErrorBoundary extends Component {
             rechargez la page pour repartir de zéro.
           </p>
 
-          <button
-            type="button"
-            onClick={this.handleReset}
-            className="mt-6 inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-          >
+          <Bouton variante="principal" className="mt-6" onClick={this.handleReset}>
             Revenir à la liste des jeux
-          </button>
+          </Bouton>
 
           <details className="mt-6 text-left">
             <summary className="cursor-pointer text-sm text-ardoise/80">

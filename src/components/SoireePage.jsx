@@ -1,5 +1,5 @@
 import { ArrowLeft, ChevronDown, ChevronUp, Clock, Play, Trash2, X } from 'lucide-react';
-import BoutonDiscret from './BoutonDiscret';
+import { ActionsObjet, BarreActions, BarreActionsSecondaire, Bouton } from './Bouton';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
 import { formatDuration, formatDureeTotale, formatPlayers } from '../utils/formatGame';
@@ -23,9 +23,21 @@ function SoireePage({
   return (
     <section
       aria-labelledby="titre-soiree"
-      className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-2xl p-6 sm:p-8"
+      className="anim-panneau relative bg-creme rounded-2xl shadow-xl w-full max-w-2xl p-6 sm:p-8"
     >
-      <h2 id="titre-soiree" className="font-titre text-3xl sm:text-4xl text-brique">
+      {/* Partager porte sur l'objet affiché — le programme — donc icône en haut
+          à droite, comme sur la fiche d'un jeu (docs/boutons.md). */}
+      {soiree.length > 0 && (
+        <ActionsObjet>
+          <ShareButton
+            titre="Notre soirée — À quoi on joue ?"
+            texte={`Le programme : ${soiree.map((g) => g.title).join(', ')}`}
+            libelle="Partager le programme"
+          />
+        </ActionsObjet>
+      )}
+
+      <h2 id="titre-soiree" className="font-titre text-3xl sm:text-4xl text-brique pr-12">
         Notre soirée
       </h2>
 
@@ -38,14 +50,11 @@ function SoireePage({
             </span>{' '}
             pour composer la soirée.
           </p>
-          <button
-            type="button"
-            onClick={onRetour}
-            className="mt-6 inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-          >
-            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-            Choisir des jeux
-          </button>
+          <BarreActions className="mt-6">
+            <Bouton variante="principal" icone={ArrowLeft} onClick={onRetour}>
+              Choisir des jeux
+            </Bouton>
+          </BarreActions>
         </>
       ) : (
         <>
@@ -132,32 +141,20 @@ function SoireePage({
             ))}
           </ol>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={onLancer}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-            >
-              <Play className="w-5 h-5" aria-hidden="true" />
+          <BarreActions>
+            <Bouton variante="principal" icone={Play} onClick={onLancer}>
               Lancer la soirée
-            </button>
+            </Bouton>
+          </BarreActions>
 
-            <ShareButton
-              titre="Notre soirée — À quoi on joue ?"
-              texte={`Le programme : ${soiree.map((g) => g.title).join(', ')}`}
-              libelle="Partager le programme"
-              className="px-6 py-2 border-2 border-brique text-brique font-titre text-xl rounded-full hover:bg-brique hover:text-creme transition-colors"
-            />
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <BoutonDiscret icon={ArrowLeft} onClick={onRetour}>
+          <BarreActionsSecondaire>
+            <Bouton variante="discret" icone={ArrowLeft} onClick={onRetour}>
               Ajouter d&apos;autres jeux
-            </BoutonDiscret>
-            <BoutonDiscret icon={Trash2} onClick={onVider} ton="attention">
+            </Bouton>
+            <Bouton variante="discret" destructeur icone={Trash2} onClick={onVider}>
               Vider le programme
-            </BoutonDiscret>
-          </div>
+            </Bouton>
+          </BarreActionsSecondaire>
         </>
       )}
     </section>

@@ -1,4 +1,5 @@
 import { HelpCircle, PartyPopper, Play, Plus, SlidersHorizontal, X } from 'lucide-react';
+import { BarreActions, Bouton } from './Bouton';
 
 /**
  * Explication du principe, dépliée à la première visite.
@@ -34,14 +35,9 @@ function Introduction({ visible, onMasquer, onAfficher }) {
   if (!visible) {
     return (
       <div className="flex justify-center mb-6">
-        <button
-          type="button"
-          onClick={onAfficher}
-          className="inline-flex items-center gap-1.5 text-sm text-ardoise hover:text-brique focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full px-2 py-1"
-        >
-          <HelpCircle className="w-4 h-4" aria-hidden="true" />
+        <Bouton variante="discret" icone={HelpCircle} onClick={onAfficher}>
           Comment ça marche ?
-        </button>
+        </Bouton>
       </div>
     );
   }
@@ -96,13 +92,11 @@ function Introduction({ visible, onMasquer, onAfficher }) {
         </span>
       </div>
 
-      <button
-        type="button"
-        onClick={onMasquer}
-        className="mt-5 inline-flex items-center gap-2 px-5 py-1.5 bg-brique text-creme font-titre text-lg rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-      >
-        C’est parti
-      </button>
+      <BarreActions className="mt-5">
+        <Bouton variante="principal" onClick={onMasquer}>
+          C’est parti
+        </Bouton>
+      </BarreActions>
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check, Dices } from 'lucide-react';
+import { ActionsObjet, BarreActions, Bouton, BoutonIcone } from './Bouton';
 import GameThumb from './GameThumb';
-import Infobulle from './Infobulle';
 import ShareButton from './ShareButton';
 import { formatDuration, formatMaterial, formatPlayers, formatTypes } from '../utils/formatGame';
 
@@ -42,48 +42,31 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
       aria-labelledby="titre-jeu"
       className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
     >
-      {/* Actions secondaires en haut à droite : présentes sans concurrencer le
-          bouton de retour, qui reste l'action principale en bas de fiche. */}
+      {/* Actions portant sur le jeu affiché : icônes groupées en haut à
+          droite, cf. docs/boutons.md. */}
       <div className="relative">
-        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-10 flex items-center gap-2">
+        <ActionsObjet>
           {onBasculerSoiree && (
-            <Infobulle
-              texte={dansSoiree ? 'Retirer de la soirée' : 'Ajouter à la soirée'}
-            >
-              <button
-                type="button"
-                onClick={() => onBasculerSoiree(game)}
-                aria-pressed={dansSoiree}
-                aria-label={
-                  dansSoiree
-                    ? `Retirer ${game.title} de la soirée`
-                    : `Ajouter ${game.title} à la soirée`
-                }
-                className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 ${
-                  dansSoiree
-                    ? 'bg-brique border-brique text-creme'
-                    : 'border-orange/50 text-orange hover:bg-orange hover:text-creme hover:border-orange'
-                }`}
-              >
-                {dansSoiree ? (
-                  <Check className="w-5 h-5" aria-hidden="true" />
-                ) : (
-                  <Plus className="w-5 h-5" aria-hidden="true" />
-                )}
-              </button>
-            </Infobulle>
+            <BoutonIcone
+              icone={dansSoiree ? Check : Plus}
+              infobulle={dansSoiree ? 'Retirer de la soirée' : 'Ajouter à la soirée'}
+              nomAccessible={
+                dansSoiree
+                  ? `Retirer ${game.title} de la soirée`
+                  : `Ajouter ${game.title} à la soirée`
+              }
+              actif={dansSoiree}
+              aria-pressed={dansSoiree}
+              onClick={() => onBasculerSoiree(game)}
+            />
           )}
 
-          <Infobulle texte="Partager ce jeu">
-            <ShareButton
-              titre={`${game.title} — À quoi on joue ?`}
-              texte={`On joue à ${game.title} ? ${game.description}`}
-              libelle="Partager ce jeu"
-              iconeSeule
-              className="w-9 h-9 rounded-full border border-brique/50 text-brique justify-center hover:bg-brique hover:text-creme hover:border-brique transition-colors"
-            />
-          </Infobulle>
-        </div>
+          <ShareButton
+            titre={`${game.title} — À quoi on joue ?`}
+            texte={`On joue à ${game.title} ? ${game.description}`}
+            libelle="Partager ce jeu"
+          />
+        </ActionsObjet>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-6 p-6 sm:p-8">
@@ -123,34 +106,21 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
           {game.rules}
         </p>
 
-        {/* Partage et ajout à la soirée sont remontés en haut de fiche. Ne
-            restent ici que le retour et, si le jeu vient d'un tirage, la
-            relance — pour ne pas avoir à repasser par la liste. */}
-        <div className="mt-8 flex flex-wrap items-center gap-3">
+        <BarreActions>
           {onAutreJeu && (
-            <button
-              type="button"
-              onClick={onAutreJeu}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-            >
-              <Dices className="w-5 h-5" aria-hidden="true" />
+            <Bouton variante="principal" icone={Dices} onClick={onAutreJeu}>
               Un autre jeu ?
-            </button>
+            </Bouton>
           )}
 
-          <button
-            type="button"
+          <Bouton
+            variante={onAutreJeu ? 'secondaire' : 'principal'}
+            icone={ArrowLeft}
             onClick={goBack}
-            className={`inline-flex items-center gap-2 px-6 py-2 font-titre text-xl rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 ${
-              onAutreJeu
-                ? 'border-2 border-brique text-brique hover:bg-brique hover:text-creme'
-                : 'bg-brique text-creme shadow-md hover:bg-orange'
-            }`}
           >
-            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
             Retour aux jeux
-          </button>
-        </div>
+          </Bouton>
+        </BarreActions>
       </div>
     </article>
   );
