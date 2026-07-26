@@ -9,7 +9,7 @@
 /* Les familles portent des noms d'usage (« titre », « manuscrit », « texte »)
    et non des noms de fonderie : changer de police ne touche alors que ce
    fichier, sans renommer une classe dans tout le projet.
-   Actuellement Jost, Petit Formal Script et Source Sans 3 — les trois sous
+   Actuellement Fredoka, Petit Formal Script et Source Sans 3 — les trois sous
    licence SIL Open Font, régénérées par `npm run build:fonts`.
    font-display: swap → le texte reste lisible pendant le chargement. */
 @font-face {

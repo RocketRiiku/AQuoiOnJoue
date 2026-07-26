@@ -215,7 +215,7 @@ et non des noms de fonderie. Changer de police ne touche alors que les trois
 
 | Famille | Police actuelle | Usage |
 | --- | --- | --- |
-| `font-titre` | Jost (poids 500) | titres, boutons |
+| `font-titre` | Fredoka (poids 500) | titres, boutons |
 | `font-manuscrit` | Petit Formal Script | sous-titre |
 | `font-texte` | Source Sans 3 (poids 300) | descriptions, règles |
 
@@ -229,7 +229,7 @@ Aucune police n'est chargée depuis un tiers : tout est servi par le site, ce qu
 
 - **Sources** : `assets-source/fonts/` — versionnées avec leurs licences OFL,
   mais **non servies**.
-- **Servies** : `public/fonts/*.woff2` — sous-ensemble latin/français, **59 ko**
+- **Servies** : `public/fonts/*.woff2` — sous-ensemble latin/français, **65 ko**
   à elles trois.
 
 Deux des trois sont variables alors qu'un seul poids est utilisé : figer

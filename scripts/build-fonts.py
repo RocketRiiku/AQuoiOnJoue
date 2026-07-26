@@ -41,11 +41,12 @@ UNICODES = (
 
 # (source, sortie, instance à figer si la police est variable)
 #
-# Jost à 500 plutôt qu'à 400 : les titres s'affichent en très grand, et le poids
-# intermédiaire retrouve l'épaisseur de trait de l'ancienne Berlin Sans.
+# Fredoka à 500, en largeur normale : ses formes rondes et généreuses reprennent
+# l'esprit de l'ancienne Berlin Sans, là où une géométrique plus stricte jurait
+# avec les cartes dessinées à la main.
 # Source Sans 3 à 300 pour rester fidèle au texte courant en graisse légère.
 JOBS = [
-    ('Jost-Variable.ttf', 'titre.woff2', {'wght': 500}),
+    ('Fredoka-Variable.ttf', 'titre.woff2', {'wght': 500, 'wdth': 100}),
     ('PetitFormalScript-Regular.ttf', 'manuscrit.woff2', None),
     ('SourceSans3-Variable.ttf', 'texte.woff2', {'wght': 300}),
 ]
