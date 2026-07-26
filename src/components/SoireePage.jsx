@@ -1,4 +1,5 @@
 import { ArrowLeft, ChevronDown, ChevronUp, Clock, Play, Trash2, X } from 'lucide-react';
+import BoutonDiscret from './BoutonDiscret';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
 import { formatDuration, formatDureeTotale, formatPlayers } from '../utils/formatGame';
@@ -149,23 +150,13 @@ function SoireePage({
             />
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-            <button
-              type="button"
-              onClick={onRetour}
-              className="inline-flex items-center gap-1 text-ardoise hover:text-brique focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded"
-            >
-              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <BoutonDiscret icon={ArrowLeft} onClick={onRetour}>
               Ajouter d&apos;autres jeux
-            </button>
-            <button
-              type="button"
-              onClick={onVider}
-              className="inline-flex items-center gap-1 text-ardoise/70 hover:text-brique focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded"
-            >
-              <Trash2 className="w-4 h-4" aria-hidden="true" />
+            </BoutonDiscret>
+            <BoutonDiscret icon={Trash2} onClick={onVider} ton="attention">
               Vider le programme
-            </button>
+            </BoutonDiscret>
           </div>
         </>
       )}

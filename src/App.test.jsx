@@ -86,6 +86,60 @@ describe('parcours : consulter un jeu', () => {
   });
 });
 
+describe('parcours : tirage au sort', () => {
+  const titreFiche = () =>
+    screen.getByRole('heading', { level: 2 }).textContent;
+
+  it('propose de relancer sans repasser par la liste', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
+    const premier = titreFiche();
+
+    const relancer = await screen.findByRole('button', { name: /un autre jeu/i });
+    await u.click(relancer);
+
+    // Le tirage évite le jeu déjà affiché : on change forcément de fiche.
+    expect(titreFiche()).not.toBe(premier);
+  });
+
+  it('n’offre pas la relance quand la fiche vient de la liste', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    await u.click(carteDuJeu('Undercover'));
+
+    await screen.findByRole('heading', { name: /comment on joue/i });
+    expect(screen.queryByRole('button', { name: /un autre jeu/i })).not.toBeInTheDocument();
+  });
+
+  it('n’offre pas la relance s’il ne reste qu’un seul jeu', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    // 2 joueurs ne laisse que mix.GPT : il n'y a rien d'autre à tirer.
+    await u.type(screen.getByLabelText(/nombre de joueurs/i), '2');
+    await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
+
+    await screen.findByRole('heading', { name: /comment on joue/i });
+    expect(screen.queryByRole('button', { name: /un autre jeu/i })).not.toBeInTheDocument();
+  });
+
+  it('oublie le tirage après un retour à la liste', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
+    await screen.findByRole('button', { name: /un autre jeu/i });
+
+    await u.click(screen.getByRole('button', { name: /retour aux jeux/i }));
+    await u.click(carteDuJeu('Undercover'));
+
+    expect(screen.queryByRole('button', { name: /un autre jeu/i })).not.toBeInTheDocument();
+  });
+});
+
 describe('parcours : filtrer', () => {
   it('restreint la liste par nombre de joueurs', async () => {
     const u = rendre();

@@ -46,9 +46,33 @@ function App() {
     if (!enListe) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [enListe, vue, etape, jeuAffiche]);
 
-  const handleSurprise = () => {
-    if (aucunResultat) return;
-    ouvrirJeu(filteredGames[Math.floor(Math.random() * filteredGames.length)]);
+  /**
+   * Vrai quand la fiche affichée vient d'un tirage au sort. La fiche propose
+   * alors de relancer sans repasser par la liste — c'est le geste attendu quand
+   * le jeu tiré ne plaît pas.
+   *
+   * Volontairement hors de l'URL : le lien partagé depuis une fiche ne doit pas
+   * trimballer ce détail d'usage.
+   */
+  const [issuDuHasard, setIssuDuHasard] = useState(false);
+
+  useEffect(() => {
+    if (vue !== 'jeu') setIssuDuHasard(false);
+  }, [vue]);
+
+  /** Tire un jeu parmi les résultats, en évitant celui déjà affiché. */
+  const tirerAuHasard = (aEviter) => {
+    const candidats = aEviter
+      ? filteredGames.filter((g) => g.slug !== aEviter.slug)
+      : filteredGames;
+    if (candidats.length === 0) return;
+    setIssuDuHasard(true);
+    ouvrirJeu(candidats[Math.floor(Math.random() * candidats.length)]);
+  };
+
+  const ouvrirDepuisLaListe = (game) => {
+    setIssuDuHasard(false);
+    ouvrirJeu(game);
   };
 
   return (
@@ -125,7 +149,7 @@ function App() {
                     onVider={viderSoiree}
                     onRetirer={retirerDeSoiree}
                     onDeplacer={deplacerDansSoiree}
-                    onOuvrirJeu={ouvrirJeu}
+                    onOuvrirJeu={ouvrirDepuisLaListe}
                   />
                 </div>
               ) : vue === 'jeu' ? (
@@ -133,6 +157,11 @@ function App() {
                   <GameDetail
                     game={jeuAffiche}
                     goBack={fermerJeu}
+                    onAutreJeu={
+                      issuDuHasard && filteredGames.length > 1
+                        ? () => tirerAuHasard(jeuAffiche)
+                        : undefined
+                    }
                     dansSoiree={estDansSoiree(jeuAffiche.slug)}
                     onBasculerSoiree={basculerSoiree}
                   />
@@ -170,7 +199,7 @@ function App() {
                   <div className="flex flex-wrap justify-center items-center gap-3 my-6">
                     <button
                       type="button"
-                      onClick={handleSurprise}
+                      onClick={() => tirerAuHasard()}
                       disabled={aucunResultat}
                       className="flex items-center gap-2 px-6 py-1 bg-brique text-creme text-2xl font-titre rounded-full shadow-md transition-transform duration-150 hover:enabled:scale-105 active:enabled:scale-95 disabled:opacity-40 disabled:cursor-not-allowed motion-reduce:transition-none motion-reduce:hover:enabled:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                     >
@@ -229,7 +258,7 @@ function App() {
                         <li key={game.id} className="w-full flex justify-center">
                           <GameCard
                             game={game}
-                            onSelect={() => ouvrirJeu(game)}
+                            onSelect={() => ouvrirDepuisLaListe(game)}
                             dansSoiree={estDansSoiree(game.slug)}
                             onBasculerSoiree={basculerSoiree}
                           />

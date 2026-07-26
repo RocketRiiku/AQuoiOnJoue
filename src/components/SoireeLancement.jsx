@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Clock, PartyPopper, Users, X } from 'lucide-react';
+import BoutonDiscret from './BoutonDiscret';
 import GameThumb from './GameThumb';
 import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGame';
 
@@ -45,14 +46,9 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
         <p className="font-titre text-lg text-ardoise" role="status" aria-live="polite">
           Jeu {etape} sur {soiree.length}
         </p>
-        <button
-          type="button"
-          onClick={onQuitter}
-          className="inline-flex items-center gap-1 text-sm text-ardoise/70 hover:text-brique focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded"
-        >
-          <X className="w-4 h-4" aria-hidden="true" />
+        <BoutonDiscret icon={X} onClick={onQuitter} ton="attention">
           Quitter
-        </button>
+        </BoutonDiscret>
       </div>
 
       <ol className="flex gap-1.5 mt-3" aria-hidden="true">

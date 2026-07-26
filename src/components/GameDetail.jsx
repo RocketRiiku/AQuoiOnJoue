@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check, Dices } from 'lucide-react';
 import GameThumb from './GameThumb';
 import Infobulle from './Infobulle';
 import ShareButton from './ShareButton';
@@ -19,7 +19,7 @@ function Meta({ icon: Icon, label, value }) {
   );
 }
 
-function GameDetail({ game, goBack, dansSoiree = false, onBasculerSoiree }) {
+function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSoiree }) {
   const headingRef = useRef(null);
 
   // Le focus suit la navigation : sans cela, un utilisateur au clavier ou au
@@ -123,16 +123,34 @@ function GameDetail({ game, goBack, dansSoiree = false, onBasculerSoiree }) {
           {game.rules}
         </p>
 
-        {/* Partage et ajout à la soirée sont remontés en haut de fiche : il ne
-            reste ici que l'action principale. */}
-        <button
-          type="button"
-          onClick={goBack}
-          className="mt-8 inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-        >
-          <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-          Retour aux jeux
-        </button>
+        {/* Partage et ajout à la soirée sont remontés en haut de fiche. Ne
+            restent ici que le retour et, si le jeu vient d'un tirage, la
+            relance — pour ne pas avoir à repasser par la liste. */}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {onAutreJeu && (
+            <button
+              type="button"
+              onClick={onAutreJeu}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-brique text-creme font-titre text-xl rounded-full shadow-md hover:bg-orange transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+            >
+              <Dices className="w-5 h-5" aria-hidden="true" />
+              Un autre jeu ?
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={goBack}
+            className={`inline-flex items-center gap-2 px-6 py-2 font-titre text-xl rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 ${
+              onAutreJeu
+                ? 'border-2 border-brique text-brique hover:bg-brique hover:text-creme'
+                : 'bg-brique text-creme shadow-md hover:bg-orange'
+            }`}
+          >
+            <ArrowLeft className="w-5 h-5" aria-hidden="true" />
+            Retour aux jeux
+          </button>
+        </div>
       </div>
     </article>
   );
