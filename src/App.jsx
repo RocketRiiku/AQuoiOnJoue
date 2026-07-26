@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { PartyPopper, Search } from 'lucide-react';
 import { Bouton } from './components/Bouton';
 import Header from './components/Header';
+import Tuile from './components/Tuile';
 import GameCard from './components/GameCard';
 import GameDetail from './components/GameDetail';
 import Introduction from './components/Introduction';
@@ -208,29 +209,24 @@ function App() {
                       Surprends-moi !
                       <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
                     </Bouton>
+                  </div>
 
-                    {/* Toujours visible, même vide : sa présence fait découvrir
-                        la fonction. Désactivé tant qu'aucun jeu n'est retenu. */}
-                    {/* Secondaire : « Surprends-moi ! » est l'action principale
-                        de la liste, une seule par vue (docs/boutons.md). */}
-                    <Bouton
-                      variante="secondaire"
+                  {/* Entrée vers une section, pas une action : une tuile plutôt
+                      qu'un bouton, cf. docs/boutons.md. La ligne d'explication
+                      remplace l'infobulle — elle est lisible sans survol. */}
+                  <div className="flex justify-center mb-6">
+                    <Tuile
                       icone={PartyPopper}
+                      titre="Notre soirée"
+                      badge={soiree.length > 0 ? soiree.length : null}
+                      description={
+                        soiree.length === 0
+                          ? 'Composez le programme de la soirée avec le bouton + des jeux'
+                          : 'Réordonnez, partagez, puis lancez-la jeu après jeu'
+                      }
                       onClick={ouvrirSoiree}
                       disabled={soiree.length === 0}
-                      title={
-                        soiree.length === 0
-                          ? 'Ajoutez des jeux avec le bouton + d’une carte pour composer votre soirée'
-                          : 'Voir le programme de la soirée'
-                      }
-                    >
-                      Notre soirée
-                      {soiree.length > 0 && (
-                        <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-brique text-creme text-sm">
-                          {soiree.length}
-                        </span>
-                      )}
-                    </Bouton>
+                    />
                   </div>
 
                   <p

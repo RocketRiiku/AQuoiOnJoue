@@ -102,6 +102,30 @@ icônes est pire que de n'en poser sur aucune
 </ActionsObjet>
 ```
 
+## Les entrées de section : des tuiles, pas des boutons
+
+Une **porte d'entrée vers une section** n'est pas une action, et aucun niveau
+d'emphase ne lui convient : en `secondaire` elle paraît mise de côté, en
+`principal` elle entre en concurrence avec la vraie action de la vue.
+
+C'est le cas de « Notre soirée » sur la liste. Il passe par
+[`Tuile.jsx`](../src/components/Tuile.jsx) : un bloc large, entièrement
+cliquable, avec un titre, **une ligne qui explique où il mène**, et un chevron
+qui signale la navigation. Sa présence vient de sa taille et de son contenu, pas
+d'une couleur qui crierait plus fort que le reste — la règle du principal unique
+reste donc intacte.
+
+Deux contraintes reprises du motif de la [tuile cliquable de
+Carbon](https://carbondesignsystem.com/components/tile/usage/) :
+
+- **aucune commande à l'intérieur** — un second point de clic rendrait la cible
+  ambiguë. Un badge ou une icône, oui ; un bouton, non ;
+- **une icône signale la navigation**, ici un chevron à droite.
+
+La ligne de description remplace avantageusement une infobulle : elle se lit
+sans survol, donc aussi au doigt sur mobile. Elle s'adapte à l'état — quand le
+programme est vide, elle explique comment le remplir.
+
 ## Ce que ce système ne couvre pas
 
 Il régit les **actions** — ce qu'on déclenche volontairement. Trois familles
