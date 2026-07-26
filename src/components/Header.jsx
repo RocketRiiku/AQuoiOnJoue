@@ -99,6 +99,20 @@ function Header({ filters, setFilters }) {
   const basculerSimple = (cle, valeur) =>
     setFilters((f) => ({ ...f, [cle]: f[cle] === valeur ? '' : valeur }));
 
+  /**
+   * Saisie directe du nombre de joueurs.
+   *
+   * On ne borne que par le haut. Borner aussi par le bas empêcherait de taper
+   * « 10 » : le « 1 » intermédiaire serait aussitôt réécrit en « 2 ». Un
+   * nombre trop petit ne renvoie simplement aucun jeu, ce que l'état vide
+   * explique déjà.
+   */
+  const saisirJoueurs = (valeur) => {
+    const chiffres = valeur.replace(/\D/g, '').slice(0, 2);
+    const nombre = Math.min(parseInt(chiffres, 10) || 0, MAX_PLAYERS);
+    setFilters((f) => ({ ...f, players: nombre === 0 ? '' : String(nombre) }));
+  };
+
   const stepPlayers = (delta) =>
     setFilters((f) => {
       const current = parseInt(f.players, 10);
@@ -139,16 +153,20 @@ function Header({ filters, setFilters }) {
             >
               &lt;
             </button>
-            <span
-              className="text-encre text-3xl font-titre tabular-nums"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {filters.players || '–'}
-              <span className="sr-only">
-                {filters.players ? ' joueurs' : ' nombre de joueurs indifférent'}
-              </span>
-            </span>
+            {/* Saisissable au clavier : atteindre 8 joueurs demandait sept
+                clics. `type="text"` avec `inputMode="numeric"` plutôt que
+                `type="number"`, pour éviter les flèches natives qui jureraient
+                avec la carte, tout en ouvrant le pavé numérique sur mobile. */}
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              aria-label="Nombre de joueurs"
+              placeholder="–"
+              value={filters.players}
+              onChange={(e) => saisirJoueurs(e.target.value)}
+              className="w-10 bg-transparent text-center text-encre text-3xl font-titre tabular-nums placeholder:text-encre/50 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            />
             <button
               type="button"
               aria-label="Plus de joueurs"

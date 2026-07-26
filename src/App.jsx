@@ -88,7 +88,7 @@ function App() {
                 ligne dépassait le titre de 21 % en largeur et lui volait la
                 vedette. Deux crans en dessous, le sous-titre repasse sous la
                 largeur du titre. */}
-            <p className="text-brique font-manuscrit text-lg sm:text-2xl leading-snug mt-1">
+            <p className="text-brique font-manuscrit text-base sm:text-xl leading-snug mt-1">
               Pour toujours avoir des cartes
               <br />à jouer en soirée
             </p>

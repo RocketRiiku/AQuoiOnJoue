@@ -89,6 +89,12 @@
 /* ---- Confort de lecture ---- */
 :root {
   scroll-behavior: smooth;
+
+  /* Réserve en permanence la place de la barre de défilement. Sans cela,
+     filtrer raccourcit la page, la barre disparaît, et toute la mise en page
+     se décale latéralement de sa largeur — le bouton qu'on vient de cliquer
+     glisse alors sous le curseur, ce qui rend les clics répétés pénibles. */
+  scrollbar-gutter: stable;
 }
 
 /* Respecte le réglage système « réduire les animations ». */

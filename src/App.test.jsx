@@ -98,6 +98,41 @@ describe('parcours : filtrer', () => {
     expect(screen.getByRole('status')).toHaveTextContent('1 jeu trouvé');
   });
 
+  it('accepte la saisie directe du nombre de joueurs', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const champ = screen.getByLabelText(/nombre de joueurs/i);
+    await u.type(champ, '10');
+
+    // Le « 1 » intermédiaire ne doit pas être réécrit, sinon « 10 » est
+    // impossible à taper.
+    expect(champ).toHaveValue('10');
+    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
+  });
+
+  it('plafonne la saisie au maximum jouable et accepte l’effacement', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const champ = screen.getByLabelText(/nombre de joueurs/i);
+    await u.type(champ, '99');
+    expect(champ).toHaveValue('10');
+
+    await u.clear(champ);
+    expect(champ).toHaveValue('');
+    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
+  });
+
+  it('ignore les caractères non numériques', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const champ = screen.getByLabelText(/nombre de joueurs/i);
+    await u.type(champ, 'a4b');
+    expect(champ).toHaveValue('4');
+  });
+
   it('restreint la liste par recherche, sans tenir compte des accents', async () => {
     const u = rendre();
     await fermerIntroduction(u);
