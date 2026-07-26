@@ -1,4 +1,3 @@
-import { m } from 'framer-motion';
 import { HelpCircle, PartyPopper, Play, Plus, SlidersHorizontal, X } from 'lucide-react';
 
 /**
@@ -48,12 +47,9 @@ function Introduction({ visible, onMasquer, onAfficher }) {
   }
 
   return (
-    <m.section
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+    <section
       aria-labelledby="titre-intro"
-      className="relative bg-creme/95 rounded-2xl shadow-md max-w-3xl mx-auto px-5 py-5 sm:px-7 sm:py-6 mb-8"
+      className="anim-panneau relative bg-creme/95 rounded-2xl shadow-md max-w-3xl mx-auto px-5 py-5 sm:px-7 sm:py-6 mb-8"
     >
       <button
         type="button"
@@ -107,7 +103,7 @@ function Introduction({ visible, onMasquer, onAfficher }) {
       >
         C’est parti
       </button>
-    </m.section>
+    </section>
   );
 }
 

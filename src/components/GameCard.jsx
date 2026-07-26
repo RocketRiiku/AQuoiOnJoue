@@ -1,4 +1,3 @@
-import { m } from 'framer-motion';
 import { Users, Clock, Plus, Check } from 'lucide-react';
 import GameThumb from './GameThumb';
 import { describeGame, formatDuration, formatPlayers } from '../utils/formatGame';
@@ -22,10 +21,7 @@ function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
   const tilt = tiltFor(game.id);
 
   return (
-    <m.div
-      whileHover={{ scale: 1.05 }}
-      className="relative w-full max-w-[400px]"
-    >
+    <div className="group relative w-full max-w-[400px] transition-transform duration-200 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100">
       <button
         type="button"
         onClick={onSelect}
@@ -57,13 +53,15 @@ function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
       </button>
 
       {/* Vignette : décorative, superposée à la zone cliquable. */}
-      <m.div
+      {/* Inclinaison en style inline : c'est une valeur calculée, Tailwind ne
+          peut pas la générer à l'avance. */}
+      <div
         aria-hidden="true"
-        initial={{ rotate: tilt }}
+        style={{ transform: `rotate(${tilt}deg)` }}
         className="pointer-events-none absolute -left-1 inset-y-0 my-auto w-16 h-24 rounded-xl shadow-[0_8px_20px_rgba(0,0,0,0.15)] overflow-hidden bg-paille"
       >
         <GameThumb game={game} />
-      </m.div>
+      </div>
 
       {onBasculerSoiree && (
         <button
@@ -89,7 +87,7 @@ function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
           )}
         </button>
       )}
-    </m.div>
+    </div>
   );
 }
 

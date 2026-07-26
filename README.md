@@ -28,6 +28,36 @@ Ces trois commandes (plus `npm run build`) tournent automatiquement sur chaque
 push et chaque pull request, via
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
+[`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets** plutôt que
+des fonctions isolées : consulter un jeu et revenir, filtrer, composer puis
+dérouler une soirée, ouvrir un lien partagé. Ces tests existent parce que deux
+régressions bloquantes sont parties en production sans qu'aucun test unitaire ne
+les voie — aucun ne cliquait sur une carte. Toute nouvelle fonctionnalité
+touchant à la navigation devrait y ajouter son chemin.
+
+Leur limite : jsdom ne calcule pas de rendu. Un défaut purement visuel — l'une
+des deux régressions décalait les cartes par une transformation CSS — reste hors
+de leur portée et demande un vrai navigateur.
+
+## Animations
+
+Aucune bibliothèque d'animation : survols, fondus d'apparition et dépliage du
+panneau de filtres sont en CSS (voir `.anim-entree`, `.anim-vue` et
+`.anim-panneau` dans [`src/index.css`](src/index.css)).
+
+Framer Motion a été retiré. Ce qu'il restait à animer ne le justifiait plus, et
+ses deux mécanismes irremplaçables avaient chacun causé une panne en production :
+`layout` laissait une projection figée qui décalait la liste hors de l'écran, et
+l'animation de sortie d'`AnimatePresence` pouvait ne jamais se terminer — or
+`mode="wait"` attend cette fin pour monter la vue suivante, si bien que les
+fiches de jeu ne s'ouvraient plus. Le bundle est passé de 132 à 79 ko gzippés,
+et d'un chargement en deux temps à un seul.
+
+Le dépliage du panneau utilise une grille dont l'unique rangée passe de `0fr` à
+`1fr`, ce qui interpole la hauteur sans avoir à la mesurer. Le contenu reste dans
+le DOM pour rendre la transition possible : l'attribut `inert` le retire du
+parcours clavier tant qu'il est replié.
+
 ## Ajouter un jeu
 
 Tout le catalogue tient dans [`src/data/games.js`](src/data/games.js). Un jeu se

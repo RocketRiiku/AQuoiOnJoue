@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { m } from 'framer-motion';
 import { PartyPopper, Search } from 'lucide-react';
 import Header from './components/Header';
 import GameCard from './components/GameCard';
@@ -105,12 +104,8 @@ function App() {
               recherche, pour que toutes les vues en bénéficient. */}
           <div className="relative z-30 px-4 pt-8 pb-16 min-h-[70vh]">
             {/* Une clé par vue : React remonte le conteneur, ce qui rejoue
-                l'animation CSS d'apparition.
-                AnimatePresence a été retiré d'ici : son animation de sortie
-                pouvait ne jamais se terminer, et comme `mode="wait"` attend
-                cette fin pour monter la vue suivante, la fiche d'un jeu ne
-                s'ouvrait alors jamais. Un fondu CSS ne dépend d'aucun cycle
-                de vie JavaScript et ne peut pas rester bloqué. */}
+                l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
+                cycle de vie JavaScript et ne peut pas rester bloqué. */}
             <div key={vue} className="anim-vue">
               {vue === 'lancement' ? (
                 <div className="flex justify-center items-start min-h-[60vh]">
@@ -173,18 +168,16 @@ function App() {
                   <Header filters={filters} setFilters={setFilters} />
 
                   <div className="flex flex-wrap justify-center items-center gap-3 my-6">
-                    <m.button
+                    <button
                       type="button"
-                      whileHover={aucunResultat ? undefined : { scale: 1.05 }}
-                      whileTap={aucunResultat ? undefined : { scale: 0.95 }}
                       onClick={handleSurprise}
                       disabled={aucunResultat}
-                      className="flex items-center gap-2 px-6 py-1 bg-brique text-creme text-2xl font-titre rounded-full shadow-md transition-opacity disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+                      className="flex items-center gap-2 px-6 py-1 bg-brique text-creme text-2xl font-titre rounded-full shadow-md transition-transform duration-150 hover:enabled:scale-105 active:enabled:scale-95 disabled:opacity-40 disabled:cursor-not-allowed motion-reduce:transition-none motion-reduce:hover:enabled:scale-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                     >
                       <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
                       Surprends-moi !
                       <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
-                    </m.button>
+                    </button>
 
                     {/* Toujours visible, même vide : sa présence fait découvrir
                         la fonction. Désactivé tant qu'aucun jeu n'est retenu. */}
@@ -233,14 +226,14 @@ function App() {
                         // aussi au repli de l'explication — et la projection
                         // restait figée sur un translateY de la hauteur du
                         // panneau, poussant toute la liste hors de l'écran.
-                        <m.li key={game.id} className="w-full flex justify-center">
+                        <li key={game.id} className="w-full flex justify-center">
                           <GameCard
                             game={game}
                             onSelect={() => ouvrirJeu(game)}
                             dansSoiree={estDansSoiree(game.slug)}
                             onBasculerSoiree={basculerSoiree}
                           />
-                        </m.li>
+                        </li>
                       ))
                     )}
                   </ul>

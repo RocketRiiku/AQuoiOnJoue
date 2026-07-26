@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { m } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Clock, PartyPopper, Users, X } from 'lucide-react';
 import GameThumb from './GameThumb';
 import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGame';
@@ -37,11 +36,9 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
   if (!game) return null;
 
   return (
-    <m.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <section
       aria-labelledby="titre-lancement"
-      className="bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10"
+      className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10"
     >
       {/* Progression */}
       <div className="flex items-center justify-between gap-4">
@@ -140,7 +137,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
           </button>
         )}
       </div>
-    </m.section>
+    </section>
   );
 }
 

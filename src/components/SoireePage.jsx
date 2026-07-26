@@ -1,4 +1,3 @@
-import { m } from 'framer-motion';
 import { ArrowLeft, ChevronDown, ChevronUp, Clock, Play, Trash2, X } from 'lucide-react';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
@@ -21,12 +20,9 @@ function SoireePage({
   const fourchetteImpossible = soiree.length > 0 && minJoueurs > maxJoueurs;
 
   return (
-    <m.section
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+    <section
       aria-labelledby="titre-soiree"
-      className="bg-creme rounded-2xl shadow-xl w-full max-w-2xl p-6 sm:p-8"
+      className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-2xl p-6 sm:p-8"
     >
       <h2 id="titre-soiree" className="font-titre text-3xl sm:text-4xl text-brique">
         Notre soirée
@@ -173,7 +169,7 @@ function SoireePage({
           </div>
         </>
       )}
-    </m.section>
+    </section>
   );
 }
 

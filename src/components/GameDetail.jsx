@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { m } from 'framer-motion';
 import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check } from 'lucide-react';
 import GameThumb from './GameThumb';
 import Infobulle from './Infobulle';
@@ -39,12 +38,9 @@ function GameDetail({ game, goBack, dansSoiree = false, onBasculerSoiree }) {
   }, [goBack]);
 
   return (
-    <m.article
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+    <article
       aria-labelledby="titre-jeu"
-      className="bg-creme rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
+      className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden"
     >
       {/* Actions secondaires en haut à droite : présentes sans concurrencer le
           bouton de retour, qui reste l'action principale en bas de fiche. */}
@@ -138,7 +134,7 @@ function GameDetail({ game, goBack, dansSoiree = false, onBasculerSoiree }) {
           Retour aux jeux
         </button>
       </div>
-    </m.article>
+    </article>
   );
 }
 

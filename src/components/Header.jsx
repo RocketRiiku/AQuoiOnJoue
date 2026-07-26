@@ -1,5 +1,4 @@
 import { useId, useState } from 'react';
-import { AnimatePresence, m } from 'framer-motion';
 import { ChevronDown, RotateCw, SlidersHorizontal } from 'lucide-react';
 import * as Slider from '@radix-ui/react-slider';
 import {
@@ -230,18 +229,19 @@ function Header({ filters, setFilters }) {
         )}
       </div>
 
-      <AnimatePresence initial={false}>
-        {deplie && (
-          <m.div
-            id={idPanneau}
-            key="panneau"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-4 bg-paille/90 rounded-2xl shadow-md px-4 py-4 flex flex-col gap-3">
+      {/* Dépliage animé en CSS : une grille dont l'unique rangée passe de 0fr à
+          1fr, ce qui interpole la hauteur du contenu sans avoir à la mesurer.
+          `inert` empêche d'atteindre les pastilles au clavier quand c'est replié
+          — elles restent dans le DOM pour que la transition soit possible. */}
+      <div
+        id={idPanneau}
+        inert={!deplie}
+        className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+          deplie ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-4 bg-paille/90 rounded-2xl shadow-md px-4 py-4 flex flex-col gap-3">
               <GroupePastilles label="Matériel dispo">
                 {MATERIAL_OPTIONS.map((mat) => (
                   <Pastille
@@ -295,9 +295,8 @@ function Header({ filters, setFilters }) {
                 </GroupePastilles>
               )}
             </div>
-          </m.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
     </section>
   );
 }
