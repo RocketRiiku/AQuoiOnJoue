@@ -27,6 +27,25 @@ export function formatTypes(game) {
   return types.filter(Boolean).join(', ');
 }
 
+/**
+ * Message pré-rempli du partage d'un jeu — le même sur toutes les fiches.
+ *
+ * Il doit se suffire à lui-même une fois collé dans une conversation : la
+ * feuille de partage native ne laisse pas la place d'expliquer, et le
+ * destinataire ne voit souvent que ce texte avant de décider s'il ouvre le lien.
+ */
+export function messagePartage(game) {
+  return `On joue à ${game.title} ? ${game.description} — ${formatPlayers(game)}, ${formatDuration(game)}.`;
+}
+
+/** Même message, pour un programme de soirée entier. */
+export function messagePartageSoiree(soiree, dureeTotale) {
+  const titres = soiree.map((game) => game.title).join(' · ');
+  return `Le programme de la soirée : ${titres} — ${soiree.length} jeu${
+    soiree.length > 1 ? 'x' : ''
+  }, ${formatDureeTotale(dureeTotale)} environ.`;
+}
+
 /** Résumé lu par les lecteurs d'écran à la place de la carte entière. */
 export function describeGame(game) {
   return `${game.title}. ${formatPlayers(game)}, ${formatDuration(game)}. ${game.description}`;
@@ -37,10 +56,10 @@ export function describeGame(game) {
  * (les cartes sont dessinées à la main, un jeu peut la précéder au catalogue).
  */
 const ICONES_TYPE = [
-  ['à traîtres', '🕵️'],
-  ['coopératif', '🤝'],
-  ['par équipe', '🏳️'],
-  ['compétitif', '⚔️']
+  ['Rôles cachés', '🕵️'],
+  ['Coopératif', '🤝'],
+  ['Par équipe', '🏳️'],
+  ['Compétitif', '⚔️']
 ];
 
 const ICONES_MATERIEL = [

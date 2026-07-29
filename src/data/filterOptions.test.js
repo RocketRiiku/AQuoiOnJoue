@@ -43,10 +43,10 @@ describe('compterFiltresSecondaires', () => {
   });
 
   it('compte un critère par dimension repliée', () => {
-    expect(compterFiltresSecondaires(avec({ typeGame: 'compétitif' }))).toBe(1);
+    expect(compterFiltresSecondaires(avec({ typeGame: 'Compétitif' }))).toBe(1);
     expect(
       compterFiltresSecondaires(
-        avec({ typeGame: 'compétitif', level: 'Débutant', alcohol: 'non' })
+        avec({ typeGame: 'Compétitif', level: 'Débutant', alcohol: 'non' })
       )
     ).toBe(3);
   });

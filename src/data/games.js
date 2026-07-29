@@ -14,6 +14,8 @@
  * Les libellés de `material`, `typeGame` et `level` alimentent directement les
  * filtres (cf. src/data/filterOptions.js) : ajouter un jeu avec un nouveau
  * libellé fait apparaître l'option, et aucune option ne peut donner 0 résultat.
+ * Ils s'écrivent donc tels qu'ils doivent s'afficher, capitale comprise — les
+ * pastilles de filtre les reprennent mot pour mot.
  */
 export const gamesList = [
   {
@@ -27,7 +29,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 40,
     material: [],
-    typeGame: ['compétitif', 'à traîtres'],
+    typeGame: ['Compétitif', 'Rôles cachés'],
     level: 'Intermédiaire',
     alcohol: false,
     image: '/CarteLeLiarsClub.png'
@@ -43,7 +45,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 15,
     material: ['Verres'],
-    typeGame: ['compétitif'],
+    typeGame: ['Compétitif'],
     level: 'Débutant',
     alcohol: true,
     image: '/CarteEauouVodka.png'
@@ -59,7 +61,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 20,
     material: ['Cartes à jouer'],
-    typeGame: ['compétitif'],
+    typeGame: ['Compétitif'],
     level: 'Débutant',
     alcohol: false,
     image: '/CarteLeJoker.png'
@@ -75,7 +77,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 20,
     material: ['Papier & stylo'],
-    typeGame: ['à traîtres', 'par équipe'],
+    typeGame: ['Rôles cachés', 'Par équipe'],
     level: 'Intermédiaire',
     alcohol: false,
     image: '/CarteUndercover.png'
@@ -91,7 +93,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 25,
     material: ['Téléphone'],
-    typeGame: ['par équipe', 'compétitif'],
+    typeGame: ['Par équipe', 'Compétitif'],
     level: 'Intermédiaire',
     alcohol: false,
     image: '/CarteCacophonie.png'
@@ -107,7 +109,7 @@ export const gamesList = [
     maxPlayers: 10,
     duration: 10,
     material: ['Téléphone'],
-    typeGame: ['coopératif'],
+    typeGame: ['Coopératif'],
     level: 'Débutant',
     alcohol: false,
     image: '/CartemixGPT.png'

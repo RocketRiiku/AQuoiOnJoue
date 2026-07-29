@@ -66,7 +66,9 @@ function GroupePastilles({ label, children }) {
     <div role="group" aria-labelledby={id} className="flex flex-wrap items-baseline gap-2">
       <span
         id={id}
-        className="font-titre text-encre text-sm w-full sm:w-28 sm:shrink-0 sm:text-right"
+        // Assez large pour « Matériel sous la main » d'un seul tenant : replié
+        // sur deux lignes, l'intitulé se lisait moins vite que ses pastilles.
+        className="font-titre text-encre text-sm w-full sm:w-36 sm:shrink-0 sm:text-right"
       >
         {label}
       </span>
@@ -260,7 +262,7 @@ function Header({ filters, setFilters }) {
       >
         <div className="overflow-hidden">
           <div className="mt-4 bg-paille/90 rounded-2xl shadow-md px-4 py-4 flex flex-col gap-3">
-              <GroupePastilles label="Matériel dispo">
+              <GroupePastilles label="Matériel sous la main">
                 {MATERIAL_OPTIONS.map((mat) => (
                   <Pastille
                     key={mat}
@@ -284,7 +286,7 @@ function Header({ filters, setFilters }) {
                 ))}
               </GroupePastilles>
 
-              <GroupePastilles label="Type de joueurs">
+              <GroupePastilles label="Niveau des joueurs">
                 {LEVEL_OPTIONS.map((level) => (
                   <Pastille
                     key={level}

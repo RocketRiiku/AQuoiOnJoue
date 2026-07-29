@@ -3,7 +3,7 @@ import { ChevronRight } from 'lucide-react';
 /**
  * Tuile cliquable : une entrée vers une section, pas une action.
  *
- * « Notre soirée » avait d'abord été traité comme un bouton, et aucun niveau
+ * « Ma soirée » avait d'abord été traité comme un bouton, et aucun niveau
  * d'emphase ne lui allait : en secondaire il paraissait mis de côté, en
  * principal il serait entré en concurrence avec « Surprends-moi ! », alors
  * qu'une vue ne doit porter qu'une seule action de forte emphase.

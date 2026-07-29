@@ -70,7 +70,7 @@ describe('filterGames', () => {
 
   describe('type de jeu', () => {
     it('gère les jeux à plusieurs types', () => {
-      expect(run({ typeGame: 'à traîtres' })).toEqual(['Le Liars Club', 'Undercover']);
+      expect(run({ typeGame: 'Rôles cachés' })).toEqual(['Le Liars Club', 'Undercover']);
     });
 
     it('aucune option de type ne renvoie une liste vide (régression : « coopératif » ne correspondait à aucun jeu)', () => {

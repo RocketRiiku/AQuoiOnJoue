@@ -22,7 +22,16 @@ export default {
         brique: '#a64331',
         orange: '#db4f22',
         creme: '#f4efe6',
-        paille: '#fae9b4'
+        paille: '#fae9b4',
+        // Le vert de l'herbe du décor, relevé sur nature_background.png — uni
+        // sur toute la moitié basse de l'image. La bande de pied de page en
+        // reprend la teinte, assombrie : elle se détache sans trancher.
+        //
+        // Cet écart n'est pas qu'affaire de goût. Un vert plus proche encore de
+        // l'herbe ne portait le texte crème qu'à 3,3:1, sous le seuil AA de
+        // 4,5:1 ; à ce ton, le contraste atteint 4,8:1. Ne pas éclaircir.
+        herbe: '#6e9652',
+        'herbe-sombre': '#51733a'
       }
     },
   },

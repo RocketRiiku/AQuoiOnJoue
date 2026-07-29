@@ -2,7 +2,12 @@ import { ArrowLeft, ChevronDown, ChevronUp, Clock, Play, Trash2, X } from 'lucid
 import { ActionsObjet, BarreActions, BarreActionsSecondaire, Bouton } from './Bouton';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
-import { formatDuration, formatDureeTotale, formatPlayers } from '../utils/formatGame';
+import {
+  formatDuration,
+  formatDureeTotale,
+  formatPlayers,
+  messagePartageSoiree
+} from '../utils/formatGame';
 
 function SoireePage({
   soiree,
@@ -30,15 +35,15 @@ function SoireePage({
       {soiree.length > 0 && (
         <ActionsObjet>
           <ShareButton
-            titre="Notre soirée — À quoi on joue ?"
-            texte={`Le programme : ${soiree.map((g) => g.title).join(', ')}`}
+            titre="Ma soirée — À quoi on joue ?"
+            texte={messagePartageSoiree(soiree, dureeTotale)}
             libelle="Partager le programme"
           />
         </ActionsObjet>
       )}
 
       <h2 id="titre-soiree" className="font-titre text-3xl sm:text-4xl text-brique pr-12">
-        Notre soirée
+        Ma soirée
       </h2>
 
       {soiree.length === 0 ? (

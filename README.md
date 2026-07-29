@@ -51,7 +51,8 @@ src/
   index.css                polices, animations CSS, réglages globaux
   components/
     Bouton.jsx             ← tous les boutons passent par là
-    Tuile.jsx              entrée vers une section (« Notre soirée »)
+    BoutonTirage.jsx       « Surprends-moi ! » et son mélange de cartes
+    Tuile.jsx              entrée vers une section (« Ma soirée »)
     Infobulle.jsx          infobulle au survol et au focus
     Header.jsx             les filtres (deux niveaux)
     GameCard.jsx           une carte de la liste
@@ -61,6 +62,9 @@ src/
     SoireeLancement.jsx    le déroulé jeu par jeu
     Introduction.jsx       l'explication de première visite
     ShareButton.jsx        partage natif, repli presse-papier
+    PiedDePage.jsx         l'encart de bas de page (trois entrées)
+    Suggestions.jsx        proposer un jeu au catalogue
+    MentionsLegales.jsx    mentions légales
     ErrorBoundary.jsx      filet contre l'écran blanc
   data/
     games.js               ← le catalogue
@@ -70,6 +74,7 @@ src/
     useIntroduction.js     affichage de l'explication
     filterGames.js         moteur de filtrage
     formatGame.js          libellés partagés
+    contact.js             adresse de contact et liens mailto
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
 scripts/build-fonts.py     génération des .woff2
@@ -79,7 +84,7 @@ assets-source/fonts/       polices sources (non servies)
 ## À lire avant de toucher à l'interface
 
 **[`docs/boutons.md`](docs/boutons.md)**. Toute action passe par
-[`Bouton.jsx`](src/components/Bouton.jsx) : quatre niveaux d'emphase, trois
+[`Bouton.jsx`](src/components/Bouton.jsx) : cinq niveaux d'emphase, quatre
 emplacements fixes, et une règle qui tranche les cas ambigus — *c'est le rôle de
 l'action qui décide de sa forme, jamais la place disponible*.
 
@@ -102,7 +107,7 @@ Tout tient dans [`src/data/games.js`](src/data/games.js) :
   maxPlayers: 8,
   duration: 20,                   // minutes (nombre, pas de texte type « 30+ »)
   material: ['Cartes à jouer'],   // [] si aucun matériel n’est requis
-  typeGame: ['compétitif'],       // toujours un tableau
+  typeGame: ['Compétitif'],       // toujours un tableau, libellés affichés tels quels
   level: 'Débutant',              // Débutant | Intermédiaire | Expert
   alcohol: false,
   image: '/MaCarte.png'           // facultatif — fichier déposé dans public/
@@ -136,7 +141,7 @@ un jeu. Le bloc fait maintenant 248 px dans les deux cas. Et comme les options
 sont dérivées des données, chaque nouveau libellé atterrit dans la zone
 dépliable : l'empreinte permanente ne grandira plus avec le catalogue.
 
-Sémantique de « Matériel dispo » : les pastilles décrivent ce dont **on
+Sémantique de « Matériel sous la main » : les pastilles décrivent ce dont **on
 dispose**, pas ce que le jeu exige. Un jeu sans matériel requis reste donc
 toujours proposé.
 
@@ -156,13 +161,19 @@ hook unique, seul propriétaire de l'URL *et* du stockage local (deux hooks
 | `/?jeu=undercover` | la fiche d'un jeu |
 | `/?soiree=liars-club,undercover` | le programme de la soirée |
 | `/?soiree=...&etape=2` | le déroulé, 2ᵉ jeu |
+| `/?page=suggestions` | proposer un jeu |
+| `/?page=mentions-legales` | les mentions légales |
 
 Chaque vue est donc partageable, et le bouton Retour du navigateur fait ce qu'on
 attend au lieu de quitter le site.
 
 Le `slug` est **stable** : le modifier casse les liens déjà partagés. Un slug
 inconnu est ignoré silencieusement, une étape hors limites ramenée dans
-l'intervalle.
+l'intervalle. Un `page` inconnu l'est aussi.
+
+`page` **prime sur les autres paramètres** : on y arrive depuis le pied de page,
+quelle que soit la vue quittée. En contrepartie, toute navigation de jeu doit
+l'effacer — sans quoi l'écran resterait figé sur les mentions légales.
 
 Paramètre de requête plutôt que chemin (`/jeu/...`) : aucune réécriture d'URL à
 configurer côté hébergeur statique.
@@ -182,6 +193,15 @@ Le stockage local est un confort, jamais une dépendance : indisponible
 survit simplement pas à la fermeture de l'onglet. Sans compte, elle reste propre
 à l'appareil — le partage par lien est le moyen prévu de la faire circuler.
 
+**Partage.** `navigator.share` ouvre la feuille native — WhatsApp, Messages —
+qui est l'usage réel sur téléphone. `canShare` filtre d'abord les navigateurs
+qui exposent l'API mais refusent les données : sans lui, l'appel échouait et le
+partage était perdu au lieu de retomber sur la copie. Le repli copie **le
+message entier, pas la seule adresse** : un lien nu collé dans une conversation
+n'annonce pas ce qu'il y a au bout. Le texte pré-rempli est le même partout —
+`messagePartage` et `messagePartageSoiree` dans
+[`formatGame.js`](src/utils/formatGame.js).
+
 **Réordonnancement** par boutons monter/descendre plutôt que glisser-déposer :
 utilisable au clavier, annoncé aux lecteurs d'écran, fiable au doigt. Ils
 utilisent `replaceState` pour ne pas remplir l'historique.
@@ -196,11 +216,58 @@ Volontairement une section au-dessus du catalogue, pas une page d'introduction :
 celle-ci s'interposerait entre le visiteur et les jeux, et imposerait un passage
 inutile aux habitués.
 
+## Le pied de page
+
+Une bande pleine largeur plaquée au bas de la page : **Suggestions**,
+**Contact**, **Mentions légales**. Elles portent sur le site entier et non sur
+l'écran affiché : elles prennent donc l'emphase la plus basse du système, du
+texte crème sans cadre, sur un vert repris de l'herbe du décor
+(cf. [`docs/boutons.md`](docs/boutons.md)).
+
+Au bas de la **page**, non de l'écran : le site se lit sur téléphone en pleine
+soirée, et rien ne doit recouvrir les règles pendant une partie. La colonne
+flexible d'`App.jsx` la plaque tout de même contre le bas quand la vue est plus
+courte que l'écran.
+
+Le vert est assombri par rapport à l'herbe pour porter le texte à 4,8:1 — au
+plus près de la teinte du décor, il ne dépassait pas 3,3:1, sous le seuil AA.
+
+Le site est statique — sans serveur, un formulaire n'aurait nulle part où
+poster. Contact et Suggestions passent donc par un lien `mailto:`, fabriqué par
+[`contact.js`](src/utils/contact.js), seul endroit où l'adresse est écrite.
+Celle de Suggestions arrive avec un gabarit déjà rempli, dérivé de la même liste
+de champs que celle affichée sur la page : les laisser diverger était le défaut
+le plus probable à la première retouche.
+
+Les mentions légales sont celles d'un particulier éditant à titre non
+professionnel : l'article 6 III-2 de la LCEN n'oblige alors qu'à publier
+l'hébergeur, l'identité étant communiquée à ce dernier. Le nom de l'éditeur y
+figure tout de même ; l'adresse postale, non.
+
 ## Animations
 
-Aucune bibliothèque : survols, fondus d'apparition et dépliage du panneau de
-filtres sont en CSS (`.anim-entree`, `.anim-vue`, `.anim-panneau` dans
+Aucune bibliothèque : survols, fondus d'apparition, dépliage du panneau de
+filtres et mélange de cartes sont en CSS (`.anim-entree`, `.anim-vue`,
+`.anim-panneau`, `.anim-carte`, `.anim-melange` dans
 [`index.css`](src/index.css)).
+
+**Le mélange de « Surprends-moi ! »**
+([`BoutonTirage.jsx`](src/components/BoutonTirage.jsx)) : les deux étoiles du
+bouton deviennent des cartes du catalogue qui défilent en ralentissant, comme
+une roulette qu'on lâche, avant que la fiche s'ouvre — environ 0,6 s. Trois
+règles y tiennent :
+
+- **la suite du parcours est déclenchée par une minuterie, jamais par la fin
+  d'une animation.** C'est précisément ce qui avait mis les fiches en panne du
+  temps de Framer Motion ;
+- **le bouton se verrouille dans le geste même du clic**, et non à la première
+  échéance : sinon deux pressions rapprochées lancent deux tirages ;
+- **le libellé ne change pas** pendant le mélange, sans quoi le bouton se
+  redimensionnerait sous le doigt qui vient de le presser.
+
+Avec « réduire les animations » activé, le tirage est immédiat : la règle CSS
+globale raccourcit les animations mais ne toucherait pas aux minuteries, le
+composant vérifie donc lui-même `prefers-reduced-motion`.
 
 Framer Motion a été retiré. Ses deux mécanismes irremplaçables avaient chacun
 causé une panne en production : `layout` laissait une projection figée qui
@@ -250,7 +317,7 @@ npm run build:fonts
 
 ## Tests
 
-108 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+118 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 

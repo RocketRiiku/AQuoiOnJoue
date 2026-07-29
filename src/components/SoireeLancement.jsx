@@ -47,7 +47,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
           Jeu {etape} sur {soiree.length}
         </p>
         <Bouton variante="discret" destructeur icone={X} onClick={onQuitter}>
-          Quitter
+          Arrêter la soirée
         </Bouton>
       </div>
 

@@ -9,7 +9,7 @@ Ce document existe parce que l'incohérence s'était installée sans qu'on la vo
 programme de la soirée, et les actions du programme étaient de simples liens
 texte, un vocabulaire qui n'existait nulle part ailleurs.
 
-## Les quatre niveaux
+## Les niveaux d'emphase
 
 | Niveau | Apparence | Usage | Règle |
 | --- | --- | --- | --- |
@@ -17,6 +17,7 @@ texte, un vocabulaire qui n'existait nulle part ailleurs.
 | `secondaire` | contour brique | l'alternative à l'action principale | accompagne le principal |
 | `discret` | pastille claire, bord fin | actions auxiliaires | sur leur propre rangée |
 | `destructeur` | pastille claire, vire au brique au survol | fait perdre quelque chose | **jamais en emphase forte** |
+| `lien` | texte crème, souligné au survol | entrées de bas de page | **réservé au pied de page** |
 
 Deux conventions reprises des systèmes établis :
 
@@ -56,6 +57,43 @@ Trois emplacements, et un seul par type d'action.
 C'est le **rôle** qui décide de la forme, jamais la place disponible. « Partager »
 porte sur l'objet affiché : c'est donc une icône en haut à droite, sur la fiche
 d'un jeu comme sur le programme d'une soirée.
+
+**Le pied de page** ([`PiedDePage.jsx`](../src/components/PiedDePage.jsx)) est
+un quatrième emplacement, et le seul qui traverse toutes les vues. Suggestions,
+Contact et Mentions légales ne portent sur aucun écran en particulier : elles
+prennent donc l'emphase la plus basse du système, `lien`, sur une bande verte
+plaquée au bas de la page.
+
+D'abord traitées en `discret` dans un encart crème, elles pesaient plus lourd
+que les jeux au-dessus. La règle du principal unique était pourtant respectée :
+c'est la **densité visuelle** — trois pastilles claires cerclées sur un fond
+sombre — qui déséquilibrait la page, pas le niveau d'emphase déclaré.
+
+Deux contraintes tiennent cette bande :
+
+- **au bas de la *page*, jamais de l'*écran*** — le site se lit sur téléphone en
+  pleine soirée, et rien ne doit recouvrir les règles pendant une partie ;
+- **le contraste tranche la teinte, pas l'inverse.** Un vert plus proche encore
+  de l'herbe du décor ne portait le texte crème qu'à 3,3:1. La bande est donc
+  assombrie jusqu'à 4,8:1, au-dessus du seuil AA. Ne pas l'éclaircir pour la
+  fondre davantage.
+
+## Quand ce n'est pas un bouton mais un lien
+
+Une action *fait* quelque chose sur place ; un lien *mène* ailleurs. Écrire un
+courriel mène ailleurs : passer `href` à `Bouton` rend alors un `<a>`, à
+l'apparence rigoureusement identique. C'est ce qui permet le clic droit, le
+« copier l'adresse », l'ouverture dans un onglet, et l'annonce correcte par les
+lecteurs d'écran — tout ce qu'un `<button>` déguisé en lien fait perdre.
+
+```jsx
+<Bouton variante="lien" href={lienMailto({ sujet: '…' })}>
+  Contact
+</Bouton>
+```
+
+L'adresse ne s'écrit qu'à un endroit,
+[`utils/contact.js`](../src/utils/contact.js).
 
 ## Icônes
 
@@ -108,7 +146,7 @@ Une **porte d'entrée vers une section** n'est pas une action, et aucun niveau
 d'emphase ne lui convient : en `secondaire` elle paraît mise de côté, en
 `principal` elle entre en concurrence avec la vraie action de la vue.
 
-C'est le cas de « Notre soirée » sur la liste. Il passe par
+C'est le cas de « Ma soirée » sur la liste. Il passe par
 [`Tuile.jsx`](../src/components/Tuile.jsx) : un bloc large, entièrement
 cliquable, avec un titre, **une ligne qui explique où il mène**, et un chevron
 qui signale la navigation. Sa présence vient de sa taille et de son contenu, pas

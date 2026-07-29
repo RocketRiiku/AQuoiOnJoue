@@ -3,7 +3,13 @@ import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check,
 import { ActionsObjet, BarreActions, Bouton, BoutonIcone } from './Bouton';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
-import { formatDuration, formatMaterial, formatPlayers, formatTypes } from '../utils/formatGame';
+import {
+  formatDuration,
+  formatMaterial,
+  formatPlayers,
+  formatTypes,
+  messagePartage
+} from '../utils/formatGame';
 
 function Meta({ icon: Icon, label, value }) {
   return (
@@ -63,7 +69,7 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
 
           <ShareButton
             titre={`${game.title} — À quoi on joue ?`}
-            texte={`On joue à ${game.title} ? ${game.description}`}
+            texte={messagePartage(game)}
             libelle="Partager ce jeu"
           />
         </ActionsObjet>

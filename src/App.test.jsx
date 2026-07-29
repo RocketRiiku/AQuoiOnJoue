@@ -95,9 +95,16 @@ describe('parcours : tirage au sort', () => {
     await fermerIntroduction(u);
 
     await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
+
+    // La fiche n'arrive qu'au bout du mélange : on l'attend avant de lire son
+    // titre, sans quoi on lirait ceux des cartes de la liste.
+    const relancer = await screen.findByRole(
+      'button',
+      { name: /un autre jeu/i },
+      { timeout: 3000 }
+    );
     const premier = titreFiche();
 
-    const relancer = await screen.findByRole('button', { name: /un autre jeu/i });
     await u.click(relancer);
 
     // Le tirage évite le jeu déjà affiché : on change forcément de fiche.
@@ -124,6 +131,43 @@ describe('parcours : tirage au sort', () => {
 
     await screen.findByRole('heading', { name: /comment on joue/i });
     expect(screen.queryByRole('button', { name: /un autre jeu/i })).not.toBeInTheDocument();
+  });
+
+  it('mélange les cartes, puis rend la main', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const bouton = screen.getByRole('button', { name: /surprends-moi/i });
+    await u.click(bouton);
+
+    // Le bouton se verrouille dans le geste même du clic — deux pressions
+    // rapprochées ne doivent pas lancer deux tirages — et la fiche n'est pas
+    // encore là.
+    expect(bouton).toHaveAttribute('aria-busy', 'true');
+    expect(bouton).toBeDisabled();
+    expect(screen.queryByRole('heading', { name: /comment on joue/i })).not.toBeInTheDocument();
+
+    // Et le tirage aboutit toujours : il est mené par une minuterie, jamais par
+    // la fin d'une animation — celle-ci pourrait ne jamais venir.
+    expect(
+      await screen.findByRole('heading', { name: /comment on joue/i }, { timeout: 3000 })
+    ).toBeInTheDocument();
+  });
+
+  it('tire sans attendre quand le système demande moins d’animations', async () => {
+    const matchMediaInitial = window.matchMedia;
+    window.matchMedia = (requete) => ({ ...matchMediaInitial(requete), matches: true });
+
+    try {
+      const u = rendre();
+      await fermerIntroduction(u);
+
+      await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
+
+      expect(screen.getByRole('heading', { name: /comment on joue/i })).toBeInTheDocument();
+    } finally {
+      window.matchMedia = matchMediaInitial;
+    }
   });
 
   it('oublie le tirage après un retour à la liste', async () => {
@@ -201,10 +245,10 @@ describe('parcours : filtrer', () => {
     await fermerIntroduction(u);
 
     await u.click(screen.getByRole('button', { name: /plus de filtres/i }));
-    await u.click(screen.getByRole('button', { name: 'à traîtres' }));
+    await u.click(screen.getByRole('button', { name: 'Rôles cachés' }));
 
     expect(screen.getByRole('status')).toHaveTextContent('2 jeux trouvés');
-    expect(screen.getByRole('button', { name: 'à traîtres' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Rôles cachés' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
@@ -240,7 +284,7 @@ describe('parcours : composer et dérouler une soirée', () => {
     await fermerIntroduction(u);
 
     // Le bouton existe dès le départ, désactivé, pour faire connaître la fonction.
-    const boutonSoiree = screen.getByRole('button', { name: /notre soirée/i });
+    const boutonSoiree = screen.getByRole('button', { name: /ma soirée/i });
     expect(boutonSoiree).toBeDisabled();
 
     await ajouter(u, 'Le Liars Club');
@@ -249,7 +293,7 @@ describe('parcours : composer et dérouler une soirée', () => {
     expect(boutonSoiree).toHaveTextContent('2');
 
     await u.click(boutonSoiree);
-    const programme = await screen.findByRole('heading', { name: /notre soirée/i });
+    const programme = await screen.findByRole('heading', { name: /ma soirée/i });
     expect(programme).toBeInTheDocument();
     expect(screen.getByText(/1 h/)).toBeInTheDocument(); // 40 + 20 min
 
@@ -265,7 +309,7 @@ describe('parcours : composer et dérouler une soirée', () => {
 
     // Dernière étape : l'action devient « Terminer ».
     await u.click(screen.getByRole('button', { name: /terminer la soirée/i }));
-    expect(await screen.findByRole('heading', { name: /notre soirée/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /ma soirée/i })).toBeInTheDocument();
   });
 
   it('réordonne le programme', async () => {
@@ -274,7 +318,7 @@ describe('parcours : composer et dérouler une soirée', () => {
 
     await ajouter(u, 'Le Liars Club');
     await ajouter(u, 'Undercover');
-    await u.click(screen.getByRole('button', { name: /notre soirée/i }));
+    await u.click(screen.getByRole('button', { name: /ma soirée/i }));
 
     const avant = screen.getByRole('list');
     expect(within(avant).getAllByRole('listitem')[0]).toHaveTextContent('Le Liars Club');
@@ -290,7 +334,7 @@ describe('parcours : composer et dérouler une soirée', () => {
     await fermerIntroduction(u);
 
     await ajouter(u, 'Le Liars Club');
-    await u.click(screen.getByRole('button', { name: /notre soirée/i }));
+    await u.click(screen.getByRole('button', { name: /ma soirée/i }));
     await u.click(screen.getByRole('button', { name: /retirer le liars club de la soirée/i }));
 
     expect(screen.getByText(/votre programme est vide/i)).toBeInTheDocument();
@@ -300,7 +344,7 @@ describe('parcours : composer et dérouler une soirée', () => {
     window.history.replaceState({}, '', '/?soiree=cacophonie,le-joker');
     rendre();
 
-    expect(await screen.findByRole('heading', { name: /notre soirée/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /ma soirée/i })).toBeInTheDocument();
     const liste = screen.getByRole('list');
     expect(within(liste).getAllByRole('listitem')).toHaveLength(2);
   });
@@ -311,6 +355,86 @@ describe('parcours : composer et dérouler une soirée', () => {
 
     expect(await screen.findByRole('status')).toHaveTextContent('Jeu 2 sur 2');
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Le Joker');
+  });
+});
+
+describe('parcours : pied de page', () => {
+  it('ouvre les suggestions, puis revient à la liste', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    await u.click(screen.getByRole('button', { name: /^suggestions$/i }));
+
+    expect(
+      await screen.findByRole('heading', { name: /un jeu à nous faire découvrir/i })
+    ).toBeInTheDocument();
+    expect(window.location.search).toBe('?page=suggestions');
+    // La liste laisse la place à la page : ses cartes ne sont plus montées.
+    expect(screen.queryByLabelText(/rechercher un jeu/i)).not.toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: /retour aux jeux/i }));
+
+    expect(await screen.findByLabelText(/rechercher un jeu/i)).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+  });
+
+  it('pré-remplit le courriel de suggestion avec le gabarit', async () => {
+    window.history.replaceState({}, '', '/?page=suggestions');
+    rendre();
+
+    const lien = await screen.findByRole('link', { name: /envoyer ma suggestion/i });
+    const href = lien.getAttribute('href');
+
+    expect(href).toContain('mailto:nathanboumadjer@gmail.com');
+    expect(href).toContain(encodeURIComponent('Le nom du jeu :'));
+    expect(href).toContain(encodeURIComponent('Combien de joueurs :'));
+    // Un « + » dans le corps arriverait tel quel dans le message.
+    expect(href).not.toContain('+');
+  });
+
+  it('ouvre les mentions légales depuis un lien direct', async () => {
+    window.history.replaceState({}, '', '/?page=mentions-legales');
+    rendre();
+
+    expect(
+      await screen.findByRole('heading', { name: /mentions légales/i, level: 2 })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /hébergeur/i })).toBeInTheDocument();
+  });
+
+  it('retombe sur la liste si la page est inconnue', async () => {
+    window.history.replaceState({}, '', '/?page=inexistante');
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
+    expect(window.location.search).toBe('');
+  });
+
+  it('quitte une page pour la fiche d’un jeu', async () => {
+    window.history.replaceState({}, '', '/?page=mentions-legales');
+    const u = rendre();
+    await screen.findByRole('heading', { name: /mentions légales/i, level: 2 });
+
+    await u.click(screen.getByRole('button', { name: /retour aux jeux/i }));
+    await fermerIntroduction(u);
+    await u.click(carteDuJeu('Undercover'));
+
+    // Le paramètre `page` prime sur le reste : s'il subsistait, la fiche
+    // resterait masquée par les mentions légales.
+    expect(await screen.findByRole('heading', { name: 'Undercover', level: 2 })).toBeInTheDocument();
+    expect(window.location.search).toBe('?jeu=undercover');
+  });
+
+  it('propose un lien de contact vers l’adresse du site', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const contact = screen.getByRole('link', { name: /^contact$/i });
+    expect(contact).toHaveAttribute(
+      'href',
+      expect.stringContaining('mailto:nathanboumadjer@gmail.com')
+    );
   });
 });
 

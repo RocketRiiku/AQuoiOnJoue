@@ -86,6 +86,49 @@
   animation: apparition-montante 0.25s ease-out both;
 }
 
+/* ---- Le mélange de « Surprends-moi ! » ---- */
+/* Une carte qui vient d'être retournée. Elle n'est pas animée en boucle : le
+   bouton remonte l'image à chaque carte (clé React changeante), ce qui rejoue
+   l'animation d'elle-même. Même logique que le fondu de changement de vue —
+   aucune étape du tirage ne dépend de la fin d'une animation, donc rien ne peut
+   rester bloqué à mi-chemin. */
+/* La perspective est portée par la transformation elle-même, et non par une
+   propriété `perspective` sur le bouton : celui-ci est déjà transformé pendant
+   le mélange, et empiler les deux contextes n'aurait servi qu'à les faire
+   interférer. */
+@keyframes carte-retournee {
+  from {
+    opacity: 0.3;
+    transform: perspective(220px) rotateY(75deg) scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(220px) rotateY(0deg) scale(1);
+  }
+}
+
+.anim-carte {
+  animation: carte-retournee 0.13s ease-out both;
+}
+
+/* Le bouton frémit tant que les cartes défilent. */
+@keyframes fremissement {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-2px) rotate(-0.7deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(0.7deg);
+  }
+}
+
+.anim-melange {
+  animation: fremissement 0.17s ease-in-out infinite;
+}
+
 /* ---- Confort de lecture ---- */
 :root {
   scroll-behavior: smooth;

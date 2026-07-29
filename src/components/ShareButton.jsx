@@ -28,10 +28,14 @@ function ShareButton({ url, titre, texte, libelle = 'Partager' }) {
 
   const handleClick = async () => {
     const lien = url ?? window.location.href;
+    const donnees = { title: titre, text: texte, url: lien };
 
-    if (navigator.share) {
+    // `canShare` écarte les navigateurs qui exposent l'API mais refusent ces
+    // données : sans lui, l'appel échoue et le partage est perdu au lieu de
+    // retomber sur la copie.
+    if (navigator.share && (!navigator.canShare || navigator.canShare(donnees))) {
       try {
-        await navigator.share({ title: titre, text: texte, url: lien });
+        await navigator.share(donnees);
         return;
       } catch (error) {
         // L'utilisateur a fermé la feuille de partage : ce n'est pas une erreur.
@@ -40,8 +44,10 @@ function ShareButton({ url, titre, texte, libelle = 'Partager' }) {
       }
     }
 
+    // Le repli copie le message entier, et non la seule adresse : un lien nu
+    // collé dans une conversation n'annonce pas ce qu'il y a au bout.
     try {
-      await navigator.clipboard.writeText(lien);
+      await navigator.clipboard.writeText(texte ? `${texte}\n${lien}` : lien);
       signaler('copie');
     } catch {
       signaler('echec');
@@ -50,7 +56,7 @@ function ShareButton({ url, titre, texte, libelle = 'Partager' }) {
 
   const messages = {
     pret: libelle,
-    copie: 'Lien copié !',
+    copie: 'Message copié !',
     echec: 'Copie impossible'
   };
 
@@ -65,8 +71,10 @@ function ShareButton({ url, titre, texte, libelle = 'Partager' }) {
 
       {/* Le changement d'état doit aussi être annoncé vocalement. */}
       <span role="status" aria-live="polite" className="sr-only">
-        {etat === 'copie' ? 'Lien copié dans le presse-papier' : ''}
-        {etat === 'echec' ? `Copie impossible. Le lien est ${url ?? ''}` : ''}
+        {etat === 'copie' ? 'Message copié dans le presse-papier' : ''}
+        {etat === 'echec'
+          ? `Copie impossible. Le lien est ${url ?? window.location.href}`
+          : ''}
       </span>
     </>
   );

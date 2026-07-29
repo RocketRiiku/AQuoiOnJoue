@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
  *   /?jeu=undercover                 → la fiche d'un jeu
  *   /?soiree=liars-club,undercover   → le programme de la soirée
  *   /?soiree=...&etape=2             → mode « lancer la soirée », 2ᵉ jeu
+ *   /?page=mentions-legales          → une page à propos du site
  *
  * Source de vérité de la sélection : le paramètre `soiree` s'il est présent
  * (c'est le cas d'un lien reçu d'un ami — le programme partagé doit primer),
@@ -21,6 +22,17 @@ const CLE_STOCKAGE = 'aquoionjoue:soiree';
 const P_JEU = 'jeu';
 const P_SOIREE = 'soiree';
 const P_ETAPE = 'etape';
+const P_PAGE = 'page';
+
+/**
+ * Pages à propos du site, hors parcours de jeu. Elles priment sur le reste :
+ * on y arrive depuis le pied de page, quelle que soit la vue quittée, et toute
+ * autre navigation efface le paramètre.
+ */
+const PAGES = {
+  suggestions: 'Proposer un jeu',
+  'mentions-legales': 'Mentions légales'
+};
 
 const TITRE_PAR_DEFAUT = 'À quoi on joue ? — Des jeux à sortir en soirée';
 
@@ -45,7 +57,12 @@ function ecrireStockage(slugs) {
 
 const lireParams = () => {
   const p = new URLSearchParams(window.location.search);
-  return { jeu: p.get(P_JEU), soiree: p.get(P_SOIREE), etape: p.get(P_ETAPE) };
+  return {
+    jeu: p.get(P_JEU),
+    soiree: p.get(P_SOIREE),
+    etape: p.get(P_ETAPE),
+    page: p.get(P_PAGE)
+  };
 };
 
 const decouper = (valeur) => (valeur ? valeur.split(',').filter(Boolean) : []);
@@ -96,7 +113,10 @@ export function useNavigation(games) {
   // Étape bornée : un lien vers `etape=99` doit rester exploitable.
   const etape = enLancement ? Math.min(Math.max(etapeBrute, 1), soiree.length) : null;
 
-  const vue = enLancement ? 'lancement' : enSoiree ? 'soiree' : jeuAffiche ? 'jeu' : 'liste';
+  const page = params.page !== null && params.page in PAGES ? params.page : null;
+
+  const vue =
+    page ?? (enLancement ? 'lancement' : enSoiree ? 'soiree' : jeuAffiche ? 'jeu' : 'liste');
 
   /** Écrit l'URL et l'état local en un seul endroit. */
   const naviguer = useCallback((prochains, { remplacer = false } = {}) => {
@@ -114,17 +134,19 @@ export function useNavigation(games) {
   // sans ajouter d'entrée à l'historique, et la vue de repli s'affiche.
   useEffect(() => {
     if (params.jeu && !jeuAffiche) naviguer({ [P_JEU]: null }, { remplacer: true });
+    else if (params.page && !page) naviguer({ [P_PAGE]: null }, { remplacer: true });
     else if (params.etape !== null && !enLancement) {
       naviguer({ [P_ETAPE]: null }, { remplacer: true });
     }
-  }, [params.jeu, params.etape, jeuAffiche, enLancement, naviguer]);
+  }, [params.jeu, params.etape, params.page, jeuAffiche, page, enLancement, naviguer]);
 
   const titre = useMemo(() => {
+    if (page) return `${PAGES[page]} — À quoi on joue ?`;
     if (vue === 'lancement') return `Jeu ${etape} sur ${soiree.length} — À quoi on joue ?`;
-    if (vue === 'soiree') return `Notre soirée — À quoi on joue ?`;
+    if (vue === 'soiree') return `Ma soirée — À quoi on joue ?`;
     if (vue === 'jeu') return `${jeuAffiche.title} — À quoi on joue ?`;
     return TITRE_PAR_DEFAUT;
-  }, [vue, etape, soiree.length, jeuAffiche]);
+  }, [vue, page, etape, soiree.length, jeuAffiche]);
 
   useEffect(() => {
     document.title = titre;
@@ -187,13 +209,22 @@ export function useNavigation(games) {
     etape,
 
     // Navigation
+    // `page` est effacée par toute navigation de jeu : elle prime dans le choix
+    // de la vue, et la laisser en place figerait l'écran sur les mentions.
     ouvrirJeu: useCallback(
-      (game) => naviguer({ [P_JEU]: game.slug, [P_SOIREE]: null, [P_ETAPE]: null }),
+      (game) =>
+        naviguer({ [P_JEU]: game.slug, [P_SOIREE]: null, [P_ETAPE]: null, [P_PAGE]: null }),
       [naviguer]
     ),
     fermerJeu: useCallback(() => naviguer({ [P_JEU]: null }), [naviguer]),
     ouvrirSoiree: useCallback(
-      () => naviguer({ [P_SOIREE]: filtrerConnus(slugsSoiree).join(','), [P_JEU]: null, [P_ETAPE]: null }),
+      () =>
+        naviguer({
+          [P_SOIREE]: filtrerConnus(slugsSoiree).join(','),
+          [P_JEU]: null,
+          [P_ETAPE]: null,
+          [P_PAGE]: null
+        }),
       [naviguer, slugsSoiree, filtrerConnus]
     ),
     fermerSoiree: useCallback(
@@ -201,11 +232,25 @@ export function useNavigation(games) {
       [naviguer]
     ),
     lancerSoiree: useCallback(
-      () => naviguer({ [P_SOIREE]: filtrerConnus(slugsSoiree).join(','), [P_ETAPE]: '1', [P_JEU]: null }),
+      () =>
+        naviguer({
+          [P_SOIREE]: filtrerConnus(slugsSoiree).join(','),
+          [P_ETAPE]: '1',
+          [P_JEU]: null,
+          [P_PAGE]: null
+        }),
       [naviguer, slugsSoiree, filtrerConnus]
     ),
     allerEtape: useCallback((n) => naviguer({ [P_ETAPE]: String(n) }), [naviguer]),
     quitterLancement: useCallback(() => naviguer({ [P_ETAPE]: null }), [naviguer]),
+
+    // Pages à propos du site
+    ouvrirPage: useCallback(
+      (nom) =>
+        naviguer({ [P_PAGE]: nom, [P_JEU]: null, [P_SOIREE]: null, [P_ETAPE]: null }),
+      [naviguer]
+    ),
+    fermerPage: useCallback(() => naviguer({ [P_PAGE]: null }), [naviguer]),
 
     // Sélection
     estDansSoiree,

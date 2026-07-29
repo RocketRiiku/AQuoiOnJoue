@@ -13,6 +13,7 @@ describe('ShareButton', () => {
   afterEach(() => {
     vi.useRealTimers();
     delete navigator.share;
+    delete navigator.canShare;
     vi.restoreAllMocks();
   });
 
@@ -38,7 +39,32 @@ describe('ShareButton', () => {
     await userEvent.click(screen.getByRole('button'));
 
     expect(writeText).toHaveBeenCalledWith(LIEN);
-    expect(await screen.findByText('Lien copié !')).toBeInTheDocument();
+    expect(await screen.findByText('Message copié !')).toBeInTheDocument();
+  });
+
+  it('copie le message entier, et non la seule adresse', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(<ShareButton url={LIEN} texte="On joue à Undercover ?" />);
+    await userEvent.click(screen.getByRole('button'));
+
+    // Un lien nu collé dans une conversation n'annonce pas ce qu'il y a au bout.
+    expect(writeText).toHaveBeenCalledWith(`On joue à Undercover ?\n${LIEN}`);
+  });
+
+  it('retombe sur la copie quand le navigateur refuse ces données', async () => {
+    navigator.share = vi.fn();
+    navigator.canShare = vi.fn().mockReturnValue(false);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+
+    render(<ShareButton url={LIEN} texte="On joue ?" />);
+    await userEvent.click(screen.getByRole('button'));
+
+    // Sans ce garde-fou, l'appel échouait et le partage était perdu.
+    expect(navigator.share).not.toHaveBeenCalled();
+    expect(writeText).toHaveBeenCalled();
   });
 
   it('ne signale rien si l’utilisateur annule le partage natif', async () => {

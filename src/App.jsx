@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PartyPopper, Search } from 'lucide-react';
-import { Bouton } from './components/Bouton';
+import BoutonTirage from './components/BoutonTirage';
 import Header from './components/Header';
 import Tuile from './components/Tuile';
 import GameCard from './components/GameCard';
@@ -8,6 +8,9 @@ import GameDetail from './components/GameDetail';
 import Introduction from './components/Introduction';
 import SoireePage from './components/SoireePage';
 import SoireeLancement from './components/SoireeLancement';
+import PiedDePage from './components/PiedDePage';
+import Suggestions from './components/Suggestions';
+import MentionsLegales from './components/MentionsLegales';
 import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
 import { asset } from './utils/asset';
@@ -28,6 +31,8 @@ function App() {
     lancerSoiree,
     allerEtape,
     quitterLancement,
+    ouvrirPage,
+    fermerPage,
     estDansSoiree,
     basculerSoiree,
     retirerDeSoiree,
@@ -78,7 +83,9 @@ function App() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-nature bg-repeat-y bg-top">
+    // Colonne flexible : le pied de page est plaqué contre le bas même quand la
+    // vue est courte, sans quoi une bande d'herbe vide traînerait sous lui.
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-nature bg-repeat-y bg-top flex flex-col">
       {/* Ciel étoilé : hauteur souple et fondu vers le décor, au lieu de deux
           calques figés à 1400 px qui coupaient la liste net en deux. */}
       {/* Cadrage mobile ajusté pour garder le renard visible. `cover` rogne le
@@ -97,7 +104,7 @@ function App() {
         }}
       />
 
-      <div className="relative z-20">
+      <div className="relative z-20 flex flex-1 flex-col">
         <header className="flex flex-col items-center text-center leading-tight pt-16 sm:pt-20 px-4">
           <div className="anim-entree flex flex-col items-center">
             <div className="flex items-center gap-3">
@@ -121,7 +128,7 @@ function App() {
           </div>
         </header>
 
-        <main>
+        <main className="flex-1">
           {/* Une vue s'affiche d'un bloc, bandeau de recherche et filtres
               compris : rendus à l'extérieur, ils disparaissaient d'un coup
               pendant que la liste mettait 200 ms à s'effacer, et ce décalage
@@ -133,7 +140,15 @@ function App() {
                 l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
                 cycle de vie JavaScript et ne peut pas rester bloqué. */}
             <div key={vue} className="anim-vue">
-              {vue === 'lancement' ? (
+              {vue === 'suggestions' ? (
+                <div className="flex justify-center items-start min-h-[60vh]">
+                  <Suggestions onRetour={fermerPage} />
+                </div>
+              ) : vue === 'mentions-legales' ? (
+                <div className="flex justify-center items-start min-h-[60vh]">
+                  <MentionsLegales onRetour={fermerPage} />
+                </div>
+              ) : vue === 'lancement' ? (
                 <div className="flex justify-center items-start min-h-[60vh]">
                   <SoireeLancement
                     soiree={soiree}
@@ -198,17 +213,13 @@ function App() {
 
                   <Header filters={filters} setFilters={setFilters} />
 
+                  {/* Le mélange de cartes vit dans le bouton, cf. BoutonTirage. */}
                   <div className="flex flex-wrap justify-center items-center gap-3 my-6">
-                    <Bouton
-                      variante="principal"
-                      onClick={() => tirerAuHasard()}
+                    <BoutonTirage
+                      candidats={filteredGames}
+                      onTirer={() => tirerAuHasard()}
                       disabled={aucunResultat}
-                      className="text-2xl hover:enabled:scale-105 active:enabled:scale-95 transition-transform duration-150 motion-reduce:transition-none motion-reduce:hover:enabled:scale-100"
-                    >
-                      <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
-                      Surprends-moi !
-                      <img src={asset('/star.png')} alt="" aria-hidden="true" className="w-5 h-5" />
-                    </Bouton>
+                    />
                   </div>
 
                   {/* Entrée vers une section, pas une action : une tuile plutôt
@@ -217,12 +228,15 @@ function App() {
                   <div className="flex justify-center mb-6">
                     <Tuile
                       icone={PartyPopper}
-                      titre="Notre soirée"
+                      titre="Ma soirée"
                       badge={soiree.length > 0 ? soiree.length : null}
+                      // Les deux états d'une même ligne : ils gardent la même
+                      // voix, à l'infinitif, sous un titre à la première
+                      // personne.
                       description={
                         soiree.length === 0
-                          ? 'Composez le programme de la soirée avec le bouton + des jeux'
-                          : 'Réordonnez, partagez, puis lancez-la jeu après jeu'
+                          ? 'Composer le programme de ma soirée en cliquant sur le bouton + des jeux'
+                          : 'Réordonner, partager, puis lancer la soirée jeu après jeu'
                       }
                       onClick={ouvrirSoiree}
                       disabled={soiree.length === 0}
@@ -269,6 +283,14 @@ function App() {
             </div>
           </div>
         </main>
+
+        {/* Présent sur toutes les vues : ces trois entrées portent sur le site
+            entier, pas sur l'écran affiché. */}
+        <PiedDePage
+          pageActive={vue === 'suggestions' || vue === 'mentions-legales' ? vue : null}
+          onSuggestions={() => ouvrirPage('suggestions')}
+          onMentions={() => ouvrirPage('mentions-legales')}
+        />
       </div>
     </div>
   );
