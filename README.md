@@ -239,10 +239,20 @@ Celle de Suggestions arrive avec un gabarit déjà rempli, dérivé de la même 
 de champs que celle affichée sur la page : les laisser diverger était le défaut
 le plus probable à la première retouche.
 
-Les mentions légales sont celles d'un particulier éditant à titre non
-professionnel : l'article 6 III-2 de la LCEN n'oblige alors qu'à publier
-l'hébergeur, l'identité étant communiquée à ce dernier. Le nom de l'éditeur y
-figure tout de même ; l'adresse postale, non.
+**Les mentions légales sont un texte d'éditeur, pas un texte d'interface** :
+[`MentionsLegales.jsx`](src/components/MentionsLegales.jsx) ne fait que lui
+donner la charte et une hiérarchie à trois niveaux. Ne le réécrivez pas au fil
+d'une refonte — il engage son auteur.
+
+Il décrit ce que le site fait réellement : à chaque fonction qui touche aux
+données (stockage local, mesure d'audience, service tiers, service worker)
+doit correspondre un paragraphe, et réciproquement. **Plusieurs sections y
+décrivent aujourd'hui des fonctions absentes du code** — mesure d'audience,
+dons, mode hors connexion, prénoms du kit de jeu : soit elles arrivent, soit
+elles sont à retirer du texte.
+
+Le nom de l'éditeur y figure ; l'adresse postale, non — elle n'est pas exigée
+d'un particulier éditant à titre non professionnel.
 
 ## Animations
 
