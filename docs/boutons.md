@@ -46,8 +46,11 @@ Trois emplacements, et un seul par type d'action.
 └─────────────────────────────────────────────┘
 ```
 
-- **Haut à droite** — les actions qui portent sur *l'objet affiché* : partager ce
-  jeu, l'ajouter à la soirée. Icônes seules, via `ActionsObjet` + `BoutonIcone`.
+- **Haut à droite** — les actions qui portent sur *l'objet affiché* : l'ajouter à
+  la soirée, le partager, signaler une erreur dessus. Icônes seules, via
+  `ActionsObjet` + `BoutonIcone`, **rangées de la plus probable à la moins
+  probable** : c'est le sens de lecture, et rien d'autre ne les hiérarchise
+  puisqu'elles ont toutes la même apparence.
 - **Bas, première rangée** — les actions qui font *avancer dans le parcours* :
   lancer la soirée, revenir à la liste. Le principal **en premier, à gauche**
   ([Carbon](https://carbondesignsystem.com/components/button/usage/)), le
@@ -81,15 +84,20 @@ Deux contraintes tiennent cette bande :
 ## Quand ce n'est pas un bouton mais un lien
 
 Une action *fait* quelque chose sur place ; un lien *mène* ailleurs. Écrire un
-courriel mène ailleurs : passer `href` à `Bouton` rend alors un `<a>`, à
-l'apparence rigoureusement identique. C'est ce qui permet le clic droit, le
-« copier l'adresse », l'ouverture dans un onglet, et l'annonce correcte par les
-lecteurs d'écran — tout ce qu'un `<button>` déguisé en lien fait perdre.
+courriel mène ailleurs : passer `href` à `Bouton` **ou à `BoutonIcone`** rend
+alors un `<a>`, à l'apparence rigoureusement identique. C'est ce qui permet le
+clic droit, le « copier l'adresse », l'ouverture dans un onglet, et l'annonce
+correcte par les lecteurs d'écran — tout ce qu'un `<button>` déguisé en lien
+fait perdre.
 
 ```jsx
 <Bouton variante="lien" href={lienMailto({ sujet: '…' })}>
   Contact
 </Bouton>
+
+<BoutonIcone icone={TriangleAlert} infobulle="Notifier une erreur"
+             nomAccessible={`Notifier une erreur sur ${jeu.title}`}
+             href={lienSignalement(jeu)} />
 ```
 
 L'adresse ne s'écrit qu'à un endroit,
@@ -132,11 +140,14 @@ icônes est pire que de n'en poser sur aucune
   </Bouton>
 </BarreActionsSecondaire>
 
-// Actions sur l'objet affiché
+// Actions sur l'objet affiché, de la plus probable à la moins probable
 <ActionsObjet>
   <BoutonIcone icone={Plus} infobulle="Ajouter à la soirée"
                nomAccessible={`Ajouter ${jeu.title} à la soirée`} />
   <BoutonIcone icone={Share2} infobulle="Partager" />
+  <BoutonIcone icone={TriangleAlert} infobulle="Notifier une erreur"
+               nomAccessible={`Notifier une erreur sur ${jeu.title}`}
+               href={lienSignalement(jeu)} />
 </ActionsObjet>
 ```
 

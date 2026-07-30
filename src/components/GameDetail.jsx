@@ -1,8 +1,20 @@
 import { useEffect, useRef } from 'react';
-import { ArrowLeft, Users, Clock, Package, Sparkles, GraduationCap, Plus, Check, Dices } from 'lucide-react';
+import {
+  ArrowLeft,
+  Users,
+  Clock,
+  Package,
+  Sparkles,
+  GraduationCap,
+  Plus,
+  Check,
+  Dices,
+  TriangleAlert
+} from 'lucide-react';
 import { ActionsObjet, BarreActions, Bouton, BoutonIcone } from './Bouton';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
+import { lienSignalement } from '../utils/contact';
 import {
   formatDuration,
   formatMaterial,
@@ -71,6 +83,15 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
             titre={`${game.title} — À quoi on joue ?`}
             texte={messagePartage(game)}
             libelle="Partager ce jeu"
+          />
+
+          {/* En dernier : c'est l'action la moins fréquente du groupe, et la
+              lecture va de la plus probable à la moins probable. */}
+          <BoutonIcone
+            icone={TriangleAlert}
+            infobulle="Notifier une erreur"
+            nomAccessible={`Notifier une erreur sur ${game.title}`}
+            href={lienSignalement(game)}
           />
         </ActionsObjet>
       </div>

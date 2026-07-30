@@ -74,7 +74,7 @@ src/
     useIntroduction.js     affichage de l'explication
     filterGames.js         moteur de filtrage
     formatGame.js          libellés partagés
-    contact.js             adresse de contact et liens mailto
+    contact.js             adresse de contact, liens mailto et signalements
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
 scripts/build-fonts.py     génération des .woff2
@@ -327,7 +327,7 @@ npm run build:fonts
 
 ## Tests
 
-118 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+119 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 

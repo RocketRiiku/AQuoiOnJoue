@@ -101,11 +101,23 @@ export function Bouton({
  * exposée au survol *et* au focus, et l'oublier sur une seule icône suffit à
  * rendre tout le groupe incompréhensible.
  */
-export function BoutonIcone({ icone: Icone, infobulle, nomAccessible, actif = false, ...props }) {
+export function BoutonIcone({
+  icone: Icone,
+  infobulle,
+  nomAccessible,
+  actif = false,
+  href,
+  ...props
+}) {
+  // Même règle que pour `Bouton` : une destination réelle (un mailto) se rend
+  // en lien, pour qu'elle se copie et s'ouvre dans un onglet.
+  const Element = href ? 'a' : 'button';
+  const propresAuType = href ? { href } : { type: 'button' };
+
   return (
     <Infobulle texte={infobulle}>
-      <button
-        type="button"
+      <Element
+        {...propresAuType}
         aria-label={nomAccessible ?? infobulle}
         className={`w-9 h-9 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 ${
           actif
@@ -115,7 +127,7 @@ export function BoutonIcone({ icone: Icone, infobulle, nomAccessible, actif = fa
         {...props}
       >
         <Icone className="w-5 h-5" aria-hidden="true" />
-      </button>
+      </Element>
     </Infobulle>
   );
 }

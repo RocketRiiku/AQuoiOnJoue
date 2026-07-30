@@ -78,6 +78,21 @@ describe('parcours : consulter un jeu', () => {
     expect(await screen.findByRole('heading', { name: 'Cacophonie', level: 2 })).toBeInTheDocument();
   });
 
+  it('propose de notifier une erreur, jeu et fiche déjà renseignés', async () => {
+    window.history.replaceState({}, '', '/?jeu=undercover');
+    rendre();
+
+    const lien = await screen.findByRole('link', {
+      name: /notifier une erreur sur undercover/i
+    });
+    const href = lien.getAttribute('href');
+
+    expect(href).toContain('mailto:nathanboumadjer@gmail.com');
+    // Sans le jeu ni son adresse, un signalement demande un aller-retour.
+    expect(href).toContain(encodeURIComponent('Jeu : Undercover'));
+    expect(href).toContain(encodeURIComponent('?jeu=undercover'));
+  });
+
   it('retombe sur la liste si le lien désigne un jeu inconnu', async () => {
     window.history.replaceState({}, '', '/?jeu=jeu-supprime');
     const u = rendre();
