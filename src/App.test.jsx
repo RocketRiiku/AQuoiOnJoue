@@ -441,11 +441,11 @@ describe('parcours : pied de page', () => {
 describe('parcours : première visite', () => {
   it('explique le principe, puis ne le réaffiche plus', async () => {
     const u = rendre();
-    expect(screen.getByRole('heading', { name: /vous ne savez pas à quoi jouer/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /ce soir, on joue à quoi/i })).toBeInTheDocument();
 
     await u.click(screen.getByRole('button', { name: /c’est parti/i }));
     expect(
-      screen.queryByRole('heading', { name: /vous ne savez pas à quoi jouer/i })
+      screen.queryByRole('heading', { name: /ce soir, on joue à quoi/i })
     ).not.toBeInTheDocument();
 
     // La liste reste utilisable : une régression l'avait poussée hors écran.
@@ -458,6 +458,6 @@ describe('parcours : première visite', () => {
     await fermerIntroduction(u);
 
     await u.click(screen.getByRole('button', { name: /comment ça marche/i }));
-    expect(screen.getByRole('heading', { name: /vous ne savez pas à quoi jouer/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /ce soir, on joue à quoi/i })).toBeInTheDocument();
   });
 });

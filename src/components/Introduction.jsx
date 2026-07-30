@@ -1,4 +1,4 @@
-import { HelpCircle, PartyPopper, Play, Plus, SlidersHorizontal, X } from 'lucide-react';
+import { HelpCircle, Play, Plus, SlidersHorizontal, Smartphone, X } from 'lucide-react';
 import { BarreActions, Bouton } from './Bouton';
 
 /**
@@ -14,20 +14,19 @@ const ETAPES = [
   {
     icone: SlidersHorizontal,
     titre: 'Trouvez',
-    texte:
-      'Dites combien vous êtes et le temps dont vous disposez. Ou laissez « Surprends-moi ! » trancher à votre place.'
+    texte: 'Filtrez selon votre groupe (joueurs, durée, matériel, niveau).'
   },
   {
     icone: Plus,
     titre: 'Composez',
     texte:
-      'Retenez les jeux qui vous tentent : ils s’ajoutent au programme de votre soirée, que vous pouvez réordonner et partager.'
+      'Explorez les fiches, et ajoutez vos favoris au programme de la soirée.'
   },
   {
     icone: Play,
     titre: 'Jouez',
     texte:
-      'Lancez la soirée : les règles s’affichent un jeu après l’autre, en grand, pour être lues à voix haute.'
+      'Chaque jeu a sa fiche avec les règles, et certains vont plus loin avec un kit pour jouer directement.'
   }
 ];
 
@@ -57,12 +56,11 @@ function Introduction({ visible, onMasquer, onAfficher }) {
       </button>
 
       <h2 id="titre-intro" className="font-titre text-2xl sm:text-3xl text-brique pr-8">
-        Vous ne savez pas à quoi jouer ce soir&nbsp;?
+        Ce soir, on joue à quoi&nbsp;?
       </h2>
       <p className="text-ardoise font-texte text-base sm:text-lg mt-1 leading-snug">
-        Ce site rassemble des jeux d’ambiance qui ne demandent presque rien : ni
-        boîte, ni préparation. Trouvez celui qui colle à votre groupe, ou
-        composez tout le programme de la soirée.
+        Des jeux d’ambiance à découvrir pour changer des classiques ou trouver
+        quoi faire.
       </p>
 
       <ol className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mt-5">
@@ -84,17 +82,22 @@ function Introduction({ visible, onMasquer, onAfficher }) {
         ))}
       </ol>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ardoise/80">
-        <PartyPopper className="w-4 h-4 text-orange shrink-0" aria-hidden="true" />
+      {/* L'icône dit de quoi parle la ligne : elle porte sur l'appareil et le
+          compte, pas sur la fête. */}
+      {/* Sans retour à la ligne : le texte dépasse une ligne sur téléphone, et
+          `flex-wrap` le renvoyait alors tout entier sous l'icône restée seule.
+          `items-start` le fait courir à droite de l'icône, comme prévu. */}
+      <div className="mt-5 flex items-start gap-2 text-sm text-ardoise/80">
+        <Smartphone className="w-4 h-4 mt-0.5 text-orange shrink-0" aria-hidden="true" />
         <span>
-          Tout se garde sur votre appareil, sans compte&nbsp;: votre programme
-          vous attendra à la prochaine visite.
+          Pas besoin de créer un compte&nbsp;! Votre programme reste sur cet
+          appareil.
         </span>
       </div>
 
       <BarreActions className="mt-5">
         <Bouton variante="principal" onClick={onMasquer}>
-          C’est parti
+          C’est parti&nbsp;!
         </Bouton>
       </BarreActions>
     </section>
