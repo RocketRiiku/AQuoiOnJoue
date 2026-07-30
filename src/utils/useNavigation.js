@@ -244,6 +244,13 @@ export function useNavigation(games) {
     allerEtape: useCallback((n) => naviguer({ [P_ETAPE]: String(n) }), [naviguer]),
     quitterLancement: useCallback(() => naviguer({ [P_ETAPE]: null }), [naviguer]),
 
+    /** Retour à la liste, d'où que l'on vienne : le titre du site y mène. */
+    retourAccueil: useCallback(
+      () =>
+        naviguer({ [P_JEU]: null, [P_SOIREE]: null, [P_ETAPE]: null, [P_PAGE]: null }),
+      [naviguer]
+    ),
+
     // Pages à propos du site
     ouvrirPage: useCallback(
       (nom) =>

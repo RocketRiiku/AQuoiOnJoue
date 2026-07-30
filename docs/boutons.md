@@ -186,6 +186,7 @@ gardent leur traitement propre, chacune cohérente en interne :
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
 | Fermeture d'un panneau | `Introduction.jsx` | la croix en coin est une convention universelle, elle n'a pas besoin d'un niveau d'emphase |
+| Titre du site | `App.jsx` | il ramène à l'accueil : c'est un lien, pas une action, et sa forme est déjà donnée — c'est le titre |
 
 En cas d'hésitation entre ces familles et le système : si l'élément apparaît
 **une fois par écran** et fait quelque chose, c'est une action — il passe par

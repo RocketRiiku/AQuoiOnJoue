@@ -31,6 +31,7 @@ function App() {
     lancerSoiree,
     allerEtape,
     quitterLancement,
+    retourAccueil,
     ouvrirPage,
     fermerPage,
     estDansSoiree,
@@ -82,10 +83,40 @@ function App() {
     ouvrirJeu(game);
   };
 
+  /**
+   * Le titre du site ramène à la liste.
+   *
+   * C'est un vrai lien, et non un bouton : Ctrl+clic doit pouvoir l'ouvrir dans
+   * un onglet, et l'adresse doit pouvoir se copier. Le clic simple est
+   * intercepté pour rester dans l'application — un rechargement complet
+   * perdrait l'animation d'entrée pour rien.
+   */
+  const allerAccueil = (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    // Déjà sur la liste : empiler une entrée d'historique identique rendrait le
+    // bouton Retour du navigateur sans effet visible. On remonte, c'est tout.
+    if (!enListe) retourAccueil();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     // Colonne flexible : le pied de page est plaqué contre le bas même quand la
     // vue est courte, sans quoi une bande d'herbe vide traînerait sous lui.
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-nature bg-repeat-y bg-top flex flex-col">
+    //
+    // `overflow-x-clip` et non `hidden` : masquer un seul axe fait passer
+    // l'autre de `visible` à `auto`, ce qui transformait ce bloc en zone
+    // défilante à part. Sur les vues courtes, le ciel étoilé qui le dépassait
+    // devenait alors du défilement interne — on descendait sous le pied de
+    // page, et le geste s'arrêtait là avant de reprendre sur la page. `clip`
+    // masque tout autant sans créer de conteneur de défilement.
+    //
+    // `svh` et non `vh` : sur téléphone, `100vh` vaut la hauteur *sans* la
+    // barre d'adresse, donc plus que l'écran réellement visible — la page
+    // dépassait d'autant. `svh` prend la plus petite des deux, et ne bouge pas
+    // pendant le défilement (contrairement à `dvh`, qui décalerait la mise en
+    // page à chaque apparition de la barre).
+    <div className="relative min-h-screen min-h-svh w-full overflow-x-clip bg-nature bg-repeat-y bg-top flex flex-col">
       {/* Ciel étoilé : hauteur souple et fondu vers le décor, au lieu de deux
           calques figés à 1400 px qui coupaient la liste net en deux. */}
       {/* Cadrage mobile ajusté pour garder le renard visible. `cover` rogne le
@@ -97,7 +128,11 @@ function App() {
           de le laisser caché derrière la première. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[1400px] sm:h-[900px] bg-stars bg-cover bg-[position:82%_top] sm:bg-top bg-no-repeat"
+        // `max-h-full` borne le calque à la hauteur de la page : sur une vue
+        // courte, ses 1400 px la dépassaient et rallongeaient le défilement
+        // d'un ciel vide. Ceinture et bretelles avec `overflow-x-clip` ci-dessus,
+        // qui ne s'applique pas sur les navigateurs les plus anciens.
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[1400px] max-h-full sm:h-[900px] bg-stars bg-cover bg-[position:82%_top] sm:bg-top bg-no-repeat"
         style={{
           maskImage: 'linear-gradient(to bottom, #000 75%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to bottom, #000 75%, transparent 100%)'
@@ -107,15 +142,24 @@ function App() {
       <div className="relative z-20 flex flex-1 flex-col">
         <header className="flex flex-col items-center text-center leading-tight pt-16 sm:pt-20 px-4">
           <div className="anim-entree flex flex-col items-center">
-            <div className="flex items-center gap-3">
-              <h1 className="text-encre text-4xl sm:text-6xl font-titre">À quoi on joue</h1>
+            <a
+              href={asset('/')}
+              onClick={allerAccueil}
+              className="group flex items-center gap-3 rounded-2xl px-2 -mx-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+            >
+              <h1 className="text-encre text-4xl sm:text-6xl font-titre">
+                À quoi on joue
+                {/* Le texte visible reste le début du nom accessible : la
+                    précision ne s'ajoute qu'à l'oral. */}
+                <span className="sr-only"> — retour à l’accueil</span>
+              </h1>
               <img
                 src={asset('/CarteInterrogation.png')}
                 alt=""
                 aria-hidden="true"
-                className="w-10 sm:w-12 h-auto rotate-6"
+                className="w-10 sm:w-12 h-auto rotate-6 transition-transform duration-200 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:group-hover:rotate-6"
               />
-            </div>
+            </a>
             {/* Petit Formal Script est sensiblement plus large et plus haute
                 que l'ancienne Corsiva à taille égale : au 3xl d'origine, la
                 ligne dépassait le titre de 21 % en largeur et lui volait la
@@ -135,21 +179,21 @@ function App() {
               était le « saut » visible au retour.
               Le retrait sous l'en-tête est porté ici plutôt que par la barre de
               recherche, pour que toutes les vues en bénéficient. */}
-          <div className="relative z-30 px-4 pt-8 pb-16 min-h-[70vh]">
+          <div className="relative z-30 px-4 pt-8 pb-16 min-h-[70svh]">
             {/* Une clé par vue : React remonte le conteneur, ce qui rejoue
                 l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
                 cycle de vie JavaScript et ne peut pas rester bloqué. */}
             <div key={vue} className="anim-vue">
               {vue === 'suggestions' ? (
-                <div className="flex justify-center items-start min-h-[60vh]">
+                <div className="flex justify-center items-start min-h-[60svh]">
                   <Suggestions onRetour={fermerPage} />
                 </div>
               ) : vue === 'mentions-legales' ? (
-                <div className="flex justify-center items-start min-h-[60vh]">
+                <div className="flex justify-center items-start min-h-[60svh]">
                   <MentionsLegales onRetour={fermerPage} />
                 </div>
               ) : vue === 'lancement' ? (
-                <div className="flex justify-center items-start min-h-[60vh]">
+                <div className="flex justify-center items-start min-h-[60svh]">
                   <SoireeLancement
                     soiree={soiree}
                     etape={etape}
@@ -158,7 +202,7 @@ function App() {
                   />
                 </div>
               ) : vue === 'soiree' ? (
-                <div className="flex justify-center items-start min-h-[60vh]">
+                <div className="flex justify-center items-start min-h-[60svh]">
                   <SoireePage
                     soiree={soiree}
                     onRetour={fermerSoiree}
@@ -170,7 +214,7 @@ function App() {
                   />
                 </div>
               ) : vue === 'jeu' ? (
-                <div className="flex justify-center items-start min-h-[60vh]">
+                <div className="flex justify-center items-start min-h-[60svh]">
                   <GameDetail
                     game={jeuAffiche}
                     goBack={fermerJeu}

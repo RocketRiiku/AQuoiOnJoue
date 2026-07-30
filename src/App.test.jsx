@@ -72,6 +72,17 @@ describe('parcours : consulter un jeu', () => {
     expect(window.location.search).toBe('');
   });
 
+  it('revient à l’accueil en cliquant sur le titre du site', async () => {
+    window.history.replaceState({}, '', '/?jeu=undercover');
+    const u = rendre();
+    await screen.findByRole('heading', { name: /comment on joue/i });
+
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+
+    expect(await screen.findByLabelText(/rechercher un jeu/i)).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+  });
+
   it('ouvre directement la fiche depuis un lien partagé', async () => {
     window.history.replaceState({}, '', '/?jeu=cacophonie');
     rendre();

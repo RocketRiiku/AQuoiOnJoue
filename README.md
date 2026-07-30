@@ -164,6 +164,10 @@ hook unique, seul propriétaire de l'URL *et* du stockage local (deux hooks
 | `/?page=suggestions` | proposer un jeu |
 | `/?page=mentions-legales` | les mentions légales |
 
+Le **titre du site ramène à la liste**, d'où que l'on vienne. C'est un vrai lien
+et non un bouton — Ctrl+clic doit pouvoir l'ouvrir dans un onglet, et l'adresse
+se copier — dont le clic simple est intercepté pour rester dans l'application.
+
 Chaque vue est donc partageable, et le bouton Retour du navigateur fait ce qu'on
 attend au lieu de quitter le site.
 
@@ -327,7 +331,7 @@ npm run build:fonts
 
 ## Tests
 
-119 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+120 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -385,6 +389,20 @@ doute : onglet neuf, ou vérifier sur `npm run preview`.
 **Le site déployé peut servir du cache.** Une première lecture après un
 déploiement peut renvoyer la version précédente. Forcez le rechargement sans
 cache avant de conclure.
+
+**`overflow-x: hidden` crée une zone de défilement.** Masquer un seul axe fait
+passer l'autre de `visible` à `auto` : le conteneur racine devenait alors
+défilant pour son propre compte. Le ciel étoilé, haut de 1400 px, dépassait les
+vues courtes et fournissait 588 px de défilement interne — on descendait sous le
+pied de page, puis le geste s'arrêtait net avant de reprendre sur la page. Un
+défilement dans l'autre, invisible à la lecture du code. Utiliser
+**`overflow-x: clip`**, qui masque autant sans créer de conteneur.
+
+**`100vh` est plus haut que l'écran sur téléphone.** C'est la hauteur barre
+d'adresse *repliée* : une page calée dessus dépasse toujours d'autant. Les
+hauteurs minimales sont en **`svh`**, la plus petite des deux, doublées d'un
+`vh` pour les navigateurs qui l'ignorent. Ne pas passer à `dvh` : il suit la
+barre d'adresse, donc décale la mise en page pendant le défilement.
 
 **La barre de défilement décalait la page.** Filtrer raccourcit la page, la
 barre disparaît, et toute la mise en page glisse de sa largeur — le bouton
