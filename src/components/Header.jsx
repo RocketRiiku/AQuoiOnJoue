@@ -60,15 +60,28 @@ function Pastille({ actif, onClick, children }) {
   );
 }
 
+/**
+ * Un intitulé de filtre et ses pastilles.
+ *
+ * Grille à deux colonnes, et non une rangée en `flex-wrap` : l'intitulé tenait
+ * la première place d'une rangée partagée avec les pastilles, si bien que
+ * celles-ci repassaient sous lui dès qu'elles étaient nombreuses — « Type de
+ * jeu » en compte huit. Une colonne réservée les garde toutes à droite, sur
+ * autant de lignes qu'il faut. Sur mobile, la grille repasse à une colonne et
+ * l'intitulé se remet au-dessus.
+ */
 function GroupePastilles({ label, children }) {
   const id = useId();
   return (
-    <div role="group" aria-labelledby={id} className="flex flex-wrap items-baseline gap-2">
+    <div
+      role="group"
+      aria-labelledby={id}
+      // 9rem : assez large pour « Matériel sous la main » d'un seul tenant.
+      className="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-3 gap-y-2 items-start"
+    >
       <span
         id={id}
-        // Assez large pour « Matériel sous la main » d'un seul tenant : replié
-        // sur deux lignes, l'intitulé se lisait moins vite que ses pastilles.
-        className="font-titre text-encre text-sm w-full sm:w-36 sm:shrink-0 sm:text-right"
+        className="font-titre text-encre text-sm sm:text-right sm:pt-1.5 leading-snug"
       >
         {label}
       </span>
@@ -115,6 +128,13 @@ function Header({ filters, setFilters }) {
     setFilters((f) => ({ ...f, players: nombre === 0 ? '' : String(nombre) }));
   };
 
+  /**
+   * Le compteur boucle aux deux bouts, en repassant par « indifférent ».
+   *
+   * Buter contre la borne obligeait à refaire dix-huit clics en sens inverse
+   * pour revenir à un catalogue complet. Un cran de plus au maximum efface donc
+   * la valeur, comme un cran de moins au minimum le faisait déjà.
+   */
   const stepPlayers = (delta) =>
     setFilters((f) => {
       const current = parseInt(f.players, 10);
@@ -124,8 +144,8 @@ function Header({ filters, setFilters }) {
         return { ...f, players: String(delta > 0 ? MIN_PLAYERS : MAX_PLAYERS) };
       }
       const next = current + delta;
-      if (next < MIN_PLAYERS) return { ...f, players: '' }; // repasse à « indifférent »
-      return { ...f, players: String(Math.min(MAX_PLAYERS, next)) };
+      if (next < MIN_PLAYERS || next > MAX_PLAYERS) return { ...f, players: '' };
+      return { ...f, players: String(next) };
     });
 
   // Aux extrémités, la borne devient nulle = « sans limite », ce qui évite de
@@ -286,7 +306,10 @@ function Header({ filters, setFilters }) {
                 ))}
               </GroupePastilles>
 
-              <GroupePastilles label="Niveau des joueurs">
+              {/* « Niveau des règles » et non « des joueurs » : la donnée mesure
+                  la complexité des règles à expliquer, pas l'expérience de la
+                  table. L'ancien intitulé faisait lire l'inverse. */}
+              <GroupePastilles label="Niveau des règles">
                 {LEVEL_OPTIONS.map((level) => (
                   <Pastille
                     key={level}

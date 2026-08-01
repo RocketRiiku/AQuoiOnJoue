@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PartyPopper, Search } from 'lucide-react';
+import { PartyPopper, Search, Star } from 'lucide-react';
 import BoutonTirage from './components/BoutonTirage';
 import Header from './components/Header';
 import Tuile from './components/Tuile';
@@ -15,6 +15,7 @@ import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
 import { asset } from './utils/asset';
 import { filterGames } from './utils/filterGames';
+import { estRecommande, nombreJoueurs } from './utils/formatGame';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
 
@@ -45,7 +46,32 @@ function App() {
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, material: [] });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredGames = filterGames(gamesList, filters, searchTerm);
+  /**
+   * L'effectif de la soirée, saisi une fois dans le filtre « Joueurs », suit
+   * jusque dans le déroulé : la durée d'une partie dépend du nombre de joueurs,
+   * et ce nombre ne change pas d'un jeu à l'autre. Tant qu'il n'est pas
+   * renseigné, chaque durée s'affiche en fourchette.
+   */
+  const joueurs = nombreJoueurs(filters.players);
+
+  /**
+   * Les jeux à leur meilleur pour cet effectif remontent en tête, marqués d'une
+   * étoile — plutôt qu'un filtre de plus, qui aurait caché le reste alors que
+   * la fourchette idéale est un conseil, pas une condition.
+   *
+   * `sort` est stable : à recommandation égale, l'ordre du catalogue tient.
+   */
+  const jeuxFiltres = filterGames(gamesList, filters, searchTerm);
+  const filteredGames =
+    joueurs == null
+      ? jeuxFiltres
+      : [...jeuxFiltres].sort(
+          (a, b) => estRecommande(b, joueurs) - estRecommande(a, joueurs)
+        );
+
+  const nbRecommandes =
+    joueurs == null ? 0 : filteredGames.filter((g) => estRecommande(g, joueurs)).length;
+
   const aucunResultat = filteredGames.length === 0;
   const enListe = vue === 'liste';
 
@@ -199,6 +225,7 @@ function App() {
                     etape={etape}
                     onEtape={allerEtape}
                     onQuitter={quitterLancement}
+                    joueurs={joueurs}
                   />
                 </div>
               ) : vue === 'soiree' ? (
@@ -211,6 +238,7 @@ function App() {
                     onRetirer={retirerDeSoiree}
                     onDeplacer={deplacerDansSoiree}
                     onOuvrirJeu={ouvrirDepuisLaListe}
+                    joueurs={joueurs}
                   />
                 </div>
               ) : vue === 'jeu' ? (
@@ -223,6 +251,7 @@ function App() {
                         ? () => tirerAuHasard(jeuAffiche)
                         : undefined
                     }
+                    joueurs={joueurs}
                     dansSoiree={estDansSoiree(jeuAffiche.slug)}
                     onBasculerSoiree={basculerSoiree}
                   />
@@ -287,14 +316,34 @@ function App() {
                     />
                   </div>
 
-                  <p
-                    className="text-ardoise text-sm text-center mb-4"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {filteredGames.length} jeu{filteredGames.length > 1 ? 'x' : ''} trouvé
-                    {filteredGames.length > 1 ? 's' : ''}
-                  </p>
+                  <div className="mb-4">
+                    <p
+                      className="text-ardoise text-sm text-center"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {filteredGames.length} jeu{filteredGames.length > 1 ? 'x' : ''} trouvé
+                      {filteredGames.length > 1 ? 's' : ''}
+                    </p>
+
+                    {/* Légende de l'étoile : sans elle, le symbole est joli mais
+                        muet. Elle n'apparaît que lorsqu'il y a des étoiles à
+                        expliquer. */}
+                    {nbRecommandes > 0 && (
+                      <p className="text-ardoise/80 text-sm text-center mt-1 flex flex-wrap items-center justify-center gap-x-1.5">
+                        <Star
+                          aria-hidden="true"
+                          className="w-3.5 h-3.5 fill-orange text-orange shrink-0"
+                        />
+                        <span>
+                          idéal à {joueurs} joueurs —{' '}
+                          {nbRecommandes > 1
+                            ? `ces ${nbRecommandes} jeux sont placés en tête`
+                            : 'ce jeu est placé en tête'}
+                        </span>
+                      </p>
+                    )}
+                  </div>
 
                   <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 justify-items-center mx-auto max-w-6xl list-none">
                     {aucunResultat ? (
@@ -315,6 +364,7 @@ function App() {
                           <GameCard
                             game={game}
                             onSelect={() => ouvrirDepuisLaListe(game)}
+                            joueurs={joueurs}
                             dansSoiree={estDansSoiree(game.slug)}
                             onBasculerSoiree={basculerSoiree}
                           />

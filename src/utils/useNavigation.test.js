@@ -95,32 +95,32 @@ describe('useNavigation', () => {
 
     it('conserve l’ordre d’ajout', () => {
       const { result } = monter();
-      act(() => result.current.basculerSoiree(jeu('mix-gpt')));
+      act(() => result.current.basculerSoiree(jeu('pyramide')));
       act(() => result.current.basculerSoiree(jeu('undercover')));
-      expect(titres(result.current.soiree)).toEqual(['mix.GPT', 'Undercover']);
+      expect(titres(result.current.soiree)).toEqual(['Pyramide', 'Undercover']);
     });
 
     it('réordonne', () => {
-      window.localStorage.setItem(CLE, JSON.stringify(['mix-gpt', 'undercover', 'le-joker']));
+      window.localStorage.setItem(CLE, JSON.stringify(['pyramide', 'undercover', 'le-joker']));
       const { result } = monter();
 
       act(() => result.current.deplacerDansSoiree('undercover', -1));
-      expect(titres(result.current.soiree)).toEqual(['Undercover', 'mix.GPT', 'Le Joker']);
+      expect(titres(result.current.soiree)).toEqual(['Undercover', 'Pyramide', 'Le Joker']);
     });
 
     it('ne déplace rien au-delà des bornes', () => {
-      window.localStorage.setItem(CLE, JSON.stringify(['mix-gpt', 'undercover']));
+      window.localStorage.setItem(CLE, JSON.stringify(['pyramide', 'undercover']));
       const { result } = monter();
 
-      act(() => result.current.deplacerDansSoiree('mix-gpt', -1));
-      expect(titres(result.current.soiree)).toEqual(['mix.GPT', 'Undercover']);
+      act(() => result.current.deplacerDansSoiree('pyramide', -1));
+      expect(titres(result.current.soiree)).toEqual(['Pyramide', 'Undercover']);
 
       act(() => result.current.deplacerDansSoiree('undercover', 1));
-      expect(titres(result.current.soiree)).toEqual(['mix.GPT', 'Undercover']);
+      expect(titres(result.current.soiree)).toEqual(['Pyramide', 'Undercover']);
     });
 
     it('vide le programme', () => {
-      window.localStorage.setItem(CLE, JSON.stringify(['mix-gpt', 'undercover']));
+      window.localStorage.setItem(CLE, JSON.stringify(['pyramide', 'undercover']));
       const { result } = monter();
 
       act(() => result.current.viderSoiree());

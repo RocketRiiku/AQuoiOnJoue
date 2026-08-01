@@ -1,4 +1,5 @@
 import { gamesList } from './games';
+import { plageDuree } from '../utils/formatGame';
 
 /**
  * Les options de filtre sont déduites du catalogue plutôt que codées en dur.
@@ -23,8 +24,14 @@ export const LEVEL_OPTIONS = LEVEL_ORDER.filter((level) =>
 export const MIN_PLAYERS = Math.min(...gamesList.map((g) => g.minPlayers));
 export const MAX_PLAYERS = Math.max(...gamesList.map((g) => g.maxPlayers));
 
-export const MIN_DURATION = Math.min(...gamesList.map((g) => g.duration));
-export const MAX_DURATION = Math.max(...gamesList.map((g) => g.duration));
+// Les fils rouges se jouent en fond, sans durée propre : ils n'entrent pas dans
+// les bornes du curseur, sans quoi celui-ci démarrerait à zéro.
+const PLAGES = gamesList
+  .map((game) => plageDuree(game, null))
+  .filter((plage) => plage != null);
+
+export const MIN_DURATION = Math.min(...PLAGES.map(([bas]) => bas));
+export const MAX_DURATION = Math.max(...PLAGES.map(([, haut]) => haut));
 
 // Bornes arrondies au pas de 5 pour un curseur lisible.
 export const DURATION_STEP = 5;

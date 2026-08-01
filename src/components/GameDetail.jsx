@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   Users,
+  UserCheck,
   Clock,
+  Infinity as InfinityIcon,
   Package,
   Sparkles,
   GraduationCap,
@@ -17,6 +19,7 @@ import ShareButton from './ShareButton';
 import { lienSignalement } from '../utils/contact';
 import {
   formatDuration,
+  formatIdealPlayers,
   formatMaterial,
   formatPlayers,
   formatTypes,
@@ -37,7 +40,14 @@ function Meta({ icon: Icon, label, value }) {
   );
 }
 
-function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSoiree }) {
+function GameDetail({
+  game,
+  goBack,
+  onAutreJeu,
+  joueurs = null,
+  dansSoiree = false,
+  onBasculerSoiree
+}) {
   const headingRef = useRef(null);
 
   // Le focus suit la navigation : sans cela, un utilisateur au clavier ou au
@@ -81,7 +91,7 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
 
           <ShareButton
             titre={`${game.title} — À quoi on joue ?`}
-            texte={messagePartage(game)}
+            texte={messagePartage(game, joueurs)}
             libelle="Partager ce jeu"
           />
 
@@ -98,7 +108,7 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
 
       <div className="flex flex-col sm:flex-row gap-6 p-6 sm:p-8">
         <div className="w-32 sm:w-40 h-48 sm:h-60 self-center sm:self-start rounded-xl shadow-lg -rotate-2 shrink-0 overflow-hidden">
-          <GameThumb game={game} tailleIcone="text-5xl" />
+          <GameThumb game={game} />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -116,10 +126,24 @@ function GameDetail({ game, goBack, onAutreJeu, dansSoiree = false, onBasculerSo
 
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-5">
             <Meta icon={Users} label="Joueurs" value={formatPlayers(game)} />
-            <Meta icon={Clock} label="Durée" value={formatDuration(game)} />
+            {/* La fourchette idéale mérite sa ligne : elle répond à « on est
+                six, est-ce que ça vaut le coup ? », là où « 3 à 12 » ne dit
+                que ce qui est possible. */}
+            <Meta icon={UserCheck} label="Idéal à" value={formatIdealPlayers(game)} />
+            <Meta icon={Clock} label="Durée" value={formatDuration(game, joueurs)} />
             <Meta icon={Package} label="Matériel" value={formatMaterial(game)} />
             <Meta icon={Sparkles} label="Type" value={formatTypes(game)} />
             <Meta icon={GraduationCap} label="Niveau" value={game.level} />
+            {/* Un fil rouge ne s'insère pas dans le programme comme les autres :
+                il court en parallèle. On le dit ici, sans quoi « toute la
+                soirée » en face de « Durée » reste énigmatique. */}
+            {game.filRouge && (
+              <Meta
+                icon={InfinityIcon}
+                label="Format"
+                value="Fil rouge : se joue en fond, en parallèle des autres jeux"
+              />
+            )}
             {game.alcohol && (
               <Meta icon={Sparkles} label="Ambiance" value="Jeu alcoolisé" />
             )}

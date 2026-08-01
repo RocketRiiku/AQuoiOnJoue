@@ -1,6 +1,11 @@
-import { Users, Clock, Plus, Check } from 'lucide-react';
+import { Users, Clock, Plus, Check, Star } from 'lucide-react';
 import GameThumb from './GameThumb';
-import { describeGame, formatDuration, formatPlayers } from '../utils/formatGame';
+import {
+  describeGame,
+  estRecommande,
+  formatDuration,
+  formatPlayers
+} from '../utils/formatGame';
 
 /**
  * Inclinaison dérivée de l'id plutôt que tirée au hasard : l'effet « cartes
@@ -17,19 +22,31 @@ function tiltFor(id) {
  * ne peut pas en contenir un autre. Les deux zones restent de vrais <button>,
  * donc atteignables au clavier.
  */
-function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
+function GameCard({ game, onSelect, joueurs = null, dansSoiree = false, onBasculerSoiree }) {
   const tilt = tiltFor(game.id);
+  const recommande = estRecommande(game, joueurs);
 
   return (
     <div className="group relative w-full max-w-[400px] transition-transform duration-200 hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100">
       <button
         type="button"
         onClick={onSelect}
-        aria-label={describeGame(game)}
-        className="w-full min-h-[80px] bg-creme rounded-2xl shadow-md hover:shadow-lg transition-shadow cursor-pointer pl-20 pr-10 py-3 flex items-center text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+        aria-label={describeGame(game, joueurs)}
+        // La hauteur minimale est celle de la vignette (h-24, soit 96 px) plus
+        // sa marge : en dessous, la carte dessinée dépassait du cadre crème.
+        className="w-full min-h-[112px] bg-creme rounded-2xl shadow-md hover:shadow-lg transition-shadow cursor-pointer pl-20 pr-10 py-3 flex items-center text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
       >
         <div className="flex flex-col overflow-hidden gap-0.5 min-w-0">
           <h2 className="text-[1.5rem] font-titre text-brique leading-tight line-clamp-2">
+            {/* L'étoile signale un jeu à son meilleur pour l'effectif saisi.
+                Devant le titre, elle se voit au premier balayage de la liste —
+                où ces jeux sont d'ailleurs remontés en tête. */}
+            {recommande && (
+              <Star
+                aria-hidden="true"
+                className="inline-block w-4 h-4 mr-1.5 -mt-1 fill-orange text-orange"
+              />
+            )}
             {game.title}
           </h2>
           <p className="text-[1.05rem] text-[#235766] font-texte leading-[1.15] line-clamp-2">
@@ -38,15 +55,15 @@ function GameCard({ game, onSelect, dansSoiree = false, onBasculerSoiree }) {
           {/* Repères de tri : visibles sans avoir à ouvrir la fiche. */}
           <p
             aria-hidden="true"
-            className="flex items-center gap-3 text-xs text-ardoise/80 mt-0.5"
+            className="flex flex-wrap items-center gap-x-3 text-xs text-ardoise/80 mt-0.5"
           >
             <span className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               {formatPlayers(game)}
             </span>
             <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {formatDuration(game)}
+              <Clock className="w-3 h-3 shrink-0" />
+              {formatDuration(game, joueurs)}
             </span>
           </p>
         </div>

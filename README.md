@@ -73,7 +73,8 @@ src/
     useNavigation.js       ← URL, vues et sélection de soirée
     useIntroduction.js     affichage de l'explication
     filterGames.js         moteur de filtrage
-    formatGame.js          libellés partagés
+    formatGame.js          libellés partagés, et le calcul des durées
+    soiree.js              programme et fils rouges : affichage et déroulé
     contact.js             adresse de contact, liens mailto et signalements
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
@@ -105,22 +106,67 @@ Tout tient dans [`src/data/games.js`](src/data/games.js) :
   rules: 'Comment on joue, en quelques phrases. Affiché sur la fiche.',
   minPlayers: 3,                  // nombres, bornes incluses
   maxPlayers: 8,
-  duration: 20,                   // minutes (nombre, pas de texte type « 30+ »)
+  idealPlayersMin: 4,             // fourchette où le jeu est vraiment au mieux
+  idealPlayersMax: 7,
+  durationBase: 4,                // minutes fixes
+  durationPerPlayer: 3.5,         // minutes ajoutées par joueur
+  filRouge: false,                // true = se joue en fond toute la soirée
   material: ['Cartes à jouer'],   // [] si aucun matériel n’est requis
-  typeGame: ['Compétitif'],       // toujours un tableau, libellés affichés tels quels
+  typeGame: ['Bluff'],            // toujours un tableau, libellés affichés tels quels
   level: 'Débutant',              // Débutant | Intermédiaire | Expert
   alcohol: false,
   image: '/MaCarte.png'           // facultatif — fichier déposé dans public/
 }
 ```
 
+Le catalogue est saisi dans un tableur, puis converti en JavaScript. Les
+libellés de `typeGame` sont capitalisés au passage, et les cinq slugs déjà
+publiés sont préservés tels quels — un test les verrouille.
+
+### La durée se calcule, elle ne se lit pas
+
+Il n'y a **pas de champ `duration`**. Une durée unique annonçait la même chose à
+3 et à 8 joueurs, alors qu'un tour de table s'allonge avec la table :
+
+```
+durée = round(durationBase + durationPerPlayer × nbJoueurs)
+```
+
+`durationBase` couvre ce que l'effectif ne change pas (règles, mise en place,
+manches jouées en simultané), `durationPerPlayer` ce que chaque joueur ajoute.
+L'ordre de grandeur du second dit à lui seul de quelle famille relève le jeu :
+`0` pour un fil rouge, `0,4` à `1` pour un quiz joué en simultané, `1` à `2,5`
+pour un tour de table rapide, au-delà quand chacun passe longuement sur le
+devant de la scène.
+
+**L'effectif se saisit une seule fois**, dans le filtre « Joueurs », et suit
+jusque dans le déroulé de la soirée : c'est le nombre de personnes autour de la
+table, il ne change pas d'un jeu à l'autre. Tant qu'il n'est pas renseigné,
+chaque durée s'affiche **en fourchette**, encadrée par `idealPlayersMin` et
+`idealPlayersMax` — et le filtre durée compare cette même fourchette, sans quoi
+il exclurait un jeu dont la carte annonce qu'il rentrait dans les clous. Tout
+passe par [`formatGame.js`](src/utils/formatGame.js) : `dureeJeu`, `plageDuree`,
+`plageDureeSoiree`.
+
+### Les fils rouges
+
+`filRouge: true` signale un jeu qui tourne **en fond, en parallèle des autres**,
+sur toute la soirée. Il n'a donc pas de durée propre : il n'entre pas dans le
+total du programme, il passe tous les filtres de durée, et sa carte annonce
+« toute la soirée » au lieu d'un nombre de minutes. Sa fiche le dit explicitement
+sous « Format », sans quoi la mention resterait énigmatique.
+
+### L'illustration
+
 `image` est **facultative** : les cartes étant dessinées à la main, un jeu peut
-entrer au catalogue avant son illustration. `GameThumb` affiche alors un repli à
-la charte. Inutile d'attendre le visuel pour saisir un jeu.
+entrer au catalogue avant la sienne. `GameThumb` affiche alors la carte au point
+d'interrogation — déjà l'emblème du site, à côté du titre. Inutile d'attendre le
+visuel pour saisir un jeu ; les jeux sans carte se repèrent à l'absence du champ.
 
 [`games.test.js`](src/data/games.test.js) verrouille ces conventions : unicité
-des identifiants et des slugs, format de chaque champ, et absence de règles
-dupliquées entre deux jeux.
+des identifiants et des slugs, `minPlayers ≤ idealPlayersMin ≤ idealPlayersMax ≤
+maxPlayers`, durée non nulle pour tout jeu qui n'est pas un fil rouge, format de
+chaque champ, et absence de règles dupliquées entre deux jeux.
 
 ### Les filtres
 
@@ -144,6 +190,30 @@ dépliable : l'empreinte permanente ne grandira plus avec le catalogue.
 Sémantique de « Matériel sous la main » : les pastilles décrivent ce dont **on
 dispose**, pas ce que le jeu exige. Un jeu sans matériel requis reste donc
 toujours proposé.
+
+« Niveau des règles », et non « des joueurs » : la donnée mesure la complexité
+des règles à expliquer, pas l'expérience de la table.
+
+Chaque groupe est une **grille à deux colonnes**, l'intitulé seul à gauche. En
+`flex-wrap`, il occupait la première place d'une rangée partagée avec les
+pastilles, et celles-ci repassaient sous lui dès qu'elles étaient nombreuses —
+« Type de jeu » en compte huit.
+
+Le compteur de joueurs **boucle aux deux bouts** : un cran au-delà du maximum
+efface la valeur, comme un cran sous le minimum le faisait déjà. Buter contre la
+borne obligeait à dix-huit clics en sens inverse pour retrouver le catalogue
+entier.
+
+### L'effectif recommandé n'est pas un filtre
+
+Quand un nombre de joueurs est saisi, les jeux dont c'est la fourchette idéale
+portent une **étoile** et **remontent en tête de liste** ; une légende sous le
+compteur de résultats dit ce que l'étoile signifie. Rien n'est masqué : la
+fourchette idéale est un conseil, pas une condition, et un filtre aurait caché
+quarante-neuf jeux jouables pour en montrer un.
+
+L'étoile est décorative au sens strict — c'est `describeGame` qui porte
+l'information au lecteur d'écran (« Idéal à 6 joueurs »).
 
 Le nombre de joueurs se saisit aussi au clavier. Le champ n'est borné que par le
 haut : borner aussi par le bas empêcherait de taper « 10 », le « 1 »
@@ -186,6 +256,24 @@ configurer côté hébergeur statique.
 
 On compose depuis la liste (bouton `+` des cartes), puis on réordonne, on
 partage, on déroule.
+
+**Les fils rouges vivent hors du programme.** Ils ont leur bloc, sous la file
+numérotée, sans numéro d'ordre ni boutons monter/descendre — ils courent en
+fond, ils n'ont pas de place dans une file d'attente. Ils sont exclus du total
+de durée, et **ouvrent le déroulé** : c'est au début de soirée qu'on bannit les
+mots ou qu'on distribue les missions.
+
+Trois conséquences dans le code, à ne pas défaire séparément :
+
+- [`useNavigation`](src/utils/useNavigation.js) **range les fils rouges en fin
+  de sélection**. L'index d'un jeu du programme y est alors sa place affichée,
+  ce dont dépendent monter/descendre. Sans cela, échanger deux jeux séparés par
+  un fil rouge dans la liste brute ne changeait rien à l'écran ;
+- [`soiree.js`](src/utils/soiree.js) porte les deux lectures — `partitionner`
+  pour l'affichage, `ordreDeroule` pour le lancement, fils rouges d'abord ;
+- l'étape de l'URL indexe **l'ordre du déroulé**, pas la sélection.
+
+**La durée totale** additionne les durées calculées pour l'effectif courant.
 
 **Où vit la sélection.** Le paramètre `soiree` de l'URL prime s'il est présent —
 c'est le cas d'un lien reçu d'un ami, et le programme partagé doit gagner ;
@@ -331,7 +419,7 @@ npm run build:fonts
 
 ## Tests
 
-120 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+167 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -416,20 +504,23 @@ erreur en console : le rendu retombe simplement sur une police système.
 
 Par ordre d'intérêt selon la dernière revue :
 
-1. **Le catalogue** — six jeux. Tout est prêt pour en accueillir trente, et les
-   filtres comme la soirée ne prennent leur sens qu'à partir de là.
-2. **Ajout à l'écran d'accueil** (manifest + service worker) : le site est
+1. **Les kits de jeu** — le tableur source porte déjà, pour 36 des 50 jeux, de
+   quoi alimenter un bouton « Lancer le jeu » : mots à faire deviner, rôles à
+   distribuer, questions et leurs réponses, compteurs de score, chronomètres de
+   tour. Rien n'en est intégré pour l'instant, et les règles de huit jeux
+   (Pyramide, Trois fois rien, Le Fitch, Le Petit Menteur, Petit Bac, Sorry mon
+   french, Pitch de ouf, Cow-boy) mentionnent une « liste » qui n'existera
+   qu'avec eux.
+2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
+   d'interrogation.
+3. **Tri et filtres dans l'URL** : le catalogue a dépassé la vingtaine.
+4. **Ajout à l'écran d'accueil** (manifest + service worker) : le site est
    léger, s'utilise sur téléphone en soirée, et fonctionnerait hors ligne.
-3. **Tri et filtres dans l'URL**, quand le catalogue dépassera la vingtaine.
-4. **Images en WebP** — 277 ko de PNG, même méthode que les polices.
-5. **Pondérer la recherche** : elle couvre aussi les règles, ce qui deviendra
-   bruyant à grande échelle.
-6. **Purger les polices commerciales de l'historique Git** si le dépôt est public.
-7. **Rendre le site référençable** quand il sera prêt à être trouvé.
-
-Le contenu des règles de trois jeux (Le Liars Club, Cacophonie, mix.GPT) a été
-rédigé faute de source : ce sont des hypothèses plausibles, à relire par
-l'auteur du site.
+5. **Images en WebP** — même méthode que les polices.
+6. **Pondérer la recherche** : elle couvre aussi les règles, ce qui devient
+   bruyant à cinquante jeux.
+7. **Purger les polices commerciales de l'historique Git** si le dépôt est public.
+8. **Rendre le site référençable** quand il sera prêt à être trouvé.
 
 ## Contribuer
 

@@ -52,7 +52,7 @@ describe('parcours : consulter un jeu', () => {
     expect(screen.getByRole('heading', { name: /comment on joue/i })).toBeInTheDocument();
     // Sans apostrophe dans le motif : les données mêlent apostrophes droites
     // et typographiques, et ce test n'a pas à en dépendre.
-    expect(screen.getByText(/qui reçoit un mot très proche/i)).toBeInTheDocument();
+    expect(screen.getByText(/qui en reçoit un très proche/i)).toBeInTheDocument();
     expect(window.location.search).toBe('?jeu=undercover');
   });
 
@@ -151,8 +151,8 @@ describe('parcours : tirage au sort', () => {
     const u = rendre();
     await fermerIntroduction(u);
 
-    // 2 joueurs ne laisse que mix.GPT : il n'y a rien d'autre à tirer.
-    await u.type(screen.getByLabelText(/nombre de joueurs/i), '2');
+    // 20 joueurs ne laisse que Ban word : il n'y a rien d'autre à tirer.
+    await u.type(screen.getByLabelText(/nombre de joueurs/i), '20');
     await u.click(screen.getByRole('button', { name: /surprends-moi/i }));
 
     await screen.findByRole('heading', { name: /comment on joue/i });
@@ -217,9 +217,10 @@ describe('parcours : filtrer', () => {
 
     await u.click(screen.getByRole('button', { name: /plus de joueurs/i }));
 
-    // 2 joueurs : seul mix.GPT descend aussi bas.
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
-    expect(screen.getByRole('status')).toHaveTextContent('1 jeu trouvé');
+    // Le premier clic démarre au minimum jouable du catalogue, jamais à 1 :
+    // aucun jeu ne se joue seul, et le compteur restait bloqué sur zéro résultat.
+    expect(screen.getByLabelText(/nombre de joueurs/i)).toHaveValue('2');
+    expect(screen.getAllByRole('listitem').length).toBeLessThan(gamesList.length);
   });
 
   it('accepte la saisie directe du nombre de joueurs', async () => {
@@ -232,7 +233,7 @@ describe('parcours : filtrer', () => {
     // Le « 1 » intermédiaire ne doit pas être réécrit, sinon « 10 » est
     // impossible à taper.
     expect(champ).toHaveValue('10');
-    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
+    expect(screen.getAllByRole('listitem').length).toBeGreaterThan(0);
   });
 
   it('plafonne la saisie au maximum jouable et accepte l’effacement', async () => {
@@ -241,7 +242,7 @@ describe('parcours : filtrer', () => {
 
     const champ = screen.getByLabelText(/nombre de joueurs/i);
     await u.type(champ, '99');
-    expect(champ).toHaveValue('10');
+    expect(champ).toHaveValue('20');
 
     await u.clear(champ);
     expect(champ).toHaveValue('');
@@ -261,9 +262,10 @@ describe('parcours : filtrer', () => {
     const u = rendre();
     await fermerIntroduction(u);
 
-    await u.type(screen.getByLabelText(/rechercher un jeu/i), 'traitre');
+    // « decale » doit trouver « décalée », dans les règles du Fitch.
+    await u.type(screen.getByLabelText(/rechercher un jeu/i), 'decale');
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Undercover' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Le Fitch' })).toBeInTheDocument();
   });
 
   it('déplie les filtres secondaires et applique une pastille', async () => {
@@ -271,13 +273,49 @@ describe('parcours : filtrer', () => {
     await fermerIntroduction(u);
 
     await u.click(screen.getByRole('button', { name: /plus de filtres/i }));
-    await u.click(screen.getByRole('button', { name: 'Rôles cachés' }));
+    await u.click(screen.getByRole('button', { name: 'À traîtres' }));
 
-    expect(screen.getByRole('status')).toHaveTextContent('2 jeux trouvés');
-    expect(screen.getByRole('button', { name: 'Rôles cachés' })).toHaveAttribute(
+    expect(screen.getByRole('status')).toHaveTextContent('5 jeux trouvés');
+    expect(screen.getByRole('button', { name: 'À traîtres' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
+  });
+
+  it('signale les jeux idéaux pour l’effectif et les remonte en tête', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    // Sans effectif saisi, rien n'est recommandé : il n'y a rien à comparer.
+    expect(screen.queryByText(/idéal à/i)).not.toBeInTheDocument();
+
+    await u.type(screen.getByLabelText(/nombre de joueurs/i), '2');
+
+    // Seize jeux tolèrent deux joueurs ; un seul est vraiment pensé pour, et il
+    // passe devant les quinze autres — sans qu'aucun disparaisse.
+    expect(screen.getByText(/idéal à 2 joueurs/i)).toBeInTheDocument();
+    const cartes = screen.getAllByRole('listitem');
+    expect(cartes).toHaveLength(16);
+    expect(cartes[0]).toHaveTextContent('Soyez logique');
+
+    // L'étoile est décorative : le résumé lu à voix haute porte l'information.
+    expect(
+      within(cartes[0]).getByRole('button', { name: /idéal à 2 joueurs/i })
+    ).toBeInTheDocument();
+  });
+
+  it('boucle le compteur de joueurs au-delà du maximum', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    const champ = screen.getByLabelText(/nombre de joueurs/i);
+    await u.type(champ, '20'); // le maximum du catalogue
+
+    // Un cran de plus repasse à « indifférent » plutôt que de buter : sinon il
+    // fallait dix-huit clics en sens inverse pour retrouver tout le catalogue.
+    await u.click(screen.getByRole('button', { name: /plus de joueurs/i }));
+    expect(champ).toHaveValue('');
+    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
   });
 
   it('réinitialise les filtres', async () => {
@@ -321,7 +359,9 @@ describe('parcours : composer et dérouler une soirée', () => {
     await u.click(boutonSoiree);
     const programme = await screen.findByRole('heading', { name: /ma soirée/i });
     expect(programme).toBeInTheDocument();
-    expect(screen.getByText(/1 h/)).toBeInTheDocument(); // 40 + 20 min
+    // Sans effectif saisi, la durée s'annonce en fourchette, calculée sur les
+    // effectifs idéaux : Le Liars Club 35–47 min, Undercover 18–27 min.
+    expect(screen.getByText(/53 min à 1 h 14/)).toBeInTheDocument();
 
     await u.click(screen.getByRole('button', { name: /lancer la soirée/i }));
 
@@ -364,6 +404,31 @@ describe('parcours : composer et dérouler une soirée', () => {
     await u.click(screen.getByRole('button', { name: /retirer le liars club de la soirée/i }));
 
     expect(screen.getByText(/votre programme est vide/i)).toBeInTheDocument();
+  });
+
+  it('met les fils rouges hors programme, et les lance en premier', async () => {
+    window.history.replaceState({}, '', '/?soiree=liars-club,ban-word,undercover');
+    const u = rendre();
+    await screen.findByRole('heading', { name: /ma soirée/i });
+
+    // Ban word se joue en fond : il sort de la file numérotée, qui ne compte
+    // donc que deux jeux, et sa durée n'entre pas dans le total.
+    expect(screen.getByText(/2 jeux au programme/i)).toBeInTheDocument();
+    const programme = screen.getByRole('list', { name: /programme, dans l’ordre/i });
+    expect(within(programme).getAllByRole('listitem')).toHaveLength(2);
+
+    // Il n'est pas ordonnançable : ni monter, ni descendre.
+    expect(screen.getByRole('heading', { name: /en fond toute la soirée/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /monter ban word/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /descendre ban word/i })).not.toBeInTheDocument();
+    // Mais il se retire comme les autres.
+    expect(screen.getByRole('button', { name: /retirer ban word/i })).toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: /lancer la soirée/i }));
+
+    // On le lance en premier : c'est là qu'on bannit les mots, avant le reste.
+    expect(await screen.findByRole('status')).toHaveTextContent('Jeu 1 sur 3');
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Ban word');
   });
 
   it('ouvre un programme reçu par lien', async () => {

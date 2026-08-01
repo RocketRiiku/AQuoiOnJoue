@@ -70,9 +70,22 @@ const decouper = (valeur) => (valeur ? valeur.split(',').filter(Boolean) : []);
 export function useNavigation(games) {
   const [params, setParams] = useState(lireParams);
 
-  // Slugs connus uniquement : un lien partagé peut citer un jeu retiré depuis.
-  const filtrerConnus = useCallback(
-    (slugs) => slugs.filter((slug) => games.some((g) => g.slug === slug)),
+  /**
+   * Slugs connus uniquement — un lien partagé peut citer un jeu retiré depuis —
+   * et **fils rouges rangés en fin de liste**.
+   *
+   * Ce second point n'est pas cosmétique : un fil rouge se joue en fond et ne
+   * s'ordonnance pas avec le reste. En le gardant à la fin, l'index d'un jeu
+   * dans cette liste est aussi sa place dans le programme, ce dont dépendent
+   * les boutons monter/descendre. Sans cela, échanger deux jeux séparés par un
+   * fil rouge dans la liste brute ne changeait rien à l'affichage.
+   */
+  const normaliser = useCallback(
+    (slugs) => {
+      const connus = slugs.filter((slug) => games.some((g) => g.slug === slug));
+      const estFilRouge = (slug) => Boolean(games.find((g) => g.slug === slug)?.filRouge);
+      return [...connus.filter((s) => !estFilRouge(s)), ...connus.filter(estFilRouge)];
+    },
     [games]
   );
 
@@ -93,16 +106,16 @@ export function useNavigation(games) {
   }, []);
 
   const soiree = useMemo(
-    () => filtrerConnus(slugsSoiree).map((slug) => games.find((g) => g.slug === slug)),
-    [slugsSoiree, filtrerConnus, games]
+    () => normaliser(slugsSoiree).map((slug) => games.find((g) => g.slug === slug)),
+    [slugsSoiree, normaliser, games]
   );
 
   // Unique point d'écriture du stockage : couvre aussi bien une modification
   // qu'un programme reçu par lien. Sans cela, la soirée d'un ami s'affichait
   // mais disparaissait au rechargement.
   useEffect(() => {
-    ecrireStockage(filtrerConnus(slugsSoiree));
-  }, [slugsSoiree, filtrerConnus]);
+    ecrireStockage(normaliser(slugsSoiree));
+  }, [slugsSoiree, normaliser]);
 
   const jeuAffiche = params.jeu ? (games.find((g) => g.slug === params.jeu) ?? null) : null;
 
@@ -156,7 +169,7 @@ export function useNavigation(games) {
   const majSoiree = useCallback(
     (calcul) => {
       setSlugsSoiree((actuels) => {
-        const suivants = filtrerConnus(calcul(filtrerConnus(actuels)));
+        const suivants = normaliser(calcul(normaliser(actuels)));
         if (window.location.search.includes(`${P_SOIREE}=`)) {
           // replaceState : réordonner ne doit pas empiler l'historique.
           naviguer({ [P_SOIREE]: suivants.join(','), [P_ETAPE]: null }, { remplacer: true });
@@ -164,12 +177,12 @@ export function useNavigation(games) {
         return suivants;
       });
     },
-    [filtrerConnus, naviguer]
+    [normaliser, naviguer]
   );
 
   const estDansSoiree = useCallback(
-    (slug) => filtrerConnus(slugsSoiree).includes(slug),
-    [slugsSoiree, filtrerConnus]
+    (slug) => normaliser(slugsSoiree).includes(slug),
+    [slugsSoiree, normaliser]
   );
 
   const basculerSoiree = useCallback(
@@ -220,12 +233,12 @@ export function useNavigation(games) {
     ouvrirSoiree: useCallback(
       () =>
         naviguer({
-          [P_SOIREE]: filtrerConnus(slugsSoiree).join(','),
+          [P_SOIREE]: normaliser(slugsSoiree).join(','),
           [P_JEU]: null,
           [P_ETAPE]: null,
           [P_PAGE]: null
         }),
-      [naviguer, slugsSoiree, filtrerConnus]
+      [naviguer, slugsSoiree, normaliser]
     ),
     fermerSoiree: useCallback(
       () => naviguer({ [P_SOIREE]: null, [P_ETAPE]: null }),
@@ -234,12 +247,12 @@ export function useNavigation(games) {
     lancerSoiree: useCallback(
       () =>
         naviguer({
-          [P_SOIREE]: filtrerConnus(slugsSoiree).join(','),
+          [P_SOIREE]: normaliser(slugsSoiree).join(','),
           [P_ETAPE]: '1',
           [P_JEU]: null,
           [P_PAGE]: null
         }),
-      [naviguer, slugsSoiree, filtrerConnus]
+      [naviguer, slugsSoiree, normaliser]
     ),
     allerEtape: useCallback((n) => naviguer({ [P_ETAPE]: String(n) }), [naviguer]),
     quitterLancement: useCallback(() => naviguer({ [P_ETAPE]: null }), [naviguer]),

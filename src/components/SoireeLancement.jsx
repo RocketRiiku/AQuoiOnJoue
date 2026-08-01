@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Clock, PartyPopper, Users, X } from 'lucide-
 import { Bouton } from './Bouton';
 import GameThumb from './GameThumb';
 import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGame';
+import { ordreDeroule } from '../utils/soiree';
 
 /**
  * Déroulé de la soirée, un jeu à la fois.
@@ -12,10 +13,13 @@ import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGa
  * L'étape vit dans l'URL, donc les flèches du navigateur fonctionnent aussi et
  * un rafraîchissement ne perd pas la place.
  */
-function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
-  const game = soiree[etape - 1];
+function SoireeLancement({ soiree, etape, onEtape, onQuitter, joueurs = null }) {
+  // Les fils rouges ouvrent la soirée : c'est là qu'on bannit les mots ou qu'on
+  // distribue les missions, avant que le programme s'enchaîne par-dessus.
+  const deroule = ordreDeroule(soiree);
+  const game = deroule[etape - 1];
   const titreRef = useRef(null);
-  const dernier = etape === soiree.length;
+  const dernier = etape === deroule.length;
 
   // Le focus suit le jeu affiché, sinon un utilisateur au clavier reste bloqué
   // sur le bouton précédent après chaque changement d'étape.
@@ -27,12 +31,12 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onQuitter();
-      if (event.key === 'ArrowRight' && etape < soiree.length) onEtape(etape + 1);
+      if (event.key === 'ArrowRight' && etape < deroule.length) onEtape(etape + 1);
       if (event.key === 'ArrowLeft' && etape > 1) onEtape(etape - 1);
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [etape, soiree.length, onEtape, onQuitter]);
+  }, [etape, deroule.length, onEtape, onQuitter]);
 
   if (!game) return null;
 
@@ -44,7 +48,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
       {/* Progression */}
       <div className="flex items-center justify-between gap-4">
         <p className="font-titre text-lg text-ardoise" role="status" aria-live="polite">
-          Jeu {etape} sur {soiree.length}
+          Jeu {etape} sur {deroule.length}
         </p>
         <Bouton variante="discret" destructeur icone={X} onClick={onQuitter}>
           Arrêter la soirée
@@ -52,7 +56,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
       </div>
 
       <ol className="flex gap-1.5 mt-3" aria-hidden="true">
-        {soiree.map((etapeJeu, index) => (
+        {deroule.map((etapeJeu, index) => (
           <li
             key={etapeJeu.slug}
             className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -64,7 +68,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
 
       <div className="flex flex-col sm:flex-row gap-6 mt-8">
         <div className="w-28 sm:w-36 h-40 sm:h-52 self-center sm:self-start rounded-xl shadow-lg -rotate-2 shrink-0 overflow-hidden">
-          <GameThumb game={game} tailleIcone="text-5xl" />
+          <GameThumb game={game} />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -87,7 +91,7 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter }) {
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-orange" aria-hidden="true" />
-              {formatDuration(game)}
+              {formatDuration(game, joueurs)}
             </span>
             <span className="text-sm text-ardoise/80">{formatMaterial(game)}</span>
           </p>

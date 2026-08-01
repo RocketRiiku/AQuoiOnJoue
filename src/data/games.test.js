@@ -30,8 +30,26 @@ describe('catalogue des jeux', () => {
     expect(game.minPlayers).toBeGreaterThanOrEqual(2);
     expect(game.maxPlayers).toBeGreaterThanOrEqual(game.minPlayers);
 
-    expect(Number.isFinite(game.duration)).toBe(true);
-    expect(game.duration).toBeGreaterThan(0);
+    // La fourchette idéale est incluse dans la fourchette jouable, sans quoi le
+    // filtre « Idéal pour ce groupe » recommanderait un effectif que le jeu
+    // refuse par ailleurs.
+    expect(Number.isInteger(game.idealPlayersMin)).toBe(true);
+    expect(Number.isInteger(game.idealPlayersMax)).toBe(true);
+    expect(game.idealPlayersMin).toBeGreaterThanOrEqual(game.minPlayers);
+    expect(game.idealPlayersMax).toBeGreaterThanOrEqual(game.idealPlayersMin);
+    expect(game.maxPlayers).toBeGreaterThanOrEqual(game.idealPlayersMax);
+
+    expect(Number.isFinite(game.durationBase)).toBe(true);
+    expect(Number.isFinite(game.durationPerPlayer)).toBe(true);
+    expect(game.durationBase).toBeGreaterThanOrEqual(0);
+    expect(game.durationPerPlayer).toBeGreaterThanOrEqual(0);
+
+    expect(typeof game.filRouge).toBe('boolean');
+    // Un jeu qui n'est pas un fil rouge a forcément une durée : sans quoi il
+    // s'afficherait « 0 min » et passerait tous les filtres de durée.
+    if (!game.filRouge) {
+      expect(game.durationBase + game.durationPerPlayer).toBeGreaterThan(0);
+    }
 
     expect(Array.isArray(game.material)).toBe(true);
     expect(Array.isArray(game.typeGame)).toBe(true);
@@ -42,7 +60,8 @@ describe('catalogue des jeux', () => {
 
     // `image` est facultative : les cartes sont dessinées à la main, un jeu peut
     // donc entrer au catalogue avant son illustration (GameThumb affiche alors
-    // un repli). En revanche, si elle est renseignée, le chemin doit être valide.
+    // la carte au point d'interrogation). En revanche, si elle est renseignée,
+    // le chemin doit être valide.
     if (game.image !== undefined) {
       expect(game.image).toMatch(/^\/.+\.(png|jpg|webp|svg)$/);
     }
@@ -52,5 +71,12 @@ describe('catalogue des jeux', () => {
     // Quatre jeux partageaient jadis un texte de règles copié-collé.
     const rules = gamesList.map((g) => g.rules);
     expect(new Set(rules).size).toBe(rules.length);
+  });
+
+  it('conserve les slugs déjà publiés', () => {
+    // Ils circulent dans des liens partagés : les régénérer les casserait.
+    for (const slug of ['liars-club', 'eau-ou-vodka', 'le-joker', 'undercover', 'cacophonie']) {
+      expect(gamesList.some((g) => g.slug === slug), slug).toBe(true);
+    }
   });
 });
