@@ -304,6 +304,24 @@ describe('parcours : filtrer', () => {
     ).toBeInTheDocument();
   });
 
+  it('réordonne la liste sans rien en retirer', async () => {
+    const u = rendre();
+    await fermerIntroduction(u);
+
+    await u.click(screen.getByRole('button', { name: 'A → Z' }));
+
+    // Trier réordonne, filtrer retire : le compte ne bouge pas.
+    expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('30 secondes chrono');
+    expect(screen.getByRole('button', { name: 'A → Z' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await u.click(screen.getByRole('button', { name: /jeux de fond/i }));
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('La blessure critique');
+  });
+
   it('boucle le compteur de joueurs au-delà du maximum', async () => {
     const u = rendre();
     await fermerIntroduction(u);

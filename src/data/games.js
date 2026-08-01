@@ -405,8 +405,8 @@ export const gamesList = [
   },
   {
     id: 20,
-    title: 'Le juste chiffre, mais pas au-delà',
-    slug: 'le-juste-chiffre-mais-pas-au-dela',
+    title: 'Le juste chiffre',
+    slug: 'le-juste-chiffre',
     description: 'Estimez la valeur exacte sans jamais la dépasser.',
     rules:
       'Chacun estime la réponse chiffrée à une question de culture générale : combien de taxis circulent à New York ? Tout le monde annonce en même temps. Le plus proche marque le point, mais toute estimation supérieure à la vraie valeur saute, aussi précise soit-elle. Cinq questions au total.',

@@ -11,11 +11,13 @@ import SoireeLancement from './components/SoireeLancement';
 import PiedDePage from './components/PiedDePage';
 import Suggestions from './components/Suggestions';
 import MentionsLegales from './components/MentionsLegales';
+import TriJeux from './components/TriJeux';
 import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
 import { asset } from './utils/asset';
 import { filterGames } from './utils/filterGames';
 import { estRecommande, nombreJoueurs } from './utils/formatGame';
+import { TRI_PAR_DEFAUT, trierJeux } from './utils/trierJeux';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
 
@@ -45,6 +47,7 @@ function App() {
   const introduction = useIntroduction();
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, material: [] });
   const [searchTerm, setSearchTerm] = useState('');
+  const [tri, setTri] = useState(TRI_PAR_DEFAUT);
 
   /**
    * L'effectif de la soirée, saisi une fois dans le filtre « Joueurs », suit
@@ -55,19 +58,17 @@ function App() {
   const joueurs = nombreJoueurs(filters.players);
 
   /**
-   * Les jeux à leur meilleur pour cet effectif remontent en tête, marqués d'une
-   * étoile — plutôt qu'un filtre de plus, qui aurait caché le reste alors que
-   * la fourchette idéale est un conseil, pas une condition.
+   * Filtrer retire des jeux, trier les réordonne : les deux restent séparés.
    *
-   * `sort` est stable : à recommandation égale, l'ordre du catalogue tient.
+   * L'ordre par défaut remonte les jeux à leur meilleur pour l'effectif, qui
+   * portent une étoile — plutôt qu'un filtre de plus, qui aurait caché le reste
+   * alors que la fourchette idéale est un conseil, pas une condition.
    */
-  const jeuxFiltres = filterGames(gamesList, filters, searchTerm);
-  const filteredGames =
-    joueurs == null
-      ? jeuxFiltres
-      : [...jeuxFiltres].sort(
-          (a, b) => estRecommande(b, joueurs) - estRecommande(a, joueurs)
-        );
+  const filteredGames = trierJeux(
+    filterGames(gamesList, filters, searchTerm),
+    tri,
+    joueurs
+  );
 
   const nbRecommandes =
     joueurs == null ? 0 : filteredGames.filter((g) => estRecommande(g, joueurs)).length;
@@ -328,7 +329,8 @@ function App() {
 
                     {/* Légende de l'étoile : sans elle, le symbole est joli mais
                         muet. Elle n'apparaît que lorsqu'il y a des étoiles à
-                        expliquer. */}
+                        expliquer, et ne promet la tête de liste que si c'est
+                        bien l'ordre retenu. */}
                     {nbRecommandes > 0 && (
                       <p className="text-ardoise/80 text-sm text-center mt-1 flex flex-wrap items-center justify-center gap-x-1.5">
                         <Star
@@ -336,14 +338,19 @@ function App() {
                           className="w-3.5 h-3.5 fill-orange text-orange shrink-0"
                         />
                         <span>
-                          idéal à {joueurs} joueurs —{' '}
-                          {nbRecommandes > 1
-                            ? `ces ${nbRecommandes} jeux sont placés en tête`
-                            : 'ce jeu est placé en tête'}
+                          idéal à {joueurs} joueurs
+                          {tri === TRI_PAR_DEFAUT &&
+                            (nbRecommandes > 1
+                              ? ` — ces ${nbRecommandes} jeux sont placés en tête`
+                              : ' — ce jeu est placé en tête')}
                         </span>
                       </p>
                     )}
                   </div>
+
+                  {/* Trier réordonne, filtrer retire : le tri reste donc hors
+                      du panneau de filtres, et visible en permanence. */}
+                  {!aucunResultat && <TriJeux tri={tri} onTri={setTri} />}
 
                   <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 justify-items-center mx-auto max-w-6xl list-none">
                     {aucunResultat ? (

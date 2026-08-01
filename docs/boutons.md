@@ -182,7 +182,7 @@ gardent leur traitement propre, chacune cohérente en interne :
 
 | Famille | Où | Pourquoi à part |
 | --- | --- | --- |
-| Pastilles de filtre | `Header.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action |
+| Pastilles | `Pastille.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action. Deux vues s'en servent — les filtres (`Header.jsx`) et le choix du tri (`TriJeux.jsx`) |
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
 | Fermeture d'un panneau | `Introduction.jsx` | la croix en coin est une convention universelle, elle n'a pas besoin d'un niveau d'emphase |

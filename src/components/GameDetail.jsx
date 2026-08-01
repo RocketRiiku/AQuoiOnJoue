@@ -112,11 +112,19 @@ function GameDetail({
         </div>
 
         <div className="min-w-0 flex-1">
+          {/* Le titre réserve la place des icônes du coin, qui le survolent :
+              elles sont posées en absolu sur le panneau et ne poussent donc
+              rien. Trois icônes de 36 px, deux écarts de 8 px et le retrait du
+              coin font 140 px depuis le bord du panneau, dont 32 px déjà pris
+              par le rembourrage — d'où 112 px à dégager.
+              Seulement à partir de `sm` : en dessous, la mise en page passe en
+              colonne et le titre descend sous la vignette, hors de leur portée.
+              Sans ce retrait, « Avez-vous confiance ? » passait sous elles. */}
           <h2
             id="titre-jeu"
             ref={headingRef}
             tabIndex={-1}
-            className="text-3xl sm:text-4xl font-titre text-brique leading-tight focus:outline-none"
+            className="text-3xl sm:text-4xl font-titre text-brique leading-tight sm:pr-28 focus:outline-none"
           >
             {game.title}
           </h2>

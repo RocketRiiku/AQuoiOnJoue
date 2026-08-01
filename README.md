@@ -51,10 +51,12 @@ src/
   index.css                polices, animations CSS, réglages globaux
   components/
     Bouton.jsx             ← tous les boutons passent par là
+    Pastille.jsx           contrôle à cocher : filtres et tri
     BoutonTirage.jsx       « Surprends-moi ! » et son mélange de cartes
     Tuile.jsx              entrée vers une section (« Ma soirée »)
     Infobulle.jsx          infobulle au survol et au focus
     Header.jsx             les filtres (deux niveaux)
+    TriJeux.jsx            l’ordre de la liste
     GameCard.jsx           une carte de la liste
     GameDetail.jsx         la fiche d'un jeu
     GameThumb.jsx          vignette, avec repli si pas d'illustration
@@ -73,6 +75,7 @@ src/
     useNavigation.js       ← URL, vues et sélection de soirée
     useIntroduction.js     affichage de l'explication
     filterGames.js         moteur de filtrage
+    trierJeux.js           les quatre ordres de la liste
     formatGame.js          libellés partagés, et le calcul des durées
     soiree.js              programme et fils rouges : affichage et déroulé
     contact.js             adresse de contact, liens mailto et signalements
@@ -203,6 +206,26 @@ Le compteur de joueurs **boucle aux deux bouts** : un cran au-delà du maximum
 efface la valeur, comme un cran sous le minimum le faisait déjà. Buter contre la
 borne obligeait à dix-huit clics en sens inverse pour retrouver le catalogue
 entier.
+
+### Trier
+
+Quatre ordres, en pastilles au-dessus de la liste
+([`TriJeux.jsx`](src/components/TriJeux.jsx), logique dans
+[`trierJeux.js`](src/utils/trierJeux.js)) : conseillés d'abord (défaut), A → Z,
+les plus courts, jeux de fond d'abord.
+
+**Le tri est hors du panneau de filtres, et visible en permanence.** Filtrer
+retire des jeux, trier les réordonne : ce ne sont pas les mêmes gestes, et un
+tri qu'il faut déplier n'est jamais trouvé.
+
+Chaque comparateur n'exprime qu'un seul départage : `sort` étant stable, l'ordre
+du catalogue tient à critère égal, sans avoir à le rejouer derrière. « Les plus
+courts » range sur la borne basse de la fourchette de durée, donc **suit
+l'effectif** — un jeu long à huit joueurs peut être court à trois — et renvoie
+les fils rouges en fin de liste, faute de durée propre.
+
+Une clé de tri inconnue rend la liste telle quelle plutôt que de lever : l'ordre
+du catalogue est toujours une réponse acceptable.
 
 ### L'effectif recommandé n'est pas un filtre
 
@@ -419,7 +442,7 @@ npm run build:fonts
 
 ## Tests
 
-167 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+179 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -513,7 +536,8 @@ Par ordre d'intérêt selon la dernière revue :
    qu'avec eux.
 2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
-3. **Tri et filtres dans l'URL** : le catalogue a dépassé la vingtaine.
+3. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable
+   aujourd'hui, et un lien vers « les jeux courts à six » aurait du sens.
 4. **Ajout à l'écran d'accueil** (manifest + service worker) : le site est
    léger, s'utilise sur téléphone en soirée, et fonctionnerait hors ligne.
 5. **Images en WebP** — même méthode que les polices.
