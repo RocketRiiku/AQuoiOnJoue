@@ -103,6 +103,33 @@ fait perdre.
 L'adresse ne s'écrit qu'à un endroit,
 [`utils/contact.js`](../src/utils/contact.js).
 
+## Quand un bouton déplie un panneau
+
+Montrer ou cacher un contenu déjà présent reste une action ordinaire : elle
+passe par `Bouton`, en `discret`. C'est le motif *disclosure* du
+[WAI-ARIA APG](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/) et non un
+menu — `aria-expanded` porte l'état, `aria-controls` désigne le panneau.
+
+Deux règles propres à ce cas :
+
+- **le libellé porte la valeur en cours**, pas seulement le nom du réglage :
+  « Trier : A → Z » plutôt que « Trier par ». Un déclencheur muet laisse le
+  visiteur incapable de dire comment la liste est rangée
+  ([Baymard](https://baymard.com/blog/essential-sort-types)), et le réglage
+  replié devient introuvable. Faute de valeur unique à annoncer, un compteur en
+  tient lieu, comme le badge de « Plus de filtres » ;
+- **un chevron suit le libellé**, et change de sens à l'ouverture. Seule
+  exception à la règle de l'icône qui précède : cette flèche n'accompagne pas le
+  libellé, elle montre où le panneau va s'ouvrir. Elle bascule
+  `ChevronDown`/`ChevronUp` plutôt que de pivoter, faute de quoi il faudrait
+  ouvrir `Bouton` aux classes d'icône passées de l'extérieur.
+
+Le choix appliqué referme le panneau et rend le focus au bouton.
+
+Deux déclencheurs de ce type aujourd'hui : le tri
+([`TriJeux.jsx`](../src/components/TriJeux.jsx)) et les filtres secondaires
+([`Header.jsx`](../src/components/Header.jsx)).
+
 ## Icônes
 
 - Une icône **précède** le libellé.

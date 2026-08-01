@@ -209,14 +209,20 @@ entier.
 
 ### Trier
 
-Quatre ordres, en pastilles au-dessus de la liste
+Quatre ordres, sous un bouton discret posé au-dessus de la liste
 ([`TriJeux.jsx`](src/components/TriJeux.jsx), logique dans
 [`trierJeux.js`](src/utils/trierJeux.js)) : conseillés d'abord (défaut), A → Z,
 les plus courts, jeux de fond d'abord.
 
-**Le tri est hors du panneau de filtres, et visible en permanence.** Filtrer
-retire des jeux, trier les réordonne : ce ne sont pas les mêmes gestes, et un
-tri qu'il faut déplier n'est jamais trouvé.
+**Le tri garde son propre bouton, hors du panneau de filtres.** Filtrer retire
+des jeux, trier les réordonne : ce ne sont pas les mêmes gestes.
+
+**Le bouton porte l'ordre en cours** — « Trier : A → Z », et non « Trier par ».
+C'est ce qui rend le repli acceptable : un déclencheur muet laisse le visiteur
+incapable de dire comment la liste est rangée, et le tri devient alors
+introuvable. Les quatre pastilles dépliées en permanence occupaient, elles, une
+rangée entière entre les filtres et les jeux pour un réglage que presque
+personne ne touche. Le choix s'applique aussitôt et referme le panneau.
 
 Chaque comparateur n'exprime qu'un seul départage : `sort` étant stable, l'ordre
 du catalogue tient à critère égal, sans avoir à le rejouer derrière. « Les plus
@@ -352,7 +358,13 @@ poster. Contact et Suggestions passent donc par un lien `mailto:`, fabriqué par
 [`contact.js`](src/utils/contact.js), seul endroit où l'adresse est écrite.
 Celle de Suggestions arrive avec un gabarit déjà rempli, dérivé de la même liste
 de champs que celle affichée sur la page : les laisser diverger était le défaut
-le plus probable à la première retouche.
+le plus probable à la première retouche. La page annonce que le bouton ouvre la
+messagerie, et son libellé dit « Écrire », pas « Envoyer » : le clic ne poste
+rien, il rédige.
+
+**Les textes d'interface parlent à la première personne du singulier**, comme
+les mentions légales : je tiens ce site seul. Le « nous » de la page Suggestions
+promettait une équipe qui n'existe pas. Le visiteur, lui, est vouvoyé partout.
 
 **Les mentions légales sont un texte d'éditeur, pas un texte d'interface** :
 [`MentionsLegales.jsx`](src/components/MentionsLegales.jsx) ne fait que lui

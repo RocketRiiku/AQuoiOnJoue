@@ -348,8 +348,9 @@ function App() {
                     )}
                   </div>
 
-                  {/* Trier réordonne, filtrer retire : le tri reste donc hors
-                      du panneau de filtres, et visible en permanence. */}
+                  {/* Trier réordonne, filtrer retire : le tri garde donc son
+                      propre bouton, hors du panneau de filtres. Il est replié,
+                      mais son libellé porte l'ordre en cours. */}
                   {!aucunResultat && <TriJeux tri={tri} onTri={setTri} />}
 
                   <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 justify-items-center mx-auto max-w-6xl list-none">

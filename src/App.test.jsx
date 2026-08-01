@@ -308,16 +308,27 @@ describe('parcours : filtrer', () => {
     const u = rendre();
     await fermerIntroduction(u);
 
+    // Le tri est replié : le bouton annonce l'ordre en cours, ici celui par
+    // défaut. C'est ce qui rend le repli acceptable.
+    const declencheur = screen.getByRole('button', { name: /^trier\s*:/i });
+    expect(declencheur).toHaveTextContent('Conseillés d’abord');
+
+    await u.click(declencheur);
     await u.click(screen.getByRole('button', { name: 'A → Z' }));
 
     // Trier réordonne, filtrer retire : le compte ne bouge pas.
     expect(screen.getAllByRole('listitem')).toHaveLength(gamesList.length);
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('30 secondes chrono');
+
+    // Le choix se répercute sur le bouton, et le panneau s'est refermé.
+    expect(declencheur).toHaveTextContent('A → Z');
+    expect(declencheur).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByRole('button', { name: 'A → Z' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
 
+    await u.click(declencheur);
     await u.click(screen.getByRole('button', { name: /jeux de fond/i }));
     expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('La blessure critique');
   });
@@ -475,7 +486,7 @@ describe('parcours : pied de page', () => {
     await u.click(screen.getByRole('button', { name: /^suggestions$/i }));
 
     expect(
-      await screen.findByRole('heading', { name: /un jeu à nous faire découvrir/i })
+      await screen.findByRole('heading', { name: /un jeu à me faire découvrir/i })
     ).toBeInTheDocument();
     expect(window.location.search).toBe('?page=suggestions');
     // La liste laisse la place à la page : ses cartes ne sont plus montées.
@@ -491,7 +502,7 @@ describe('parcours : pied de page', () => {
     window.history.replaceState({}, '', '/?page=suggestions');
     rendre();
 
-    const lien = await screen.findByRole('link', { name: /envoyer ma suggestion/i });
+    const lien = await screen.findByRole('link', { name: /écrire ma suggestion/i });
     const href = lien.getAttribute('href');
 
     expect(href).toContain('mailto:nathanboumadjer@gmail.com');

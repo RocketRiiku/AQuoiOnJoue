@@ -7,9 +7,13 @@ import { lienMailto } from '../utils/contact';
  * Proposer un jeu au catalogue.
  *
  * Le site est statique : sans serveur, un formulaire n'aurait nulle part où
- * poster. Le message part donc par courriel, avec un gabarit déjà rempli — la
- * page dit d'abord ce qu'on attend, pour que la suggestion arrive utilisable du
- * premier coup plutôt qu'en trois allers-retours.
+ * poster. Le message part donc par courriel, avec un gabarit déjà rempli. La
+ * page dit d'abord ce que j'attends, pour que la suggestion arrive utilisable
+ * du premier coup plutôt qu'en trois allers-retours.
+ *
+ * Le texte est à la première personne du singulier, comme les mentions légales :
+ * je tiens ce site seul, et le « nous » d'origine promettait une équipe qui
+ * n'existe pas.
  *
  * Les champs listés à l'écran et ceux du courriel viennent de la même source :
  * les laisser diverger était le défaut le plus probable à la première retouche.
@@ -54,16 +58,16 @@ function Suggestions({ onRetour }) {
         tabIndex={-1}
         className="text-3xl sm:text-4xl font-titre text-brique leading-tight focus:outline-none"
       >
-        Un jeu à nous faire découvrir&nbsp;?
+        Un jeu à me faire découvrir&nbsp;?
       </h2>
       <p className="text-ardoise font-texte text-lg mt-2 leading-snug">
-        Le catalogue se remplit des jeux qu’on nous rapporte. Y ont leur place
-        les jeux d’ambiance qui ne demandent presque rien&nbsp;: ni boîte, ni
-        préparation, et des règles qui s’expliquent en une minute.
+        Le catalogue vient en grande partie de mes soirées. J’y mets les jeux
+        d’ambiance qui ne demandent presque rien&nbsp;: ni boîte ni préparation,
+        et des règles qui se retiennent facilement.
       </p>
 
       <h3 className="font-titre text-2xl text-encre mt-6 mb-3">
-        Ce qu’il nous faut
+        Ce qu’il me faut
       </h3>
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 list-none">
         {CHAMPS.map(({ intitule, aide }) => (
@@ -81,8 +85,15 @@ function Suggestions({ onRetour }) {
       </ul>
 
       <p className="text-ardoise font-texte mt-5 leading-snug">
-        Pas besoin d’illustration&nbsp;: les cartes sont dessinées à la main, et
-        un jeu entre au catalogue sans attendre la sienne.
+        Pas besoin d’illustration. Je dessine les cartes à la main&nbsp;!
+      </p>
+
+      {/* Le bouton est un lien `mailto:` : il ouvre le logiciel de messagerie
+          au lieu d'envoyer sur place. Le dire évite la surprise, et un libellé
+          qui promet l'envoi rendrait l'ouverture du courrielleur incompréhensible. */}
+      <p className="text-sm text-ardoise/80 font-texte mt-4 leading-snug">
+        Le bouton ouvre votre messagerie avec le message déjà
+        commencé&nbsp;: vous complétez, vous envoyez.
       </p>
 
       <BarreActions>
@@ -94,7 +105,7 @@ function Suggestions({ onRetour }) {
             corps: GABARIT
           })}
         >
-          Envoyer ma suggestion
+          Écrire ma suggestion
         </Bouton>
 
         <Bouton variante="secondaire" icone={ArrowLeft} onClick={onRetour}>

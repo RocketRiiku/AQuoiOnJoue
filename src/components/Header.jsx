@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
-import { ChevronDown, RotateCw, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, ChevronUp, RotateCw, SlidersHorizontal } from 'lucide-react';
 import * as Slider from '@radix-ui/react-slider';
+import { Bouton } from './Bouton';
 import Pastille from './Pastille';
 import {
   compterFiltresActifs,
@@ -193,25 +194,25 @@ function Header({ filters, setFilters }) {
 
       {/* Niveau 2 : tout le reste, replié par défaut. */}
       <div className="flex flex-wrap justify-center items-center gap-3 mt-5">
-        <button
-          type="button"
+        {/* Motif « disclosure » de docs/boutons.md, le même que le tri : le
+            chevron change de sens au lieu de pivoter, `Bouton` posant lui-même
+            les classes de ses icônes. Le compteur tient lieu de valeur en cours,
+            faute d'une valeur unique à annoncer dans le libellé. */}
+        <Bouton
+          variante="discret"
+          icone={SlidersHorizontal}
+          iconeApres={deplie ? ChevronUp : ChevronDown}
           onClick={() => setDeplie((v) => !v)}
           aria-expanded={deplie}
           aria-controls={idPanneau}
-          className="inline-flex items-center gap-2 px-4 py-1.5 bg-creme/90 text-encre font-titre rounded-full shadow-sm hover:bg-creme transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
         >
-          <SlidersHorizontal className="w-4 h-4 text-orange" aria-hidden="true" />
           Plus de filtres
           {nbSecondaires > 0 && (
             <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-brique text-creme text-xs">
               {nbSecondaires}
             </span>
           )}
-          <ChevronDown
-            aria-hidden="true"
-            className={`w-4 h-4 transition-transform ${deplie ? 'rotate-180' : ''}`}
-          />
-        </button>
+        </Bouton>
 
         {/* N'apparaît que lorsqu'il a quelque chose à réinitialiser : la carte
             dédiée occupait une place permanente pour rien. */}
