@@ -82,6 +82,7 @@ src/
     soiree.js              programme et fils rouges : affichage et déroulé
     kit.js                 affichage du bouton « Lancer le jeu », invariants
     troisFoisRien.js       le déroulé de ce jeu, en réducteur pur
+    sonKit.js              tic-tac et vibration des dernières secondes
     contact.js             adresse de contact, liens mailto et signalements
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
@@ -268,6 +269,7 @@ score par manche, chrono, et surtout les mêmes mots rejoués trois fois de suit
 src/data/lancerJeu.js              le contenu tiré (l'onglet « LancerJeu »)
 src/utils/kit.js                   règles d'affichage et invariants, sans JSX
 src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
+src/utils/sonKit.js                tic-tac et vibration, sans fichier son
 src/components/kit/
   registre.js                      slug → composant, et « ce kit est-il prêt ? »
   KitJeu.jsx                       aiguillage + repli si le kit manque
@@ -566,7 +568,7 @@ npm run build:fonts
 
 ## Tests
 
-386 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+401 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
