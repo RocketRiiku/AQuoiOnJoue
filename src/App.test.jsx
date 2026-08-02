@@ -478,6 +478,62 @@ describe('parcours : composer et dérouler une soirée', () => {
   });
 });
 
+describe('parcours : lancer le kit d’un jeu', () => {
+  it('ouvre le kit depuis la fiche, et y revient en le quittant', async () => {
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien');
+    const u = rendre();
+    await screen.findByRole('heading', { name: 'Trois fois rien', level: 2 });
+
+    await u.click(screen.getByRole('button', { name: /lancer le jeu/i }));
+
+    expect(await screen.findByText(/combien êtes-vous/i)).toBeInTheDocument();
+    // Le kit se pose sur la fiche sans effacer d'où l'on vient.
+    expect(window.location.search).toBe('?jeu=trois-fois-rien&kit=1');
+
+    await u.click(screen.getByRole('button', { name: /retour à la fiche/i }));
+
+    expect(await screen.findByRole('heading', { name: /comment on joue/i })).toBeInTheDocument();
+    expect(window.location.search).toBe('?jeu=trois-fois-rien');
+  });
+
+  it('ne propose pas de kit sur un jeu qui n’en a pas', async () => {
+    window.history.replaceState({}, '', '/?jeu=le-liars-club');
+    window.history.replaceState({}, '', '/?jeu=liars-club');
+    rendre();
+    await screen.findByRole('heading', { name: 'Le Liars Club', level: 2 });
+
+    expect(screen.queryByRole('button', { name: /lancer le jeu/i })).not.toBeInTheDocument();
+  });
+
+  it('ouvre le kit depuis le déroulé de la soirée', async () => {
+    window.history.replaceState({}, '', '/?soiree=trois-fois-rien,undercover&etape=1');
+    const u = rendre();
+    await screen.findByRole('status');
+
+    await u.click(screen.getByRole('button', { name: /lancer le jeu/i }));
+
+    expect(await screen.findByText(/combien êtes-vous/i)).toBeInTheDocument();
+    // On revient à l'étape qu'on jouait, pas à la fiche ni à la liste — et le
+    // bouton le dit.
+    await u.click(screen.getByRole('button', { name: /retour à la soirée/i }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Jeu 1 sur 2');
+  });
+
+  it('le dit franchement sur un lien de kit qui n’existe pas encore', async () => {
+    window.history.replaceState({}, '', '/?jeu=undercover&kit=1');
+    const u = rendre();
+
+    // Plutôt que d'avaler le paramètre en silence : le visiteur a suivi un lien
+    // vers un kit, il mérite de savoir pourquoi il ne l'a pas.
+    expect(await screen.findByText(/pas encore prêt/i)).toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: /retour à la fiche/i }));
+    expect(
+      await screen.findByRole('heading', { name: 'Undercover', level: 2 })
+    ).toBeInTheDocument();
+  });
+});
+
 describe('parcours : pied de page', () => {
   it('ouvre les suggestions, puis revient à la liste', async () => {
     const u = rendre();

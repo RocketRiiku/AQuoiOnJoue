@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { gamesList } from './games';
+import { contenuLancerJeu, contenuDuJeu } from './lancerJeu';
+import { piocheDuContenu } from '../utils/kit';
 
 /**
  * Le catalogue est saisi à la main : ces tests verrouillent les conventions
@@ -71,6 +73,52 @@ describe('catalogue des jeux', () => {
     // Quatre jeux partageaient jadis un texte de règles copié-collé.
     const rules = gamesList.map((g) => g.rules);
     expect(new Set(rules).size).toBe(rules.length);
+  });
+
+  it.each(gamesList.filter((g) => g.kit || g.scoring || g.chronoTour).map((g) => [g.title, g]))(
+    'le kit de « %s » est bien formé',
+    (_titre, game) => {
+      if (game.kit !== undefined) {
+        expect(Array.isArray(game.kit)).toBe(true);
+        expect(game.kit.length).toBeGreaterThan(0);
+        for (const module of game.kit) {
+          expect(
+            ['prompts', 'distribution', 'equipes', 'regle-secrete'],
+            module
+          ).toContain(module);
+        }
+      }
+      if (game.scoring !== undefined) {
+        expect(['compteur', 'manches', 'elimination']).toContain(game.scoring);
+      }
+      if (game.chronoTour !== undefined) {
+        // En secondes, jamais en minutes : la confusion avec durationBase est
+        // le piège que ce test garde fermé.
+        expect(Number.isInteger(game.chronoTour)).toBe(true);
+        expect(game.chronoTour).toBeGreaterThan(0);
+        expect(game.chronoTour).toBeLessThanOrEqual(600);
+      }
+    }
+  );
+
+  it('lie contenu et modules dans les deux sens', () => {
+    // Un module qui pioche sans contenu tire dans le vide ; du contenu sans
+    // module reste inatteignable. L'invariant a déjà cédé trois fois en silence
+    // côté tableur — d'où ce test, qui le vérifie dans les deux directions.
+    for (const game of gamesList) {
+      const lignes = contenuDuJeu(game.slug).length;
+      expect(
+        piocheDuContenu(game) ? lignes > 0 : lignes === 0,
+        `${game.title} : ${lignes} ligne(s) de contenu pour kit = ${game.kit ?? 'aucun'}`
+      ).toBe(true);
+    }
+
+    for (const slug of Object.keys(contenuLancerJeu)) {
+      expect(
+        gamesList.some((g) => g.slug === slug),
+        `contenu orphelin : ${slug}`
+      ).toBe(true);
+    }
   });
 
   it('conserve les slugs déjà publiés', () => {

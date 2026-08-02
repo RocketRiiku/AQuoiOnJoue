@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Outillage local. `.claude/worktrees/` contient des copies complètes du dépôt :
+# sans cette ligne, un `git add -A` distrait embarque tout le projet en double.
+.claude
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

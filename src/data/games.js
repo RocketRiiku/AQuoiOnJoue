@@ -27,6 +27,25 @@
  *                  entrer au catalogue avant la sienne, GameThumb affiche alors
  *                  la carte au point d'interrogation.
  *
+ * Le kit de jeu — trois champs facultatifs et indépendants. Le bouton « Lancer
+ * le jeu » apparaît dès que **l'un des trois** est renseigné : un jeu peut avoir
+ * un score sans contenu à tirer, ou un chrono sans score.
+ *
+ *  - kit         : modules d'interaction, cumulables.
+ *                  `prompts`       tire une question / un mot / un thème
+ *                  `distribution`  le téléphone tourne, chacun révèle son rôle
+ *                  `equipes`       constitution des équipes + score par équipe
+ *                  `regle-secrete` écran privé du meneur + tirage d'une règle
+ *  - scoring     : `compteur` (+1 / −1 par joueur), `manches` (un score par
+ *                  manche), `elimination` (dedans ou dehors).
+ *  - chronoTour  : durée d'**un seul tour**, en **secondes**. À ne pas confondre
+ *                  avec durationBase / durationPerPlayer, qui sont en minutes et
+ *                  servent à estimer la soirée.
+ *
+ * Les trois modules qui *tirent* du contenu — prompts, distribution,
+ * regle-secrete — exigent des lignes dans src/data/lancerJeu.js, et
+ * réciproquement. games.test.js tient l'invariant dans les deux sens.
+ *
  * Les libellés de `material`, `typeGame` et `level` alimentent directement les
  * filtres (cf. src/data/filterOptions.js) : ajouter un jeu avec un nouveau
  * libellé fait apparaître l'option, et aucune option ne peut donner 0 résultat.
@@ -591,7 +610,10 @@ export const gamesList = [
     material: ['Papier & stylo'],
     typeGame: ['Par équipe'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts', 'equipes'],
+    scoring: 'manches',
+    chronoTour: 30
   },
   {
     id: 30,

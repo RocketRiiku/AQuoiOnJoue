@@ -11,6 +11,7 @@ import SoireeLancement from './components/SoireeLancement';
 import PiedDePage from './components/PiedDePage';
 import Suggestions from './components/Suggestions';
 import MentionsLegales from './components/MentionsLegales';
+import KitJeu from './components/kit/KitJeu';
 import TriJeux from './components/TriJeux';
 import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
@@ -27,8 +28,11 @@ function App() {
     jeuAffiche,
     soiree,
     etape,
+    jeuDuKit,
     ouvrirJeu,
     fermerJeu,
+    ouvrirKit,
+    fermerKit,
     ouvrirSoiree,
     fermerSoiree,
     lancerSoiree,
@@ -211,7 +215,35 @@ function App() {
                 l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
                 cycle de vie JavaScript et ne peut pas rester bloqué. */}
             <div key={vue} className="anim-vue">
-              {vue === 'suggestions' ? (
+              {vue === 'kit' ? (
+                <div className="flex justify-center items-start min-h-[60svh]">
+                  {/* Le kit prend le même panneau crème que les autres vues :
+                      c'est le même objet — un jeu — vu pendant qu'on y joue. */}
+                  <section
+                    aria-labelledby="titre-kit"
+                    className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10"
+                  >
+                    {/* Le titre du jeu ancre l'écran : on peut y arriver par un
+                        lien, sans être passé par la fiche. Deux crans sous le
+                        titre d'une fiche — ici, c'est la partie qui compte. */}
+                    <h2
+                      id="titre-kit"
+                      className="font-titre text-2xl text-brique leading-tight mb-4"
+                    >
+                      {jeuDuKit.title}
+                    </h2>
+                    {/* Le kit se pose sur la fiche ou sur le déroulé : le
+                        libellé de sortie doit nommer l'écran où l'on retourne,
+                        sans quoi il promet la fiche et rend la soirée. */}
+                    <KitJeu
+                      game={jeuDuKit}
+                      joueurs={joueurs}
+                      onQuitter={fermerKit}
+                      libelleRetour={etape != null ? 'Retour à la soirée' : 'Retour à la fiche'}
+                    />
+                  </section>
+                </div>
+              ) : vue === 'suggestions' ? (
                 <div className="flex justify-center items-start min-h-[60svh]">
                   <Suggestions onRetour={fermerPage} />
                 </div>
@@ -226,6 +258,7 @@ function App() {
                     etape={etape}
                     onEtape={allerEtape}
                     onQuitter={quitterLancement}
+                    onLancerKit={ouvrirKit}
                     joueurs={joueurs}
                   />
                 </div>
@@ -253,6 +286,7 @@ function App() {
                         : undefined
                     }
                     joueurs={joueurs}
+                    onLancerKit={ouvrirKit}
                     dansSoiree={estDansSoiree(jeuAffiche.slug)}
                     onBasculerSoiree={basculerSoiree}
                   />

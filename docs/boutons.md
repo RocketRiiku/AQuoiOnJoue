@@ -209,7 +209,9 @@ gardent leur traitement propre, chacune cohérente en interne :
 
 | Famille | Où | Pourquoi à part |
 | --- | --- | --- |
-| Pastilles | `Pastille.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action. Deux vues s'en servent — les filtres (`Header.jsx`) et le choix du tri (`TriJeux.jsx`) |
+| Pastilles | `Pastille.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action. Trois vues s'en servent — les filtres (`Header.jsx`), le choix du tri (`TriJeux.jsx`) et le réglage d'un kit (`kit/`) |
+| Compteurs `< n >` | `Header.jsx`, `kit/` | réglage d'un nombre : même famille que les pastilles, un état et non une action |
+| Zones de réponse | `kit/EcranTour.jsx` | pendant un tour, « Trouvé » et « Passer » ne sont pas des actions de panneau mais **la table de jeu** — voir ci-dessous |
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
 | Fermeture d'un panneau | `Introduction.jsx` | la croix en coin est une convention universelle, elle n'a pas besoin d'un niveau d'emphase |
@@ -219,6 +221,62 @@ En cas d'hésitation entre ces familles et le système : si l'élément apparaî
 **une fois par écran** et fait quelque chose, c'est une action — il passe par
 `Bouton`. S'il se **répète** par élément de liste ou porte un état de filtre,
 il appartient à sa famille.
+
+## Le cas des kits de jeu
+
+Un jeu qui a son kit fait apparaître **« Lancer le jeu »**, sur sa fiche comme
+dans le déroulé d'une soirée. C'est alors **le principal de la vue**, et les
+actions qui l'entouraient descendent d'un cran :
+
+| Vue | Sans kit | Avec kit |
+| --- | --- | --- |
+| Fiche d'un jeu | principal « Retour aux jeux » (ou « Un autre jeu ? ») | principal **« Lancer le jeu »**, le reste en `secondaire` |
+| Déroulé de soirée | principal « Jeu suivant » | principal **« Lancer le jeu »**, « Jeu suivant » et « Précédent » en `secondaire` |
+
+C'est l'application directe de la règle du principal unique : *l'action que
+l'utilisateur veut le plus probablement*. On lit les règles pour jouer ; passer
+au jeu suivant ne vient qu'après. Ne pas ajouter un second bouton plein pour
+éviter de déplacer les autres — ce serait exactement l'incohérence que ce
+document combat.
+
+L'action de sortie du kit est un `discret destructeur` : quitter fait perdre la
+partie en cours. Son libellé nomme l'écran où l'on retourne — « Retour à la
+fiche » ou « Retour à la soirée » — parce que le kit se pose sur les deux.
+
+### Pendant un tour, l'écran n'est plus un panneau
+
+Les trente secondes d'un tour ne se pilotent pas comme un formulaire. « Trouvé »
+et « Passer » sortent donc du système, au même titre que la carte entière de la
+liste : ce sont **des surfaces de jeu**, pas des boutons de panneau.
+
+Trois règles, reprises de ce que font les applications du genre — Heads Up!,
+les jeux de charades, Fishbowl :
+
+- **elles occupent le bas de l'écran, sur toute la largeur.** C'est la zone que
+  le pouce atteint sans effort : la précision d'appui y est de 96 %, contre
+  61 % dès qu'il faut s'étirer (NN/g). On tape sous la pression du chrono,
+  parfois debout, un verre à la main ;
+- **la réussite est verte, le reste ne l'est pas.** `herbe-sombre` — le vert du
+  décor, à la seule teinte où le crème passe le seuil AA. Un aplat brique aurait
+  dit « action importante » là où il faut dire « c'est bon » ;
+- **elles sont doublées d'un glissement de la carte** — droite pour « trouvé »,
+  gauche pour « passer ». Un raccourci, jamais le seul chemin : le glissement
+  n'existe qu'au doigt, les deux surfaces restent la voie universelle ;
+- **chaque geste s'annule**, par un lien discret offert deux secondes et demie.
+  Deux surfaces larges et collées, tapées vite : l'erreur est prévisible, et un
+  point volé sans retour en arrière fausse toute la partie.
+
+Sur cet écran, seuls **deux chiffres et le mot** ont droit à la grande taille :
+le temps qui descend, les mots trouvés qui montent. Le nom de l'équipe et le
+tableau des scores ont leur place avant et après le tour, pas pendant.
+
+Le mot lui-même est posé sur une **carte** paille, pas sur une ligne de texte :
+c'est la métaphore du site, et c'est le papier qu'on vient de tirer du chapeau.
+
+Deux voiles couvrent le panneau et suspendent le jeu — le décompte d'entrée
+(3, 2, 1) et la pause. Tous deux sont **opaques** : à travers un voile
+translucide, le mot en cours reste lisible, et une pause ne doit pas donner la
+réponse.
 
 ## En cas de doute
 

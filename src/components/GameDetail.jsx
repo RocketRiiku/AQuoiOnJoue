@@ -11,12 +11,14 @@ import {
   Plus,
   Check,
   Dices,
+  Play,
   TriangleAlert
 } from 'lucide-react';
 import { ActionsObjet, BarreActions, Bouton, BoutonIcone } from './Bouton';
 import GameThumb from './GameThumb';
 import ShareButton from './ShareButton';
 import { lienSignalement } from '../utils/contact';
+import { kitDisponible } from './kit/registre';
 import {
   formatDuration,
   formatIdealPlayers,
@@ -44,11 +46,13 @@ function GameDetail({
   game,
   goBack,
   onAutreJeu,
+  onLancerKit,
   joueurs = null,
   dansSoiree = false,
   onBasculerSoiree
 }) {
   const headingRef = useRef(null);
+  const kitOuvrable = Boolean(onLancerKit) && kitDisponible(game);
 
   // Le focus suit la navigation : sans cela, un utilisateur au clavier ou au
   // lecteur d'écran resterait au début de la page après avoir ouvert la fiche.
@@ -166,14 +170,27 @@ function GameDetail({
         </p>
 
         <BarreActions>
+          {/* Le principal unique de la vue, quand le jeu a son kit : c'est
+              l'action que l'on vient chercher après avoir lu les règles. « Un
+              autre jeu ? » lui cède donc la place (docs/boutons.md). */}
+          {kitOuvrable && (
+            <Bouton variante="principal" icone={Play} onClick={onLancerKit}>
+              Lancer le jeu
+            </Bouton>
+          )}
+
           {onAutreJeu && (
-            <Bouton variante="principal" icone={Dices} onClick={onAutreJeu}>
+            <Bouton
+              variante={kitOuvrable ? 'secondaire' : 'principal'}
+              icone={Dices}
+              onClick={onAutreJeu}
+            >
               Un autre jeu ?
             </Bouton>
           )}
 
           <Bouton
-            variante={onAutreJeu ? 'secondaire' : 'principal'}
+            variante={kitOuvrable || onAutreJeu ? 'secondaire' : 'principal'}
             icone={ArrowLeft}
             onClick={goBack}
           >

@@ -46,7 +46,7 @@ Deux absences volontaires :
 
 ```
 src/
-  App.jsx                  aiguillage des quatre vues + vue liste
+  App.jsx                  aiguillage des vues + vue liste
   main.jsx                 point d'entrée, ErrorBoundary
   index.css                polices, animations CSS, réglages globaux
   components/
@@ -68,8 +68,10 @@ src/
     Suggestions.jsx        proposer un jeu au catalogue
     MentionsLegales.jsx    mentions légales
     ErrorBoundary.jsx      filet contre l'écran blanc
+    kit/                   les kits de jeu, voir plus bas
   data/
     games.js               ← le catalogue
+    lancerJeu.js           le contenu tiré par les kits
     filterOptions.js       options de filtre déduites du catalogue
   utils/
     useNavigation.js       ← URL, vues et sélection de soirée
@@ -78,6 +80,8 @@ src/
     trierJeux.js           les quatre ordres de la liste
     formatGame.js          libellés partagés, et le calcul des durées
     soiree.js              programme et fils rouges : affichage et déroulé
+    kit.js                 affichage du bouton « Lancer le jeu », invariants
+    troisFoisRien.js       le déroulé de ce jeu, en réducteur pur
     contact.js             adresse de contact, liens mailto et signalements
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
@@ -248,6 +252,112 @@ Le nombre de joueurs se saisit aussi au clavier. Le champ n'est borné que par l
 haut : borner aussi par le bas empêcherait de taper « 10 », le « 1 »
 intermédiaire étant réécrit en « 2 ».
 
+## Les kits de jeu
+
+Certains jeux ne se contentent pas de règles à lire : il faut tirer des mots,
+tenir un chrono, compter les points. C'est le rôle du kit, ouvert par le bouton
+**« Lancer le jeu »** de la fiche et du déroulé de soirée.
+
+**Un seul kit est écrit à ce jour**, celui de *Trois fois rien* — choisi comme
+banc d'essai parce que c'est le plus exigeant du catalogue : équipes, pioche,
+score par manche, chrono, et surtout les mêmes mots rejoués trois fois de suite.
+
+### Où vit quoi
+
+```
+src/data/lancerJeu.js              le contenu tiré (l'onglet « LancerJeu »)
+src/utils/kit.js                   règles d'affichage et invariants, sans JSX
+src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
+src/components/kit/
+  registre.js                      slug → composant, et « ce kit est-il prêt ? »
+  KitJeu.jsx                       aiguillage + repli si le kit manque
+  Chrono.jsx                       brique : décompte d'un tour, avec pause
+  EcranTour.jsx                    brique : l'écran de jeu (carte + réponses)
+  TableauScores.jsx                brique : grille équipes × manches, corrigeable
+  KitTroisFoisRien.jsx             l'orchestrateur du jeu
+```
+
+### Ce que l'écran de jeu doit au genre
+
+La première version affichait un formulaire : des lignes de texte, deux boutons
+de panneau, un chrono discret. Le tour se pilote autrement — voir
+[`docs/boutons.md`](docs/boutons.md#pendant-un-tour-lécran-nest-plus-un-panneau)
+pour les règles, et ce qui les motive :
+
+- **un décompte de trois secondes** avant que le chrono ne parte. Sans lui, les
+  premières secondes s'écoulent pendant qu'on lève encore le téléphone ;
+- **le mot sur une carte**, en très grand, seul au milieu de l'écran ;
+- **deux chiffres qui se font face** : le temps qui descend, les mots trouvés qui
+  montent. C'est la tension qu'on vient chercher dans un Time's Up, et elle ne se
+  lit pas dans une phrase ;
+- **les dix dernières secondes montent en pression** — le compteur passe au
+  brique, pulse, et se fait entendre : un tic-tac de deux hauteurs alternées,
+  puis une vibration sur les trois dernières. Le son se coupe depuis la pause ;
+- **deux surfaces de réponse pleine largeur en bas**, la réussite en vert, plus
+  le **glissement de la carte** (droite = trouvé, gauche = passer), qui va plus
+  vite que viser un bouton quand ça s'emballe ;
+- **« Annuler » pendant deux secondes et demie** après chaque geste. Les deux
+  surfaces sont larges et collées, on tape vite : un « Trouvé » de travers vole
+  un point *et* retire un mot du pot. Le réducteur mémorise le dernier geste
+  pour pouvoir le défaire — jamais plus d'un, et jamais au-delà du tour ;
+- **une pause atteignable à tout moment**, qui gèle le chrono sans rien perdre —
+  le temps restant est conservé, pas remis à la durée pleine. Son voile est
+  opaque : le mot en cours ne doit pas se lire à travers ;
+- **un tableau des scores corrigeable** : `−` et `+` sur la manche en cours,
+  remise à zéro par équipe, et « Recommencer la partie » depuis la pause.
+
+Deux barres de même épaisseur et de même teinte, à cent pixels l'une de l'autre,
+demandaient un temps d'arrêt pour savoir laquelle disait quoi. **L'orange plein
+est réservé au chrono**, seule information vivante de l'écran ; les trois manches
+sont de courts segments gris.
+
+**Le déroulé d'un jeu est un réducteur pur, séparé de son écran.** C'est ce qui
+rend testable la mécanique délicate — le pot qui se vide met fin à la manche
+même s'il reste du temps, un mot passé repart au fond, l'équipe qui n'a pas fini
+ouvre la manche suivante. Seize tests couvrent ces règles sans monter une seule
+ligne de DOM.
+
+### Un registre, pas un moteur unique
+
+Les briques sont communes, l'enchaînement appartient au jeu : *Trois fois rien*
+rejoue son pot trois fois, Undercover distribue des rôles, Petit Bac tire deux
+pioches à la fois. Vouloir un moteur unique reviendrait à plier cinquante cas
+particuliers dans une même boucle.
+
+Le bouton n'apparaît que si **deux conditions** sont réunies : le catalogue
+déclare un kit, *et* le composant existe (`registre.js`). La seconde est
+transitoire — sans elle, le bouton surgirait dès l'import des données, avant
+l'écran qui va avec.
+
+### Les trois champs du catalogue
+
+`kit`, `scoring` et `chronoTour` sont facultatifs et **indépendants** : le bouton
+apparaît dès que l'un des trois est renseigné. Un jeu peut compter des points
+sans rien avoir à tirer, ou cadencer des tours sans compter.
+
+L'invariant à tenir, vérifié dans les deux sens par
+[`games.test.js`](src/data/games.test.js) : un module qui pioche (`prompts`,
+`distribution`, `regle-secrete`) exige des lignes dans `lancerJeu.js`, et
+réciproquement. Sinon le kit tire dans le vide, ou du contenu écrit reste
+inatteignable — ce qui est déjà arrivé trois fois côté tableur.
+
+### Le kit vit dans l'URL, pas son état
+
+`?kit=1` se pose sur la vue courante sans effacer `jeu` ni `etape` : le quitter
+ramène exactement d'où l'on venait, fiche ou déroulé, et le bouton Retour du
+navigateur fait ce qu'on attend. La partie elle-même — pot, scores, manche — est
+un état React : un rechargement la perd, et c'est assumé. Une soirée ne se
+partage pas au milieu d'une manche.
+
+### Ce qu'il ne fait pas
+
+- **Aucun prénom n'est demandé.** Les équipes sont numérotées. Taper huit
+  prénoms sur un téléphone en pleine soirée coûte plus cher que ça ne rapporte,
+  et les mentions légales n'ont alors rien de plus à déclarer.
+- **Le temps restant ne se reporte pas** d'une manche à l'autre quand le pot se
+  vide en plein tour. La règle officielle du jeu le prévoit ; les règles de la
+  fiche n'en parlent pas.
+
 ## Navigation
 
 Tout passe par l'URL, via [`useNavigation.js`](src/utils/useNavigation.js) — un
@@ -260,6 +370,8 @@ hook unique, seul propriétaire de l'URL *et* du stockage local (deux hooks
 | `/?jeu=undercover` | la fiche d'un jeu |
 | `/?soiree=liars-club,undercover` | le programme de la soirée |
 | `/?soiree=...&etape=2` | le déroulé, 2ᵉ jeu |
+| `/?jeu=trois-fois-rien&kit=1` | le kit du jeu, depuis sa fiche |
+| `/?soiree=...&etape=2&kit=1` | le kit du jeu en cours de soirée |
 | `/?page=suggestions` | proposer un jeu |
 | `/?page=mentions-legales` | les mentions légales |
 
@@ -454,7 +566,7 @@ npm run build:fonts
 
 ## Tests
 
-179 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+386 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -539,13 +651,11 @@ erreur en console : le rendu retombe simplement sur une police système.
 
 Par ordre d'intérêt selon la dernière revue :
 
-1. **Les kits de jeu** — le tableur source porte déjà, pour 36 des 50 jeux, de
-   quoi alimenter un bouton « Lancer le jeu » : mots à faire deviner, rôles à
-   distribuer, questions et leurs réponses, compteurs de score, chronomètres de
-   tour. Rien n'en est intégré pour l'instant, et les règles de huit jeux
-   (Pyramide, Trois fois rien, Le Fitch, Le Petit Menteur, Petit Bac, Sorry mon
-   french, Pitch de ouf, Cow-boy) mentionnent une « liste » qui n'existera
-   qu'avec eux.
+1. **Les kits de jeu** — un seul est écrit, celui de Trois fois rien
+   (voir [Les kits de jeu](#les-kits-de-jeu)). Le tableur source porte de quoi
+   en alimenter 36. Les règles de sept autres jeux (Pyramide, Le Fitch, Le Petit
+   Menteur, Petit Bac, Sorry mon french, Pitch de ouf, Cow-boy) mentionnent déjà
+   une « liste » qui n'existera qu'avec leur kit.
 2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
 3. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable

@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Clock, PartyPopper, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, PartyPopper, Play, Users, X } from 'lucide-react';
 import { Bouton } from './Bouton';
 import GameThumb from './GameThumb';
 import { formatDuration, formatMaterial, formatPlayers } from '../utils/formatGame';
 import { ordreDeroule } from '../utils/soiree';
+import { kitDisponible } from './kit/registre';
 
 /**
  * Déroulé de la soirée, un jeu à la fois.
@@ -13,13 +14,21 @@ import { ordreDeroule } from '../utils/soiree';
  * L'étape vit dans l'URL, donc les flèches du navigateur fonctionnent aussi et
  * un rafraîchissement ne perd pas la place.
  */
-function SoireeLancement({ soiree, etape, onEtape, onQuitter, joueurs = null }) {
+function SoireeLancement({
+  soiree,
+  etape,
+  onEtape,
+  onQuitter,
+  onLancerKit,
+  joueurs = null
+}) {
   // Les fils rouges ouvrent la soirée : c'est là qu'on bannit les mots ou qu'on
   // distribue les missions, avant que le programme s'enchaîne par-dessus.
   const deroule = ordreDeroule(soiree);
   const game = deroule[etape - 1];
   const titreRef = useRef(null);
   const dernier = etape === deroule.length;
+  const kitOuvrable = Boolean(onLancerKit) && game != null && kitDisponible(game);
 
   // Le focus suit le jeu affiché, sinon un utilisateur au clavier reste bloqué
   // sur le bouton précédent après chaque changement d'étape.
@@ -106,16 +115,28 @@ function SoireeLancement({ soiree, etape, onEtape, onQuitter, joueurs = null }) 
         </p>
       </div>
 
-      {/* Le principal d'abord, à gauche : « avancer » est l'action attendue,
-          « précédent » n'est qu'un repli (docs/boutons.md). */}
+      {/* Le principal d'abord, à gauche (docs/boutons.md). Quand le jeu a son
+          kit, c'est lui : on est ici pour jouer *ce* jeu, passer au suivant ne
+          vient qu'après. Avancer et reculer redescendent alors d'un cran,
+          plutôt que d'ajouter un second bouton de forte emphase. */}
       <div className="mt-10 flex flex-wrap items-center gap-3">
+        {kitOuvrable && (
+          <Bouton variante="principal" icone={Play} onClick={onLancerKit}>
+            Lancer le jeu
+          </Bouton>
+        )}
+
         {dernier ? (
-          <Bouton variante="principal" icone={PartyPopper} onClick={onQuitter}>
+          <Bouton
+            variante={kitOuvrable ? 'secondaire' : 'principal'}
+            icone={PartyPopper}
+            onClick={onQuitter}
+          >
             Terminer la soirée
           </Bouton>
         ) : (
           <Bouton
-            variante="principal"
+            variante={kitOuvrable ? 'secondaire' : 'principal'}
             iconeApres={ChevronRight}
             onClick={() => onEtape(etape + 1)}
           >

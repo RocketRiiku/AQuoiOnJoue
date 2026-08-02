@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ordreDeroule } from './soiree';
 
 /**
  * Navigation et sélection de soirée, pilotées par l'URL.
@@ -12,6 +13,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
  *   /?jeu=undercover                 → la fiche d'un jeu
  *   /?soiree=liars-club,undercover   → le programme de la soirée
  *   /?soiree=...&etape=2             → mode « lancer la soirée », 2ᵉ jeu
+ *   /?jeu=trois-fois-rien&kit=1      → le kit du jeu affiché
+ *   /?soiree=...&etape=2&kit=1       → le kit du jeu en cours de soirée
  *   /?page=mentions-legales          → une page à propos du site
  *
  * Source de vérité de la sélection : le paramètre `soiree` s'il est présent
@@ -23,6 +26,7 @@ const P_JEU = 'jeu';
 const P_SOIREE = 'soiree';
 const P_ETAPE = 'etape';
 const P_PAGE = 'page';
+const P_KIT = 'kit';
 
 /**
  * Pages à propos du site, hors parcours de jeu. Elles priment sur le reste :
@@ -61,7 +65,8 @@ const lireParams = () => {
     jeu: p.get(P_JEU),
     soiree: p.get(P_SOIREE),
     etape: p.get(P_ETAPE),
-    page: p.get(P_PAGE)
+    page: p.get(P_PAGE),
+    kit: p.get(P_KIT)
   };
 };
 
@@ -128,8 +133,25 @@ export function useNavigation(games) {
 
   const page = params.page !== null && params.page in PAGES ? params.page : null;
 
+  /**
+   * Le kit se greffe sur le jeu affiché — la fiche, ou l'étape en cours du
+   * déroulé. Il ne se dit donc pas d'où il vient : le quitter efface `kit` et
+   * ramène exactement à l'écran d'où l'on partait.
+   */
+  const jeuDuKit = jeuAffiche ?? (enLancement ? ordreDeroule(soiree)[etape - 1] : null);
+  const enKit = params.kit !== null && jeuDuKit != null;
+
   const vue =
-    page ?? (enLancement ? 'lancement' : enSoiree ? 'soiree' : jeuAffiche ? 'jeu' : 'liste');
+    page ??
+    (enKit
+      ? 'kit'
+      : enLancement
+        ? 'lancement'
+        : enSoiree
+          ? 'soiree'
+          : jeuAffiche
+            ? 'jeu'
+            : 'liste');
 
   /** Écrit l'URL et l'état local en un seul endroit. */
   const naviguer = useCallback((prochains, { remplacer = false } = {}) => {
@@ -150,16 +172,30 @@ export function useNavigation(games) {
     else if (params.page && !page) naviguer({ [P_PAGE]: null }, { remplacer: true });
     else if (params.etape !== null && !enLancement) {
       naviguer({ [P_ETAPE]: null }, { remplacer: true });
+    } else if (params.kit !== null && !enKit) {
+      // `kit` sans jeu auquel se rattacher ne désigne rien.
+      naviguer({ [P_KIT]: null }, { remplacer: true });
     }
-  }, [params.jeu, params.etape, params.page, jeuAffiche, page, enLancement, naviguer]);
+  }, [
+    params.jeu,
+    params.etape,
+    params.page,
+    params.kit,
+    jeuAffiche,
+    page,
+    enLancement,
+    enKit,
+    naviguer
+  ]);
 
   const titre = useMemo(() => {
     if (page) return `${PAGES[page]} — À quoi on joue ?`;
+    if (vue === 'kit') return `${jeuDuKit.title}, on joue — À quoi on joue ?`;
     if (vue === 'lancement') return `Jeu ${etape} sur ${soiree.length} — À quoi on joue ?`;
     if (vue === 'soiree') return `Ma soirée — À quoi on joue ?`;
     if (vue === 'jeu') return `${jeuAffiche.title} — À quoi on joue ?`;
     return TITRE_PAR_DEFAUT;
-  }, [vue, page, etape, soiree.length, jeuAffiche]);
+  }, [vue, page, etape, soiree.length, jeuAffiche, jeuDuKit]);
 
   useEffect(() => {
     document.title = titre;
@@ -226,17 +262,33 @@ export function useNavigation(games) {
     // de la vue, et la laisser en place figerait l'écran sur les mentions.
     ouvrirJeu: useCallback(
       (game) =>
-        naviguer({ [P_JEU]: game.slug, [P_SOIREE]: null, [P_ETAPE]: null, [P_PAGE]: null }),
+        naviguer({
+          [P_JEU]: game.slug,
+          [P_SOIREE]: null,
+          [P_ETAPE]: null,
+          [P_PAGE]: null,
+          [P_KIT]: null
+        }),
       [naviguer]
     ),
     fermerJeu: useCallback(() => naviguer({ [P_JEU]: null }), [naviguer]),
+
+    /**
+     * Le kit se pose sur la vue courante et s'en retire : ni `jeu` ni `etape`
+     * ne bougent, si bien que le quitter ramène là d'où l'on venait, fiche ou
+     * déroulé de soirée.
+     */
+    jeuDuKit,
+    ouvrirKit: useCallback(() => naviguer({ [P_KIT]: '1' }), [naviguer]),
+    fermerKit: useCallback(() => naviguer({ [P_KIT]: null }), [naviguer]),
     ouvrirSoiree: useCallback(
       () =>
         naviguer({
           [P_SOIREE]: normaliser(slugsSoiree).join(','),
           [P_JEU]: null,
           [P_ETAPE]: null,
-          [P_PAGE]: null
+          [P_PAGE]: null,
+          [P_KIT]: null
         }),
       [naviguer, slugsSoiree, normaliser]
     ),
@@ -250,24 +302,43 @@ export function useNavigation(games) {
           [P_SOIREE]: normaliser(slugsSoiree).join(','),
           [P_ETAPE]: '1',
           [P_JEU]: null,
-          [P_PAGE]: null
+          [P_PAGE]: null,
+          [P_KIT]: null
         }),
       [naviguer, slugsSoiree, normaliser]
     ),
-    allerEtape: useCallback((n) => naviguer({ [P_ETAPE]: String(n) }), [naviguer]),
-    quitterLancement: useCallback(() => naviguer({ [P_ETAPE]: null }), [naviguer]),
+    allerEtape: useCallback(
+      (n) => naviguer({ [P_ETAPE]: String(n), [P_KIT]: null }),
+      [naviguer]
+    ),
+    quitterLancement: useCallback(
+      () => naviguer({ [P_ETAPE]: null, [P_KIT]: null }),
+      [naviguer]
+    ),
 
     /** Retour à la liste, d'où que l'on vienne : le titre du site y mène. */
     retourAccueil: useCallback(
       () =>
-        naviguer({ [P_JEU]: null, [P_SOIREE]: null, [P_ETAPE]: null, [P_PAGE]: null }),
+        naviguer({
+          [P_JEU]: null,
+          [P_SOIREE]: null,
+          [P_ETAPE]: null,
+          [P_PAGE]: null,
+          [P_KIT]: null
+        }),
       [naviguer]
     ),
 
     // Pages à propos du site
     ouvrirPage: useCallback(
       (nom) =>
-        naviguer({ [P_PAGE]: nom, [P_JEU]: null, [P_SOIREE]: null, [P_ETAPE]: null }),
+        naviguer({
+          [P_PAGE]: nom,
+          [P_JEU]: null,
+          [P_SOIREE]: null,
+          [P_ETAPE]: null,
+          [P_KIT]: null
+        }),
       [naviguer]
     ),
     fermerPage: useCallback(() => naviguer({ [P_PAGE]: null }), [naviguer]),
