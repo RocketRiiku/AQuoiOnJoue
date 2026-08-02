@@ -26,14 +26,14 @@ const jouer = (etat, ...actions) =>
 describe('composerPot', () => {
   it('prélève cinq mots par joueur', () => {
     const mots = Array.from({ length: 120 }, (_, i) => `mot ${i}`);
-    expect(composerPot(mots, 8, sansMelange)).toHaveLength(8 * MOTS_PAR_JOUEUR);
+    expect(composerPot(mots, 8, { melanger: sansMelange })).toHaveLength(8 * MOTS_PAR_JOUEUR);
   });
 
   it('ne réclame jamais plus que le catalogue ne contient', () => {
     // Seize joueurs demanderaient 80 mots ; à trente disponibles, on prend tout
     // plutôt que de laisser des trous au milieu d'une manche.
     const mots = Array.from({ length: 30 }, (_, i) => `mot ${i}`);
-    expect(composerPot(mots, 16, sansMelange)).toHaveLength(30);
+    expect(composerPot(mots, 16, { melanger: sansMelange })).toHaveLength(30);
   });
 
   it('ne modifie pas la liste reçue', () => {

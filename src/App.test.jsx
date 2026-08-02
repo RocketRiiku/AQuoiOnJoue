@@ -496,6 +496,96 @@ describe('parcours : lancer le kit d’un jeu', () => {
     expect(window.location.search).toBe('?jeu=trois-fois-rien');
   });
 
+  it('sauve la partie, la signale sur la liste, et la reprend', async () => {
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
+    const u = rendre();
+
+    await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('button', { name: /c’est parti/i }));
+
+    // Sortie brutale, comme un doigt sur la bannière du site.
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+
+    const tuile = await screen.findByRole('button', { name: /partie en cours/i });
+    expect(tuile).toHaveTextContent('Trois fois rien');
+
+    await u.click(tuile);
+
+    // Une seule entrée d'historique : la fiche n'est pas traversée au passage.
+    expect(window.location.search).toBe('?jeu=trois-fois-rien&kit=1');
+    expect(await screen.findByText(/une partie est en cours/i)).toBeInTheDocument();
+
+    await u.click(screen.getByRole('button', { name: /reprendre la partie/i }));
+    // Un tour interrompu ne reprend jamais en plein chrono.
+    expect(screen.getByRole('button', { name: /c’est parti/i })).toBeInTheDocument();
+  });
+
+  it('permet de repartir de zéro plutôt que de reprendre', async () => {
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
+    const u = rendre();
+    await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
+
+    await u.click(screen.getByRole('button', { name: /nouvelle partie/i }));
+
+    expect(screen.getByText(/combien êtes-vous/i)).toBeInTheDocument();
+    // La sauvegarde est levée : la liste ne la propose plus.
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    expect(screen.queryByRole('button', { name: /partie en cours/i })).not.toBeInTheDocument();
+  });
+
+  it('abandonne la partie et revient à la liste', async () => {
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
+    const u = rendre();
+    await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('button', { name: /c’est parti/i }));
+
+    await u.click(await screen.findByRole('button', { name: /mettre le jeu en pause/i }));
+    await u.click(screen.getByRole('button', { name: /abandonner la partie/i }));
+
+    // Retour à la liste, et plus rien à reprendre.
+    expect(await screen.findByLabelText(/rechercher un jeu/i)).toBeInTheDocument();
+    expect(window.location.search).toBe('');
+    expect(screen.queryByRole('button', { name: /partie en cours/i })).not.toBeInTheDocument();
+  });
+
+  it('supprime la partie depuis l’écran de reprise, sans la rejouer', async () => {
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
+    const u = rendre();
+    await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
+
+    // L'abandon est offert là où l'on décide du sort de la partie, sans avoir
+    // à la reprendre pour aller le chercher dans la pause.
+    await u.click(screen.getByRole('button', { name: /abandonner la partie/i }));
+
+    expect(await screen.findByLabelText(/rechercher un jeu/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /partie en cours/i })).not.toBeInTheDocument();
+  });
+
+  it('ne garde qu’une partie : la dernière écrase la précédente', async () => {
+    window.localStorage.clear();
+    window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
+    const u = rendre();
+
+    await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
+    await u.click(screen.getByRole('button', { name: /nouvelle partie/i }));
+    await u.click(screen.getByRole('button', { name: /remplir le pot/i }));
+    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+
+    // Une seule clé de stockage, donc une seule tuile : la partie précédente a
+    // été écrasée, elle ne peut pas ressurgir à côté.
+    expect(await screen.findAllByRole('button', { name: /partie en cours/i })).toHaveLength(1);
+  });
+
   it('ne propose pas de kit sur un jeu qui n’en a pas', async () => {
     window.history.replaceState({}, '', '/?jeu=le-liars-club');
     window.history.replaceState({}, '', '/?jeu=liars-club');

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { PartyPopper, Search, Star } from 'lucide-react';
+import { PartyPopper, Search, Star, Timer } from 'lucide-react';
 import BoutonTirage from './components/BoutonTirage';
 import Header from './components/Header';
 import Tuile from './components/Tuile';
 import GameCard from './components/GameCard';
+import GameThumb from './components/GameThumb';
 import GameDetail from './components/GameDetail';
 import Introduction from './components/Introduction';
 import SoireePage from './components/SoireePage';
@@ -21,6 +22,7 @@ import { estRecommande, nombreJoueurs } from './utils/formatGame';
 import { TRI_PAR_DEFAUT, trierJeux } from './utils/trierJeux';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
+import { lirePartie } from './utils/partieEnCours';
 
 function App() {
   const {
@@ -32,6 +34,7 @@ function App() {
     ouvrirJeu,
     fermerJeu,
     ouvrirKit,
+    ouvrirKitDuJeu,
     fermerKit,
     ouvrirSoiree,
     fermerSoiree,
@@ -52,6 +55,16 @@ function App() {
   const [filters, setFilters] = useState({ ...DEFAULT_FILTERS, material: [] });
   const [searchTerm, setSearchTerm] = useState('');
   const [tri, setTri] = useState(TRI_PAR_DEFAUT);
+
+  /**
+   * Une partie de kit laissée en plan se signale sur la liste.
+   *
+   * Relue à chaque changement de vue plutôt qu'à chaque rendu : elle ne bouge
+   * qu'en quittant le kit, et un accès au stockage par frappe au clavier dans
+   * la recherche serait payé pour rien.
+   */
+  const [partieEnCours, setPartieEnCours] = useState(lirePartie);
+  useEffect(() => setPartieEnCours(lirePartie()), [vue]);
 
   /**
    * L'effectif de la soirée, saisi une fois dans le filtre « Joueurs », suit
@@ -226,12 +239,19 @@ function App() {
                     {/* Le titre du jeu ancre l'écran : on peut y arriver par un
                         lien, sans être passé par la fiche. Deux crans sous le
                         titre d'une fiche — ici, c'est la partie qui compte. */}
-                    <h2
-                      id="titre-kit"
-                      className="font-titre text-2xl text-brique leading-tight mb-4"
-                    >
-                      {jeuDuKit.title}
-                    </h2>
+                    <div className="flex items-center gap-3 mb-4">
+                      {/* La carte du jeu, en petit : le kit reste rattaché à
+                          l'objet qu'on a ouvert, et non un écran hors sol. */}
+                      <div className="w-10 h-14 shrink-0 rounded-lg overflow-hidden shadow-md -rotate-2 bg-paille">
+                        <GameThumb game={jeuDuKit} />
+                      </div>
+                      <h2
+                        id="titre-kit"
+                        className="font-titre text-2xl text-brique leading-tight"
+                      >
+                        {jeuDuKit.title}
+                      </h2>
+                    </div>
                     {/* Le kit se pose sur la fiche ou sur le déroulé : le
                         libellé de sortie doit nommer l'écran où l'on retourne,
                         sans quoi il promet la fiche et rend la soirée. */}
@@ -239,6 +259,7 @@ function App() {
                       game={jeuDuKit}
                       joueurs={joueurs}
                       onQuitter={fermerKit}
+                      onRetourAccueil={retourAccueil}
                       libelleRetour={etape != null ? 'Retour à la soirée' : 'Retour à la fiche'}
                     />
                   </section>
@@ -329,6 +350,20 @@ function App() {
                       disabled={aucunResultat}
                     />
                   </div>
+
+                  {/* Une partie en cours passe devant « Ma soirée » : c'est
+                      la seule chose sur cette page qui attend qu'on y revienne,
+                      et le chrono le dit d'un coup d'œil. */}
+                  {partieEnCours && (
+                    <div className="flex justify-center mb-3">
+                      <Tuile
+                        icone={Timer}
+                        titre="Partie en cours"
+                        description={`« ${partieEnCours.titre} »`}
+                        onClick={() => ouvrirKitDuJeu(partieEnCours.slug)}
+                      />
+                    </div>
+                  )}
 
                   {/* Entrée vers une section, pas une action : une tuile plutôt
                       qu'un bouton, cf. docs/boutons.md. La ligne d'explication

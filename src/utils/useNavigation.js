@@ -280,6 +280,23 @@ export function useNavigation(games) {
      */
     jeuDuKit,
     ouvrirKit: useCallback(() => naviguer({ [P_KIT]: '1' }), [naviguer]),
+
+    /**
+     * Ouvre directement le kit d'un jeu, sans passer par sa fiche. Une seule
+     * entrée d'historique : deux navigations enchaînées obligeraient à appuyer
+     * deux fois sur Retour pour revenir à la liste.
+     */
+    ouvrirKitDuJeu: useCallback(
+      (slug) =>
+        naviguer({
+          [P_JEU]: slug,
+          [P_KIT]: '1',
+          [P_SOIREE]: null,
+          [P_ETAPE]: null,
+          [P_PAGE]: null
+        }),
+      [naviguer]
+    ),
     fermerKit: useCallback(() => naviguer({ [P_KIT]: null }), [naviguer]),
     ouvrirSoiree: useCallback(
       () =>

@@ -1,10 +1,25 @@
-import { useMemo, useReducer, useState } from 'react';
-import { ArrowLeft, Pause as IconePause, Play, RotateCw, Volume2, VolumeX, X } from 'lucide-react';
+import { useEffect, useId, useMemo, useReducer, useState } from 'react';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  Pause as IconePause,
+  Play,
+  RotateCw,
+  ListPlus,
+  Settings2,
+  Trash2,
+  Volume2,
+  VolumeX,
+  X
+} from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
 import Pastille from '../Pastille';
 import EcranTour from './EcranTour';
 import TableauScores from './TableauScores';
+import DialoguePot from './DialoguePot';
 import { contenuDuJeu } from '../../data/lancerJeu';
+import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
 import {
   composerPot,
   etatInitial,
@@ -14,6 +29,7 @@ import {
   motCourant,
   nomsEquipes,
   reducteur,
+  reprendre,
   scoreDuTour,
   totalEquipe,
   vainqueurs
@@ -21,60 +37,117 @@ import {
 
 const EQUIPES_POSSIBLES = [2, 3, 4];
 
+/** Bornes des paramètres avancés. Larges, mais pas absurdes. */
+const BORNES = { duree: [10, 180], motsParJoueur: [2, 12] };
+
 /**
- * Réglage d'avant-partie : l'effectif fixe la taille du pot, le nombre
- * d'équipes fixe la grille des scores. Rien d'autre n'est demandé — aucun
- * prénom à saisir, parce que taper huit prénoms sur un téléphone au milieu
- * d'une soirée coûte plus cher que ça ne rapporte.
+ * Réglage d'un nombre : deux flèches et une valeur.
+ *
+ * Repris du filtre « Joueurs » de la liste. C'est un contrôle de formulaire,
+ * pas une action — il ne relève donc pas du système de boutons, cf.
+ * docs/boutons.md.
+ */
+function Compteur({ label, valeur, unite, min, max, pas = 1, onChange }) {
+  const borner = (n) => Math.min(max, Math.max(min, n));
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        type="button"
+        aria-label={`Diminuer : ${label}`}
+        onClick={() => onChange(borner(valeur - pas))}
+        disabled={valeur <= min}
+        className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
+      >
+        &lt;
+      </button>
+      <span
+        aria-live="polite"
+        className="font-titre text-2xl text-encre tabular-nums min-w-[3rem] text-center"
+      >
+        {valeur}
+        {unite && <span className="text-base text-ardoise/70 ml-0.5">{unite}</span>}
+      </span>
+      <button
+        type="button"
+        aria-label={`Augmenter : ${label}`}
+        onClick={() => onChange(borner(valeur + pas))}
+        disabled={valeur >= max}
+        className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
+      >
+        &gt;
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Réglage d'avant-partie.
+ *
+ * L'essentiel tient en deux questions — combien de joueurs, combien d'équipes.
+ * Le reste se déplie : durée d'un tour, papiers par joueur, noms des équipes.
+ * Replié par défaut parce que les valeurs par défaut conviennent presque
+ * toujours, et qu'une page de formulaire entre l'envie de jouer et la première
+ * carte est le meilleur moyen de faire reposer le téléphone.
+ *
+ * Même motif que « Plus de filtres » et « Trier » : un bouton discret, une
+ * grille qui passe de 0fr à 1fr, `inert` tant que c'est fermé.
  */
 function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleRetour }) {
   const [joueurs, setJoueurs] = useState(joueursConnus ?? game.idealPlayersMin);
-  const [equipes, setEquipes] = useState(2);
+  const [nbEquipes, setNbEquipes] = useState(2);
+  const [duree, setDuree] = useState(game.chronoTour);
+  const [motsParJoueur, setMotsParJoueur] = useState(MOTS_PAR_JOUEUR);
+  const [noms, setNoms] = useState(() => nomsEquipes(4));
+  const [deplie, setDeplie] = useState(false);
+  const [potChoisi, setPotChoisi] = useState(null);
+  // `null` = fermée ; sinon, la liste avec laquelle la modale s'est ouverte.
+  // Le tirage se fait au moment du clic et pas à chaque rendu, sans quoi les
+  // mots changeraient sous les yeux à la moindre frappe ailleurs.
+  const [editionPot, setEditionPot] = useState(null);
+  const idPanneau = useId();
 
-  const taillePot = Math.min(joueurs * MOTS_PAR_JOUEUR, mots.length);
-  const potPlafonne = taillePot < joueurs * MOTS_PAR_JOUEUR;
+  const tailleTiree = Math.min(joueurs * motsParJoueur, mots.length);
+  const taillePot = potChoisi ? potChoisi.length : tailleTiree;
+  const potPlafonne = !potChoisi && tailleTiree < joueurs * motsParJoueur;
 
-  const pas = (delta) =>
-    setJoueurs((n) => Math.min(game.maxPlayers, Math.max(game.minPlayers, n + delta)));
+  // Changer l'effectif ou le nombre de papiers rebat les cartes : garder une
+  // liste taillée pour six joueurs alors qu'on vient d'en annoncer douze
+  // tromperait sur ce qui va être joué.
+  const rejouerLeTirage = (maj) => {
+    setPotChoisi(null);
+    maj();
+  };
+
+  // Un nom laissé vide retombe sur « Équipe n » : mieux vaut un nom générique
+  // qu'une colonne sans en-tête dans le tableau des scores.
+  const nomsRetenus = nomsEquipes(nbEquipes).map(
+    (defaut, i) => noms[i]?.trim() || defaut
+  );
+
+  const renommer = (index, valeur) =>
+    setNoms((actuels) => actuels.map((n, i) => (i === index ? valeur : n)));
 
   return (
     <>
-      <p className="text-ardoise font-texte text-lg">
-        Trois manches sur les mêmes mots, {game.chronoTour} secondes par tour. Je tire le
-        pot, je tiens le chrono et je compte les points.
+      {/* Le chapô du catalogue d'abord — ce que le jeu est —, la mécanique du
+          kit ensuite — ce que le site prend en charge. */}
+      <p className="text-ardoise font-texte text-lg">{game.description}</p>
+      <p className="text-ardoise/80 text-sm mt-1">
+        {duree} secondes par tour. Je tire le pot, je tiens le chrono et je compte les
+        points.
       </p>
 
       <div className="mt-6 flex flex-col gap-5">
         <div>
           <p className="font-titre text-encre">Combien êtes-vous&nbsp;?</p>
-          {/* Même contrôle que le filtre « Joueurs » de la liste : deux flèches
-              et un nombre. C'est un réglage de formulaire, pas une action — il
-              ne relève donc pas du système de boutons (docs/boutons.md). */}
-          <div className="flex items-center gap-3 mt-1">
-            <button
-              type="button"
-              aria-label="Moins de joueurs"
-              onClick={() => pas(-1)}
-              disabled={joueurs <= game.minPlayers}
-              className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
-            >
-              &lt;
-            </button>
-            <span
-              aria-live="polite"
-              className="font-titre text-3xl text-encre tabular-nums w-10 text-center"
-            >
-              {joueurs}
-            </span>
-            <button
-              type="button"
-              aria-label="Plus de joueurs"
-              onClick={() => pas(1)}
-              disabled={joueurs >= game.maxPlayers}
-              className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
-            >
-              &gt;
-            </button>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+            <Compteur
+              label="nombre de joueurs"
+              valeur={joueurs}
+              min={game.minPlayers}
+              max={game.maxPlayers}
+              onChange={(n) => rejouerLeTirage(() => setJoueurs(n))}
+            />
             <span className="text-ardoise/80 text-sm">
               soit {taillePot} mots dans le pot
               {potPlafonne && ' (tout ce que j’ai en réserve)'}
@@ -86,10 +159,91 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
           <p className="font-titre text-encre">Combien d’équipes&nbsp;?</p>
           <div className="flex flex-wrap gap-2 mt-2">
             {EQUIPES_POSSIBLES.map((n) => (
-              <Pastille key={n} actif={equipes === n} onClick={() => setEquipes(n)}>
+              <Pastille key={n} actif={nbEquipes === n} onClick={() => setNbEquipes(n)}>
                 {n} équipes
               </Pastille>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <Bouton
+          variante="discret"
+          icone={Settings2}
+          iconeApres={deplie ? ChevronUp : ChevronDown}
+          onClick={() => setDeplie((v) => !v)}
+          aria-expanded={deplie}
+          aria-controls={idPanneau}
+        >
+          Paramètres avancés
+        </Bouton>
+
+        <div
+          id={idPanneau}
+          inert={!deplie}
+          className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+            deplie ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-4 bg-paille/60 rounded-2xl px-4 py-4 flex flex-col gap-5">
+              <div>
+                <p className="font-titre text-encre">Durée d’un tour</p>
+                <Compteur
+                  label="durée d’un tour"
+                  valeur={duree}
+                  unite="s"
+                  pas={5}
+                  min={BORNES.duree[0]}
+                  max={BORNES.duree[1]}
+                  onChange={setDuree}
+                />
+              </div>
+
+              <div>
+                <p className="font-titre text-encre">Papiers par joueur</p>
+                <Compteur
+                  label="papiers par joueur"
+                  valeur={motsParJoueur}
+                  min={BORNES.motsParJoueur[0]}
+                  max={BORNES.motsParJoueur[1]}
+                  onChange={(n) => rejouerLeTirage(() => setMotsParJoueur(n))}
+                />
+                {/* `discret` : c'est une action auxiliaire d'un panneau déjà
+                    replié, et la taille d'un `secondaire` y écrasait tout le
+                    reste des réglages. */}
+                <Bouton
+                  variante="discret"
+                  icone={ListPlus}
+                  className="mt-3"
+                  onClick={() =>
+                    setEditionPot(potChoisi ?? composerPot(mots, joueurs, { motsParJoueur }))
+                  }
+                >
+                  Voir et modifier les mots
+                </Bouton>
+              </div>
+
+              <div>
+                <p className="font-titre text-encre">Noms des équipes</p>
+                <div className="flex flex-col gap-2 mt-2">
+                  {nomsEquipes(nbEquipes).map((defaut, i) => (
+                    <label key={defaut} className="flex items-center gap-3 text-sm">
+                      <span className="text-ardoise/80 w-20 shrink-0">Équipe {i + 1}</span>
+                      <input
+                        type="text"
+                        value={noms[i] ?? ''}
+                        placeholder={defaut}
+                        maxLength={24}
+                        onChange={(e) => renommer(i, e.target.value)}
+                        className="flex-1 min-w-0 rounded-full bg-white/80 px-3 py-1.5 text-encre placeholder:text-ardoise/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -99,9 +253,13 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
           variante="principal"
           icone={Play}
           onClick={() =>
-            onDemarrer(
-              etatInitial({ pot: composerPot(mots, joueurs), equipes: nomsEquipes(equipes) })
-            )
+            onDemarrer({
+              etat: etatInitial({
+                pot: potChoisi ?? composerPot(mots, joueurs, { motsParJoueur }),
+                equipes: nomsRetenus
+              }),
+              reglages: { duree, motsParJoueur }
+            })
           }
         >
           Remplir le pot
@@ -110,6 +268,18 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
           {libelleRetour}
         </Bouton>
       </BarreActions>
+
+      {editionPot && (
+        <DialoguePot
+          mots={editionPot}
+          onNouveauTirage={() => composerPot(mots, joueurs, { motsParJoueur })}
+          onFermer={() => setEditionPot(null)}
+          onValider={(liste) => {
+            setPotChoisi(liste);
+            setEditionPot(null);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -193,7 +363,15 @@ function Bilan({ annonce, precision, etat, montrerVainqueur, onAjuster, onReinit
 }
 
 /** Voile de pause : le chrono s'arrête, rien ne se perd. */
-function Pause({ onReprendre, onRecommencer, onQuitter, libelleRetour, son, onBasculerSon }) {
+function Pause({
+  onReprendre,
+  onRecommencer,
+  onAbandonner,
+  onQuitter,
+  libelleRetour,
+  son,
+  onBasculerSon
+}) {
   return (
     // Opaque, et non translucide : à 5 % de transparence le mot en cours
     // restait lisible derrière, et une pause ne doit pas donner la réponse.
@@ -225,18 +403,37 @@ function Pause({ onReprendre, onRecommencer, onQuitter, libelleRetour, son, onBa
         <Bouton variante="discret" icone={RotateCw} onClick={onRecommencer}>
           Recommencer la partie
         </Bouton>
-        <Bouton variante="discret" destructeur icone={X} onClick={onQuitter}>
+        <Bouton variante="discret" icone={X} onClick={onQuitter}>
           {libelleRetour}
+        </Bouton>
+        {/* Quitter met la partie de côté ; abandonner la supprime. Deux gestes
+            différents, deux boutons — c'est la suppression qui est destructrice,
+            pas le fait de sortir. */}
+        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
+          Abandonner la partie
         </Bouton>
       </BarreActionsSecondaire>
     </div>
   );
 }
 
-function Partie({ game, mots, depart, onQuitter, libelleRetour }) {
+function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelleRetour }) {
   const [etat, envoyer] = useReducer(reducteur, depart);
   const [enPause, setEnPause] = useState(false);
   const [son, setSon] = useState(true);
+
+  /**
+   * La partie est écrite à chaque changement.
+   *
+   * On touche la bannière du site par erreur, on répond à un message, l'onglet
+   * est recyclé : sans cela, une demi-heure de jeu disparaît sur un geste
+   * involontaire. Une partie terminée, elle, s'efface — il n'y a plus rien à
+   * reprendre, et la proposer au prochain lancement serait déroutant.
+   */
+  useEffect(() => {
+    if (etat.phase === 'fin') effacerPartie();
+    else ecrirePartie({ slug: game.slug, titre: game.title, etat, reglages });
+  }, [etat, game.slug, game.title, reglages]);
 
   const manche = MANCHES[etat.manche];
   const equipe = etat.equipes[etat.equipeActive];
@@ -294,7 +491,7 @@ function Partie({ game, mots, depart, onQuitter, libelleRetour }) {
       {etat.phase === 'tour' && (
         <EcranTour
           mot={motCourant(etat)}
-          secondes={game.chronoTour}
+          secondes={reglages.duree}
           restants={etat.restants.length}
           trouves={scoreDuTour(etat)}
           cleTour={`${etat.manche}-${etat.equipeActive}`}
@@ -384,6 +581,7 @@ function Partie({ game, mots, depart, onQuitter, libelleRetour }) {
         <Pause
           onReprendre={() => setEnPause(false)}
           onRecommencer={recommencer}
+          onAbandonner={onAbandonner}
           onQuitter={onQuitter}
           libelleRetour={libelleRetour}
           son={son}
@@ -402,19 +600,101 @@ function Partie({ game, mots, depart, onQuitter, libelleRetour }) {
  * à traiter un état « pas encore commencé » dans le réducteur, qui reste ainsi
  * total — chacune de ses actions a un sens à tout moment.
  */
-function KitTroisFoisRien({ game, joueurs, onQuitter, libelleRetour }) {
+/**
+ * Écran d'accueil quand une partie dort en mémoire.
+ *
+ * Poser la question plutôt que trancher : reprendre d'office empêcherait d'en
+ * lancer une neuve, et repartir de zéro d'office effacerait une soirée entière
+ * sans prévenir. Le résumé donne de quoi choisir sans avoir à se souvenir.
+ */
+function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, libelleRetour }) {
+  const { etat } = partie;
+  const totaux = etat.equipes.map((nom, i) => `${nom} ${totalEquipe(etat, i)}`).join(' · ');
+
+  return (
+    <>
+      <p className="font-titre text-3xl text-brique">Une partie est en cours</p>
+      <p className="text-ardoise font-texte text-lg mt-2">
+        Manche {etat.manche + 1} sur {MANCHES.length}, {etat.restants.length} mot
+        {etat.restants.length > 1 ? 's' : ''} encore dans le pot.
+      </p>
+      <p className="text-ardoise/80 mt-1">{totaux}</p>
+
+      <BarreActions>
+        <Bouton variante="principal" icone={Play} onClick={onReprendre}>
+          Reprendre la partie
+        </Bouton>
+        <Bouton variante="secondaire" icone={RotateCw} onClick={onNouvelle}>
+          Nouvelle partie
+        </Bouton>
+      </BarreActions>
+      <BarreActionsSecondaire>
+        <Bouton variante="discret" icone={ArrowLeft} onClick={onQuitter}>
+          {libelleRetour}
+        </Bouton>
+        {/* C'est ici qu'on décide du sort de la partie enregistrée : l'abandon
+            doit s'y trouver. Enfoui dans la pause, il obligeait à reprendre la
+            partie pour pouvoir la supprimer. */}
+        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
+          Abandonner la partie
+        </Bouton>
+      </BarreActionsSecondaire>
+    </>
+  );
+}
+
+function KitTroisFoisRien({ game, joueurs, onQuitter, onRetourAccueil, libelleRetour }) {
   const mots = useMemo(
     () => contenuDuJeu(game.slug, 'mot').map((ligne) => ligne.contenu),
     [game.slug]
   );
-  const [depart, setDepart] = useState(null);
 
-  return depart ? (
+  // Lue une seule fois au montage : la partie s'écrit ensuite en continu, et
+  // relire le stockage à chaque rendu proposerait de reprendre celle qu'on est
+  // justement en train de jouer.
+  const [sauvegarde] = useState(() => partieDuJeu(game.slug));
+  const [partie, setPartie] = useState(null);
+  const [choixFait, setChoixFait] = useState(!sauvegarde);
+
+  if (!choixFait) {
+    return (
+      <Reprise
+        partie={sauvegarde}
+        libelleRetour={libelleRetour}
+        onQuitter={onQuitter}
+        onAbandonner={() => {
+          effacerPartie();
+          onRetourAccueil();
+        }}
+        onReprendre={() => {
+          setPartie({
+            etat: reprendre(sauvegarde.etat),
+            reglages: sauvegarde.reglages ?? {
+              duree: game.chronoTour,
+              motsParJoueur: MOTS_PAR_JOUEUR
+            }
+          });
+          setChoixFait(true);
+        }}
+        onNouvelle={() => {
+          effacerPartie();
+          setChoixFait(true);
+        }}
+      />
+    );
+  }
+
+  return partie ? (
     <Partie
       game={game}
       mots={mots}
-      depart={depart}
+      depart={partie.etat}
+      reglages={partie.reglages}
       onQuitter={onQuitter}
+      onAbandonner={() => {
+        effacerPartie();
+        onRetourAccueil();
+      }}
       libelleRetour={libelleRetour}
     />
   ) : (
@@ -422,7 +702,7 @@ function KitTroisFoisRien({ game, joueurs, onQuitter, libelleRetour }) {
       game={game}
       mots={mots}
       joueursConnus={joueurs}
-      onDemarrer={setDepart}
+      onDemarrer={setPartie}
       onQuitter={onQuitter}
       libelleRetour={libelleRetour}
     />

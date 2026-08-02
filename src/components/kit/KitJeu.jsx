@@ -3,7 +3,13 @@ import { BarreActions, Bouton } from '../Bouton';
 import { kitDe } from './registre';
 
 /** Aiguillage : le kit du jeu, ou un repli si aucun n'est installé. */
-function KitJeu({ game, joueurs, onQuitter, libelleRetour = 'Retour à la fiche' }) {
+function KitJeu({
+  game,
+  joueurs,
+  onQuitter,
+  onRetourAccueil,
+  libelleRetour = 'Retour à la fiche'
+}) {
   const Kit = kitDe(game);
 
   // Le bouton n'est proposé que pour les kits installés : on ne devrait jamais
@@ -26,7 +32,13 @@ function KitJeu({ game, joueurs, onQuitter, libelleRetour = 'Retour à la fiche'
   }
 
   return (
-    <Kit game={game} joueurs={joueurs} onQuitter={onQuitter} libelleRetour={libelleRetour} />
+    <Kit
+      game={game}
+      joueurs={joueurs}
+      onQuitter={onQuitter}
+      onRetourAccueil={onRetourAccueil}
+      libelleRetour={libelleRetour}
+    />
   );
 }
 

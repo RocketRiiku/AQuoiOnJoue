@@ -80,6 +80,7 @@ src/
     trierJeux.js           les quatre ordres de la liste
     formatGame.js          libellés partagés, et le calcul des durées
     soiree.js              programme et fils rouges : affichage et déroulé
+    partieEnCours.js       la partie de kit conservée entre deux visites
     kit.js                 affichage du bouton « Lancer le jeu », invariants
     troisFoisRien.js       le déroulé de ce jeu, en réducteur pur
     sonKit.js              tic-tac et vibration des dernières secondes
@@ -270,6 +271,8 @@ src/data/lancerJeu.js              le contenu tiré (l'onglet « LancerJeu »)
 src/utils/kit.js                   règles d'affichage et invariants, sans JSX
 src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
 src/utils/sonKit.js                tic-tac et vibration, sans fichier son
+src/utils/partieEnCours.js         la partie conservée entre deux visites
+src/components/kit/DialoguePot.jsx l'édition des mots, en modale
 src/components/kit/
   registre.js                      slug → composant, et « ce kit est-il prêt ? »
   KitJeu.jsx                       aiguillage + repli si le kit manque
@@ -343,13 +346,58 @@ L'invariant à tenir, vérifié dans les deux sens par
 réciproquement. Sinon le kit tire dans le vide, ou du contenu écrit reste
 inatteignable — ce qui est déjà arrivé trois fois côté tableur.
 
-### Le kit vit dans l'URL, pas son état
+### Le kit vit dans l'URL, la partie dans le stockage local
 
 `?kit=1` se pose sur la vue courante sans effacer `jeu` ni `etape` : le quitter
 ramène exactement d'où l'on venait, fiche ou déroulé, et le bouton Retour du
-navigateur fait ce qu'on attend. La partie elle-même — pot, scores, manche — est
-un état React : un rechargement la perd, et c'est assumé. Une soirée ne se
-partage pas au milieu d'une manche.
+navigateur fait ce qu'on attend. La partie, elle, n'entre jamais dans l'URL —
+une soirée ne se partage pas au milieu d'une manche.
+
+Elle est en revanche **écrite dans le stockage local à chaque geste**
+([`partieEnCours.js`](src/utils/partieEnCours.js)). On touche la bannière du
+site par erreur, on répond à un message, l'onglet est recyclé : sans mémoire,
+une demi-heure de jeu disparaît sur un geste involontaire. Trois conséquences :
+
+- **la liste signale la partie en attente**, par une tuile qui passe devant
+  « Ma soirée » — c'est la seule chose de cette page qui attend qu'on y revienne ;
+- **« Lancer le jeu » demande alors quoi faire** : reprendre, ou repartir de
+  zéro. Trancher d'office empêcherait l'un ou effacerait l'autre sans prévenir ;
+- **la pause permet d'abandonner** : quitter met la partie de côté, abandonner
+  la supprime et ramène à la liste. Deux gestes différents, deux boutons ;
+- **un tour interrompu ne reprend jamais en plein chrono.** `reprendre()` ramène
+  la partie à l'écran d'annonce de l'équipe, pot et scores intacts. Reprendre à
+  dix-sept secondes d'un tour quitté il y a une heure n'aurait aucun sens.
+
+La clé est distincte de celle du programme de soirée, et son propriétaire aussi :
+`useNavigation` reste seul maître de l'URL et de la sélection de jeux. Ce qui
+interdisait deux hooks sur l'historique n'interdit pas deux tiroirs. Une partie
+dort douze heures, puis se périme — personne ne reprend une soirée d'avant-hier.
+
+### Personnaliser une partie
+
+L'écran de réglage pose deux questions — combien de joueurs, combien d'équipes —
+et replie le reste derrière **« Paramètres avancés »** : durée d'un tour, papiers
+par joueur, noms des équipes. Même motif que « Plus de filtres » et « Trier ».
+
+Replié par défaut, parce que les valeurs du catalogue conviennent presque
+toujours et qu'une page de formulaire entre l'envie de jouer et la première carte
+est le meilleur moyen de faire reposer le téléphone. Un nom d'équipe laissé vide
+retombe sur « Équipe n » : mieux vaut générique que sans en-tête.
+
+**Les mots du pot s'éditent** depuis ce panneau, dans une modale
+([`DialoguePot.jsx`](src/components/kit/DialoguePot.jsx)) : une pastille par mot,
+sa croix pour le retirer, un champ pour en ajouter. C'est le motif établi pour un
+ensemble de chaînes courtes ([Material 3](https://m3.material.io/components/chips/guidelines)),
+et la modale s'impose parce que quarante mots à relire demandent l'écran entier —
+dépliés sous les réglages, ils enterreraient « Remplir le pot ».
+
+Changer l'effectif ou le nombre de papiers **annule la personnalisation** : garder
+une liste taillée pour six joueurs alors qu'on vient d'en annoncer douze
+tromperait sur ce qui va être joué.
+
+La modale est écrite à la main plutôt qu'avec `<dialog>` : jsdom n'implémente pas
+`showModal`, et un dialogue que la suite de tests ne peut pas ouvrir n'est pas
+testable. Le piège à focus tient en quinze lignes.
 
 ### Ce qu'il ne fait pas
 
@@ -568,7 +616,7 @@ npm run build:fonts
 
 ## Tests
 
-401 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+410 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 

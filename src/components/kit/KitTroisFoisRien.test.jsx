@@ -59,7 +59,7 @@ describe('kit de Trois fois rien', () => {
     expect(screen.getByText('6')).toBeInTheDocument();
     expect(screen.getByText(/30 mots dans le pot/i)).toBeInTheDocument();
 
-    await clic(u, /plus de joueurs/i);
+    await clic(u, /augmenter : nombre de joueurs/i);
     expect(screen.getByText(/35 mots dans le pot/i)).toBeInTheDocument();
 
     await clic(u, '3 équipes');
@@ -71,9 +71,129 @@ describe('kit de Trois fois rien', () => {
 
   it('ne descend pas sous le minimum du jeu', async () => {
     const { utilisateur: u } = monter({ joueurs: jeu.minPlayers });
-    expect(screen.getByRole('button', { name: /moins de joueurs/i })).toBeDisabled();
-    await clic(u, /plus de joueurs/i);
-    expect(screen.getByRole('button', { name: /moins de joueurs/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /diminuer : nombre de joueurs/i })).toBeDisabled();
+    await clic(u, /augmenter : nombre de joueurs/i);
+    expect(screen.getByRole('button', { name: /diminuer : nombre de joueurs/i })).toBeEnabled();
+  });
+
+  it('règle la durée, la taille du pot et les noms d’équipes', async () => {
+    const { utilisateur: u } = monter({ joueurs: 4 });
+
+    // Repliés par défaut : les valeurs d'usine conviennent presque toujours.
+    // Le contenu reste dans le DOM — la transition en a besoin — mais `inert`
+    // le retire du parcours clavier, et `aria-expanded` dit l'état.
+    const declencheur = screen.getByRole('button', { name: /paramètres avancés/i });
+    expect(declencheur).toHaveAttribute('aria-expanded', 'false');
+    await u.click(declencheur);
+    expect(declencheur).toHaveAttribute('aria-expanded', 'true');
+
+    await clic(u, /diminuer : durée d’un tour/i); // 30 → 25 s
+    await clic(u, /diminuer : papiers par joueur/i); // 5 → 4
+    expect(screen.getByText(/16 mots dans le pot/i)).toBeInTheDocument();
+
+    await u.clear(screen.getByRole('textbox', { name: /équipe 1/i }));
+    await u.type(screen.getByRole('textbox', { name: /équipe 1/i }), 'Les Bleus');
+
+    await clic(u, /remplir le pot/i);
+    expect(screen.getByText('Les Bleus')).toBeInTheDocument();
+
+    await lancerTour(u);
+    expect(screen.getByRole('timer')).toHaveTextContent('25');
+  });
+
+  it('retombe sur « Équipe n » quand le nom est laissé vide', async () => {
+    const { utilisateur: u } = monter();
+    await clic(u, /paramètres avancés/i);
+    await u.type(screen.getByRole('textbox', { name: /équipe 2/i }), '   ');
+    await clic(u, /remplir le pot/i);
+    await lancerTour(u);
+    await attendre(jeu.chronoTour * 1000 + 500);
+
+    // Une colonne du tableau des scores sans en-tête serait pire que générique.
+    expect(screen.getByRole('rowheader', { name: /^Équipe 2$/ })).toBeInTheDocument();
+  });
+
+  it('modifie les mots du pot avant de jouer', async () => {
+    const { utilisateur: u } = monter({ joueurs: 4 });
+    await clic(u, /paramètres avancés/i);
+    await clic(u, /voir et modifier les mots/i);
+
+    const dialogue = screen.getByRole('dialog');
+    expect(within(dialogue).getByText(/^20 mots$/)).toBeInTheDocument();
+
+    // Un mot qu'on ne veut pas voir sortir.
+    const premier = within(dialogue).getAllByRole('button', { name: /retirer .* du pot/i })[0];
+    await u.click(premier);
+    expect(within(dialogue).getByText(/^19 mots$/)).toBeInTheDocument();
+
+    await u.type(within(dialogue).getByLabelText(/ajouter un mot/i), 'Tonton Michel');
+    await clic(u, /^ajouter$/i);
+    expect(within(dialogue).getByText(/^20 mots$/)).toBeInTheDocument();
+
+    await clic(u, /garder ces mots/i);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await clic(u, /remplir le pot/i);
+    await lancerTour(u);
+    // Le mot ajouté est en tête du pot : c'est celui qu'on vient d'écrire.
+    expect(screen.getByText(/encore 20 mots dans le pot/i)).toBeInTheDocument();
+  });
+
+  it('retire un nouveau pot autant de fois qu’on le demande', async () => {
+    const { utilisateur: u } = monter({ joueurs: 6 });
+    await clic(u, /paramètres avancés/i);
+    await clic(u, /voir et modifier les mots/i);
+
+    const listeAffichee = () =>
+      within(screen.getByRole('dialog'))
+        .getAllByRole('button', { name: /retirer .* du pot/i })
+        .map((b) => b.getAttribute('aria-label'))
+        .join('|');
+
+    const premier = listeAffichee();
+    await clic(u, /retirer un nouveau pot/i);
+    const deuxieme = listeAffichee();
+    await clic(u, /retirer un nouveau pot/i);
+    const troisieme = listeAffichee();
+
+    // Le second clic doit tirer autant que le premier : une liste figée passée
+    // en prop rendait le bouton inerte dès la deuxième fois.
+    expect(deuxieme).not.toBe(premier);
+    expect(troisieme).not.toBe(deuxieme);
+  });
+
+  it('refuse un doublon dans le pot', async () => {
+    const { utilisateur: u } = monter();
+    await clic(u, /paramètres avancés/i);
+    await clic(u, /voir et modifier les mots/i);
+
+    const dialogue = screen.getByRole('dialog');
+    const existant = within(dialogue)
+      .getAllByRole('button', { name: /retirer .* du pot/i })[0]
+      .getAttribute('aria-label')
+      .replace(/^Retirer /, '')
+      .replace(/ du pot$/, '');
+
+    await u.type(within(dialogue).getByLabelText(/ajouter un mot/i), existant);
+    await clic(u, /^ajouter$/i);
+
+    expect(within(dialogue).getByRole('alert')).toHaveTextContent(/déjà dans le pot/i);
+  });
+
+  it('ferme le dialogue sans rien garder', async () => {
+    const { utilisateur: u } = monter();
+    await clic(u, /paramètres avancés/i);
+    await clic(u, /voir et modifier les mots/i);
+    await u.click(
+      within(screen.getByRole('dialog')).getAllByRole('button', {
+        name: /retirer .* du pot/i
+      })[0]
+    );
+    await clic(u, /annuler/i);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // Le pot d'origine est intact : 4 joueurs × 5 papiers.
+    expect(screen.getByText(/20 mots dans le pot/i)).toBeInTheDocument();
   });
 
   it('décompte avant de lâcher le chrono', async () => {

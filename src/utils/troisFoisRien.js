@@ -7,6 +7,7 @@
  * réducteur pur, testable sans navigateur — l'écran ne fait que l'afficher.
  */
 
+/** Papiers pliés par joueur, réglable depuis les paramètres avancés. */
 export const MOTS_PAR_JOUEUR = 5;
 
 /** Les trois manches, dans l'ordre. Le mot à deviner ne change pas, la consigne si. */
@@ -42,8 +43,12 @@ export function melangeAleatoire(tableau) {
  * dépasseraient les 120 disponibles, et mieux vaut un pot un peu court qu'un
  * `undefined` au milieu d'une manche.
  */
-export function composerPot(mots, joueurs, melanger = melangeAleatoire) {
-  const voulus = Math.min(joueurs * MOTS_PAR_JOUEUR, mots.length);
+export function composerPot(
+  mots,
+  joueurs,
+  { melanger = melangeAleatoire, motsParJoueur = MOTS_PAR_JOUEUR } = {}
+) {
+  const voulus = Math.min(joueurs * motsParJoueur, mots.length);
   return melanger(mots).slice(0, voulus);
 }
 
@@ -192,6 +197,22 @@ export function reducteur(etat, action) {
     default:
       return etat;
   }
+}
+
+/**
+ * Remet une partie restaurée dans un état jouable.
+ *
+ * Un tour interrompu ne reprend jamais en plein chrono : on revient à l'écran
+ * d'annonce de l'équipe, pot et scores intacts. Reprendre à dix-sept secondes
+ * d'un tour qu'on a quitté il y a une heure n'aurait aucun sens, et le geste
+ * d'annulation en attente encore moins.
+ */
+export function reprendre(etat) {
+  return {
+    ...etat,
+    phase: etat.phase === 'tour' ? 'pret' : etat.phase,
+    dernier: null
+  };
 }
 
 export const motCourant = (etat) => etat.restants[0] ?? null;
