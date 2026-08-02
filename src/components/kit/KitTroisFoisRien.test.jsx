@@ -62,7 +62,7 @@ describe('kit de Trois fois rien', () => {
     await clic(u, /augmenter : nombre de joueurs/i);
     expect(screen.getByText(/35 mots dans le pot/i)).toBeInTheDocument();
 
-    await clic(u, '3 équipes');
+    await clic(u, /augmenter : nombre d’équipes/i);
     await clic(u, /remplir le pot/i);
 
     expect(screen.getByText(/manche 1 sur 3/i)).toBeInTheDocument();
@@ -74,6 +74,29 @@ describe('kit de Trois fois rien', () => {
     expect(screen.getByRole('button', { name: /diminuer : nombre de joueurs/i })).toBeDisabled();
     await clic(u, /augmenter : nombre de joueurs/i);
     expect(screen.getByRole('button', { name: /diminuer : nombre de joueurs/i })).toBeEnabled();
+  });
+
+  it('ne propose pas plus d’équipes que l’effectif n’en supporte', async () => {
+    const { utilisateur: u } = monter({ joueurs: 4 });
+
+    // Quatre joueurs, deux équipes de deux : au-delà, quelqu'un se retrouve
+    // seul à faire deviner à personne.
+    expect(screen.getByText(/soit 2 joueurs par équipe/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /augmenter : nombre d’équipes/i })
+    ).toBeDisabled();
+
+    await clic(u, /augmenter : nombre de joueurs/i);
+    await clic(u, /augmenter : nombre de joueurs/i); // 6 joueurs
+    await clic(u, /augmenter : nombre d’équipes/i);
+    expect(screen.getByText(/soit 2 joueurs par équipe/i)).toBeInTheDocument();
+
+    // Redescendre l'effectif ramène les équipes dans les clous.
+    await clic(u, /diminuer : nombre de joueurs/i);
+    await clic(u, /diminuer : nombre de joueurs/i);
+    expect(
+      screen.getByRole('button', { name: /augmenter : nombre d’équipes/i })
+    ).toBeDisabled();
   });
 
   it('règle la durée, la taille du pot et les noms d’équipes', async () => {

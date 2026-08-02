@@ -376,7 +376,16 @@ dort douze heures, puis se périme — personne ne reprend une soirée d'avant-h
 ### Personnaliser une partie
 
 L'écran de réglage pose deux questions — combien de joueurs, combien d'équipes —
-et replie le reste derrière **« Paramètres avancés »** : durée d'un tour, papiers
+réglées **par le même contrôle**, celui du filtre « Joueurs » de la liste : deux
+réglages de même nature se règlent du même geste. Chacun dit sa conséquence à
+côté : « soit 30 mots dans le pot », « soit 3 joueurs par équipe ».
+
+Le maximum d'équipes **suit l'effectif** plutôt que d'être fixe : à quatre
+joueurs, quatre équipes laisseraient chacun seul à faire deviner à personne.
+Redescendre l'effectif ramène le nombre d'équipes dans les clous sans écraser le
+choix — remonter les joueurs le restitue.
+
+Le reste se replie derrière **« Paramètres avancés »** : durée d'un tour, papiers
 par joueur, noms des équipes. Même motif que « Plus de filtres » et « Trier ».
 
 Replié par défaut, parce que les valeurs du catalogue conviennent presque

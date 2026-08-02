@@ -14,7 +14,6 @@ import {
   X
 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
-import Pastille from '../Pastille';
 import EcranTour from './EcranTour';
 import TableauScores from './TableauScores';
 import DialoguePot from './DialoguePot';
@@ -35,10 +34,15 @@ import {
   vainqueurs
 } from '../../utils/troisFoisRien';
 
-const EQUIPES_POSSIBLES = [2, 3, 4];
+/** Bornes des réglages. Larges, mais pas absurdes. */
+const BORNES = { equipes: [2, 4], duree: [10, 180], motsParJoueur: [2, 12] };
 
-/** Bornes des paramètres avancés. Larges, mais pas absurdes. */
-const BORNES = { duree: [10, 180], motsParJoueur: [2, 12] };
+/**
+ * Au-delà, les équipes tombent à un joueur : personne à qui faire deviner.
+ * Le maximum suit donc l'effectif au lieu d'être fixe.
+ */
+const maxEquipes = (joueurs) =>
+  Math.max(BORNES.equipes[0], Math.min(BORNES.equipes[1], Math.floor(joueurs / 2)));
 
 /**
  * Réglage d'un nombre : deux flèches et une valeur.
@@ -118,9 +122,23 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
     maj();
   };
 
+  // Réduire l'effectif peut rendre le nombre d'équipes intenable : on l'affiche
+  // ramené dans les clous, sans écraser le choix — remonter les joueurs le
+  // restitue. Valeur dérivée plutôt qu'état corrigé après coup.
+  const equipesTenables = Math.min(nbEquipes, maxEquipes(joueurs));
+
+  const parEquipe = [
+    Math.floor(joueurs / equipesTenables),
+    Math.ceil(joueurs / equipesTenables)
+  ];
+  const repartition =
+    parEquipe[0] === parEquipe[1]
+      ? `${parEquipe[0]} joueurs`
+      : `${parEquipe[0]} à ${parEquipe[1]} joueurs`;
+
   // Un nom laissé vide retombe sur « Équipe n » : mieux vaut un nom générique
   // qu'une colonne sans en-tête dans le tableau des scores.
-  const nomsRetenus = nomsEquipes(nbEquipes).map(
+  const nomsRetenus = nomsEquipes(equipesTenables).map(
     (defaut, i) => noms[i]?.trim() || defaut
   );
 
@@ -155,14 +173,19 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
           </div>
         </div>
 
-        <div role="group" aria-label="Nombre d’équipes">
+        <div>
           <p className="font-titre text-encre">Combien d’équipes&nbsp;?</p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {EQUIPES_POSSIBLES.map((n) => (
-              <Pastille key={n} actif={nbEquipes === n} onClick={() => setNbEquipes(n)}>
-                {n} équipes
-              </Pastille>
-            ))}
+          {/* Même contrôle que l'effectif juste au-dessus : deux réglages de
+              même nature se règlent du même geste. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+            <Compteur
+              label="nombre d’équipes"
+              valeur={equipesTenables}
+              min={BORNES.equipes[0]}
+              max={maxEquipes(joueurs)}
+              onChange={setNbEquipes}
+            />
+            <span className="text-ardoise/80 text-sm">soit {repartition} par équipe</span>
           </div>
         </div>
       </div>
@@ -228,7 +251,7 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
               <div>
                 <p className="font-titre text-encre">Noms des équipes</p>
                 <div className="flex flex-col gap-2 mt-2">
-                  {nomsEquipes(nbEquipes).map((defaut, i) => (
+                  {nomsEquipes(equipesTenables).map((defaut, i) => (
                     <label key={defaut} className="flex items-center gap-3 text-sm">
                       <span className="text-ardoise/80 w-20 shrink-0">Équipe {i + 1}</span>
                       <input
