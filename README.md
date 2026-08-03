@@ -132,9 +132,23 @@ Tout tient dans [`src/data/games.js`](src/data/games.js) :
 }
 ```
 
-Le catalogue est saisi dans un tableur, puis converti en JavaScript. Les
+Le catalogue est saisi dans un tableur — `AQuoiOnJoue_jeux.xlsx`, hors dépôt,
+documenté par `AQuoiOnJoue_Reference.md` — puis converti en JavaScript. Les
 libellés de `typeGame` sont capitalisés au passage, et les cinq slugs déjà
 publiés sont préservés tels quels — un test les verrouille.
+
+**L'import est partiel, et volontairement.** Les champs de kit d'un jeu
+(`kit`, `scoring`, `chronoTour`) et ses lignes de contenu n'arrivent qu'avec son
+kit : sans quoi le bouton « Lancer le jeu » surgirait avant l'écran qui va avec.
+Un jeu du tableur qui déclare `prompts` mais n'a pas encore son kit n'a donc
+aucun de ces champs ici, et c'est un état normal.
+
+**En cas de contradiction, l'ordre est : le site, puis le tableur, puis la
+documentation.** Le code et le tableur sont les deux sources vivantes ; ce
+README et le document de référence sont ce qui vieillit — décomptes, listes de
+jeux, dettes déjà réglées. Une doc qui contredit les données se corrige. Une
+donnée qui doit changer part du tableur, et `Title` y est la **clé de jointure**
+entre les deux onglets : la renommer d'un seul côté casse le lien en silence.
 
 ### La durée se calcule, elle ne se lit pas
 
@@ -164,10 +178,24 @@ passe par [`formatGame.js`](src/utils/formatGame.js) : `dureeJeu`, `plageDuree`,
 ### Les fils rouges
 
 `filRouge: true` signale un jeu qui tourne **en fond, en parallèle des autres**,
-sur toute la soirée. Il n'a donc pas de durée propre : il n'entre pas dans le
-total du programme, il passe tous les filtres de durée, et sa carte annonce
-« toute la soirée » au lieu d'un nombre de minutes. Sa fiche le dit explicitement
-sous « Format », sans quoi la mention resterait énigmatique.
+sur toute la soirée. Il n'entre pas dans le total du programme, il passe tous les
+filtres de durée, et sa carte annonce « toute la soirée » au lieu d'un nombre de
+minutes. Sa fiche le dit explicitement sous « Format », sans quoi la mention
+resterait énigmatique.
+
+**Un fil rouge ne porte jamais de `scoring`.** Sa partie ne se joue pas d'un
+bloc : elle court du début à la fin de la soirée, pendant que les autres jeux
+s'enchaînent. Le kit ne peut donc pas la tenir — le tiroir des parties en cours
+n'en garde qu'une, et lancer n'importe quel autre kit l'écraserait au milieu de
+la soirée. Le décompte revient aux joueurs, et les règles le disent (« à chacun
+de garder ses points en tête »). Cette contrainte a retiré `compteur` à *Ban
+word*, *Histoires secrètes* et *La Murder party*. Un fil rouge garde en revanche
+son bouton s'il a autre chose à offrir : *La Murder party* distribue ses
+missions, *La blessure critique* tire ses effets de dé.
+
+Quatre fils rouges au catalogue. Trois sont à `0 + 0`, mais la réciproque ne
+tient pas : *La blessure critique* garde une durée propre, parce qu'elle se
+sort aussi comme un jeu à part entière — ces minutes ne sont alors jamais lues.
 
 ### L'illustration
 
@@ -264,9 +292,9 @@ Certains jeux ne se contentent pas de règles à lire : il faut tirer des mots,
 tenir un chrono, compter les points. C'est le rôle du kit, ouvert par le bouton
 **« Lancer le jeu »** de la fiche et du déroulé de soirée.
 
-**Huit jeux ont leur kit écrit**, portés par trois orchestrateurs. Le bouton est
-attendu par 43 jeux du catalogue : 36 déclarent un module de `kit`, sept n'ont
-qu'un score ou un chrono. Le premier kit écrit fut celui de *Trois fois rien*,
+**Treize jeux ont leur kit écrit**, portés par quatre orchestrateurs. Le bouton
+est attendu par 41 jeux du catalogue : 36 déclarent un module de `kit`, cinq
+n'ont qu'un score ou un chrono. Le premier kit écrit fut celui de *Trois fois rien*,
 choisi comme banc d'essai parce que c'est le plus exigeant du catalogue :
 équipes, pioche, score par manche, chrono, et surtout les mêmes mots rejoués
 trois fois de suite.
@@ -282,6 +310,7 @@ src/utils/kit.js                   règles d'affichage et invariants, sans JSX
 src/utils/pioche.js                le mélange, commun à tous les kits
 src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
 src/utils/defileur.js              le déroulé de six jeux, en réducteur pur
+src/utils/feuilleDeMatch.js        le décompte de cinq jeux, en réducteur pur
 src/utils/blessureCritique.js      le jet de dé, en réducteur pur
 src/utils/sonKit.js                tic-tac et vibration, sans fichier son
 src/utils/partieEnCours.js         la partie conservée entre deux visites
@@ -291,10 +320,13 @@ src/components/kit/
   KitJeu.jsx                       aiguillage + repli si le kit manque
   CarteTiree.jsx                   brique : le papier qu'on vient de tirer
   Chrono.jsx                       brique : décompte d'un tour, avec pause
+  Compteur.jsx                     brique : réglage d'un nombre, comme le filtre
   EcranTour.jsx                    brique : l'écran de jeu (carte + réponses)
-  TableauScores.jsx                brique : grille équipes × manches, corrigeable
+  TableauScores.jsx                brique : grille lignes × colonnes, corrigeable
+  FeuilleDeMatch.jsx               brique : la feuille dont la ligne est la cible
   KitTroisFoisRien.jsx             l'orchestrateur de ce jeu
   KitDefileur.jsx                  l'orchestrateur des six « tirer et montrer »
+  KitFeuilleDeMatch.jsx            l'orchestrateur des cinq « rien qu'un score »
   KitBlessureCritique.jsx          l'orchestrateur du jet de dé
 ```
 
@@ -337,11 +369,14 @@ sont de courts segments gris.
 rend testable la mécanique délicate — le pot qui se vide met fin à la manche
 même s'il reste du temps, un mot passé repart au fond, l'équipe qui n'a pas fini
 ouvre la manche suivante. Vingt-quatre tests couvrent ces règles sans monter une
-seule ligne de DOM. La règle vaut pour les trois kits :
+seule ligne de DOM. La règle vaut pour les quatre kits :
 [`troisFoisRien.js`](src/utils/troisFoisRien.js),
-[`defileur.js`](src/utils/defileur.js) et
+[`defileur.js`](src/utils/defileur.js),
+[`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js) et
 [`blessureCritique.js`](src/utils/blessureCritique.js) ne contiennent pas une
-ligne de rendu.
+ligne de rendu. Le dernier va plus loin : ses cinq **barèmes** y sont des
+fonctions pures, si bien que « le conteur marque ce qu'il a trompé » se vérifie
+sans écran.
 
 **Le chrono lit des minutes au-delà de cent secondes.** Un tour de trente
 secondes s'annonce « 30 s » ; les cinq minutes de débat de *Sang bleu*
@@ -362,7 +397,10 @@ Qui de nous ?, Sang bleu. Ces jeux ne demandent au téléphone qu'une carte à l
 à voix haute : ni score, ni réponse à révéler, ni équipes. Leur **mécanique est
 déduite du catalogue** — le `type` de leur contenu donne le mot du bouton
 (« Dilemme suivant », « Sujet suivant »), `chronoTour` décide s'il y a un
-décompte. Un septième jeu de cette forme ne coûterait qu'une ligne.
+décompte. Un septième jeu de cette forme ne coûterait qu'une ligne. Cinq autres
+entrées pointent vers `KitFeuilleDeMatch`, à l'exact opposé : celles-là ne tirent
+rien du tout, elles comptent (voir
+[Le tableau de scores seul](#le-tableau-de-scores-seul)).
 
 Une seule chose s'y écrit jeu par jeu : le **rappel d'avant-partie**
 (`RAPPELS` dans [`defileur.js`](src/utils/defileur.js)). Un écran, une phrase, un
@@ -414,6 +452,66 @@ Une seule région live sur l'écran, et elle ne s'ouvre qu'une fois le dé posé
 les douze faces du roulement seraient annoncées une à une, et la seule qui compte
 se perdrait dedans.
 
+### Le tableau de scores seul
+
+Cinq jeux ont un bouton **sans aucun module de `kit`** : Le Liars Club,
+Avez-vous confiance ?, Tudum, Qui rit sort, Sur parole. Rien à tirer, aucune
+ligne dans `lancerJeu.js` — et l'invariant du catalogue interdit de leur en
+écrire. L'écran ne fait que compter.
+
+**Ils partagent tout sauf la façon dont un point s'attribue** : l'effectif, les
+noms, les scores, le seuil, l'annulation, la persistance, le classement. D'où un
+seul orchestrateur et trois panneaux, plutôt que trois écrans qui recopieraient
+la même feuille :
+
+| Forme | Jeux | Le geste |
+| --- | --- | --- |
+| `auFil` | Qui rit sort, Sur parole | l'événement tombe n'importe quand, on tape la ligne |
+| `parTour` | Le Liars Club, Tudum | un joueur désigné, on coche qui a trouvé, on résout d'un coup |
+| `duel` | Avez-vous confiance ? | deux joueurs tirés au sort, trois issues |
+
+**La ligne est la cible**, pour la forme `auFil`
+([`FeuilleDeMatch.jsx`](src/components/kit/FeuilleDeMatch.jsx)). C'est le geste
+du jeu, répété cent fois dans la soirée, pas une correction d'après-coup : une
+surface de jeu au même titre que la carte du catalogue et les zones de réponse
+d'`EcranTour`, et non un bouton de panneau. Elle est doublée d'un « Annuler »
+offert deux secondes et demie — vingt lignes identiques et collées, viser la
+mauvaise est l'accident prévisible du genre. Les deux autres formes affichent
+`TableauScores` avec ses commandes de correction : chez elles, la table ne
+désigne pas un coupable au vol, elle valide une manche.
+
+**Le barème disparaît de la table.** Le Liars Club veut « autant de points au
+conteur qu'il a trompé de monde », Tudum « trois points si tout le monde a
+reconnu le son, deux si la moitié y est arrivée » : demander ces chiffres à qui
+tient le téléphone lui ferait compter deux fois la même chose. On coche les
+trouveurs, le reste se déduit — trois fonctions d'une ligne dans
+[`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js). C'est la brique que le quiz
+d'animateur réutilisera, dégénérée à un seul trouveur.
+
+**`elimination` n'est pas une primitive à part** : c'est un `compteur` doublé
+d'un seuil. Qui rit sort élimine au deuxième avertissement, Sur parole au
+troisième, et le sens de la victoire suit — le plus gros total sans seuil, le
+dernier debout avec. Un joueur sorti **reste affiché**, barré : chez Qui rit
+sort, il rejoint le public et continue à saboter les survivants.
+
+Ce qui ne se déduit d'aucune colonne s'écrit jeu par jeu, comme les `RAPPELS` du
+défileur : la forme, le seuil, le barème, et la phrase d'avant-partie. Le reste
+vient du catalogue — `scoring` donne le mot du point (« point » ou
+« avertissement »), `chronoTour` la minute d'interrogation du Liars Club,
+`minPlayers` et `maxPlayers` les bornes de l'effectif.
+
+**Les joueurs se renomment.** Les équipes de *Trois fois rien* sont numérotées et
+c'est assez, elles sont deux à quatre ; une feuille de match en compte jusqu'à
+seize, où « Joueur 11 » ne désigne plus personne et où un score qu'on ne sait pas
+s'attribuer ne sert à rien. Les champs sont donc offerts sous « Paramètres
+avancés », vides, avec repli sur « Joueur n ». Aucun prénom n'est *demandé*, et
+rien ne quitte l'appareil : les mentions légales n'ont rien de plus à déclarer.
+
+Faute de seuil, **aucune règle ne dit quand s'arrêter** : la table tranche. Le
+bouton passe de `discret` à `secondaire` une fois le tour de table complet, ce
+que trois de ces jeux demandent explicitement (« jusqu'à ce que chacun soit passé
+au moins une fois »).
+
 ### Les familles qui restent
 
 Les 28 kits restants ont été regroupés par **ce que l'écran doit savoir faire**,
@@ -423,7 +521,6 @@ orchestrateur. Par ordre de rendement :
 | Famille | Jeux | Ce que l'écran fait |
 | --- | --- | --- |
 | Le quiz d'animateur | 10 | tire → « Révéler » → on désigne qui marque le point |
-| Le tableau de scores seul | 7 | ni pioche ni contenu : un score, parfois un chrono |
 | La distribution secrète | 5 | le téléphone tourne, chacun révèle puis masque |
 | Le classement à corriger | 3 | tous répondent, on révèle, on saisit des points variables |
 | Le tour de table chronométré | 3 | un thème, le chrono part, le joueur courant marque ou saute |
@@ -435,12 +532,9 @@ Le détail, jeu par jeu :
 
 - **quiz d'animateur** — Sorry mon french, Lost in translation, Plan pas plan
   plan, Le souffleur, Le blindlo-fi, ETSY c'était ça ?!, Le juste chiffre, Le
-  Fitch, Soyez logique, Cacophonie. C'est le défileur *plus* deux briques
-  neuves : la révélation, et un compteur par joueur ;
-- **tableau de scores seul** — Le Liars Club, Avez-vous confiance ?, Ban word,
-  Histoires secrètes, Tudum, Qui rit sort, Sur parole. Ces sept-là ont un bouton
-  (`scoring` ou `chronoTour` renseigné) **sans aucun module `kit`** : aucune
-  ligne à écrire dans `lancerJeu.js`, et la brique dont le quiz a besoin ;
+  Fitch, Soyez logique, Cacophonie. C'est le défileur *plus* la brique de
+  désignation du [tableau de scores seul](#le-tableau-de-scores-seul), plus une
+  seule chose neuve : la révélation ;
 - **distribution secrète** — Undercover, Insider, Cow-boy, La Murder party, et
   Psycho (`regle-secrete`, la même primitive en un seul écran) ;
 - **classement à corriger** — Best-sold, Qui vient avant ?, Duo carré ou cash ? ;
@@ -448,37 +542,68 @@ Le détail, jeu par jeu :
   la chanson. C'est la famille qui recycle le plus d'`EcranTour` ;
 - **points dégressifs** — Emo'Quiz, Harry Cover.
 
-L'ordre conseillé fait de chaque étape une extension stricte de la précédente :
-le **tableau de scores seul** pose le compteur par joueur sur sept jeux sans
-contenu à tirer, puis le **quiz d'animateur** n'est plus que la composition du
-défileur et de ce compteur, plus la révélation.
+L'ordre conseillé fait de chaque étape une extension stricte de la précédente.
+Le **tableau de scores seul** a joué ce rôle et il est écrit : il a posé le
+compteur par joueur et la désignation des marqueurs sur cinq jeux sans contenu à
+tirer. Le **quiz d'animateur** n'est donc plus que la composition du défileur et
+de cette feuille, plus la révélation — c'est la prochaine étape, et la plus
+rentable du lot.
 
 ### Ce qui reste à découpler
 
-Deux dettes que la prochaine famille rencontrera, notées ici pour qu'elles ne se
-redécouvrent pas :
+**`TableauScores` ne connaît plus le jeu qu'elle affiche.** Elle importait
+`MANCHES`, `totalEquipe` et `vainqueurs` de `troisFoisRien.js` : une brique
+annoncée comme commune, clouée à un jeu. Les colonnes sont devenues une donnée
+(`colonnes`), les lignes une liste de `{ nom, cases, total, enTete, sortie }`, et
+c'est l'appelant qui calcule ses totaux — parce que lui seul sait ce que
+« mener » veut dire chez lui : le plus grand total ici, le dernier debout dans un
+jeu à élimination. Sans colonnes, la même grille rend un simple classement — la
+forme dont le [tableau de scores seul](#le-tableau-de-scores-seul) se sert deux
+fois, en jeu et à l'arrivée.
+[`TableauScores.test.jsx`](src/components/kit/TableauScores.test.jsx) monte la
+brique **sans aucun import de jeu** : c'est ce qui empêche le couplage de
+revenir. `Compteur` a suivi le même chemin, de `KitTroisFoisRien.jsx` vers
+[`kit/Compteur.jsx`](src/components/kit/Compteur.jsx) — aucun kit ne peut
+dessiner sa table sans demander l'effectif.
 
-- **`TableauScores` importe `MANCHES` depuis `troisFoisRien.js`.** La brique est
-  annoncée comme commune mais elle est couplée à un jeu. À découpler à l'arrivée
-  du premier kit qui compte des points par joueur, pour que l'interface se
-  dessine contre un second client réel et non à l'aveugle.
+Restent deux dettes que la prochaine famille rencontrera :
+
 - **`scoring: manches` fait deux métiers.** Au sens strict, des points variables
   *selon la manche* : Trois fois rien, Pyramide, Duo carré ou cash. Au sens
   élargi, des points variables tout court : Harry Cover et Emo'Quiz (5 → 1 selon
   les indices lâchés), Best-sold, Qui vient avant ?, Petit Bac. Les seconds ont
   besoin d'une **saisie libre de points**, pas de la grille équipes × manches.
+- **Trois choses que les règles réclament et qu'aucune colonne ne porte** : le
+  seuil d'élimination, le sens de la victoire qui va avec, et le **joueur
+  courant** que quatre jeux demandent de désigner et de suivre — Le Liars Club,
+  Tudum, Avez-vous confiance ?, Carte blanche. Le kit les porte jeu par jeu dans
+  [`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js), comme `RAPPELS` porte la
+  phrase d'avant-partie du défileur : trois colonnes de plus au tableur pour cinq
+  jeux coûteraient plus cher à tenir. **À rouvrir si les 28 kits restants en
+  réclament autant** — c'est le seuil au-delà duquel la donnée doit remonter au
+  tableur.
 
-Deux corrections attendent par ailleurs côté tableur, relevées en comparant les
-règles aux colonnes : **Tueur en série** porte `compteur` alors que ses règles
-éliminent, et **Best Friends Forever** porte `manches` alors qu'elle compte un
-point par réponse identique. Aucun des deux n'a encore de champ de kit importé
-dans `games.js` : la correction doit partir du tableur.
+Les deux corrections attendues côté tableur ont été faites : **Tueur en série**
+porte `elimination`, **Best Friends Forever** porte `compteur`.
 
 ### Les trois champs du catalogue
 
 `kit`, `scoring` et `chronoTour` sont facultatifs et **indépendants** : le bouton
 apparaît dès que l'un des trois est renseigné. Un jeu peut compter des points
-sans rien avoir à tirer, ou cadencer des tours sans compter.
+sans rien avoir à tirer, ou cadencer des tours sans compter. Neuf jeux n'ont
+aucun des trois : sept sont des mécaniques pures, les deux autres des fils rouges
+à qui `scoring` est refusé par principe (voir [Les fils
+rouges](#les-fils-rouges)).
+
+**`scoring` en dit moins que les règles**, et il faut le savoir avant d'écrire un
+kit. `elimination` couvre deux formes : la sortie immédiate (Undercover, Tueur en
+série) et le **seuil** qui laisse une chance — deux avertissements chez Qui rit
+sort, trois chez Sur parole, donc un `compteur` déguisé. `compteur` de son côté
+dit « +1 / −1 par joueur » là où quatre jeux distribuent 2, 3 ou 6 points d'un
+coup, et `manches` fait deux métiers (voir [Ce qui reste à
+découpler](#ce-qui-reste-à-découpler)). Ni le seuil, ni le sens de la victoire,
+ni le joueur courant ne sont dans une colonne : ils se lisent dans les règles, et
+le kit les porte jeu par jeu.
 
 L'invariant à tenir, vérifié dans les deux sens par
 [`games.test.js`](src/data/games.test.js) : un module qui pioche (`prompts`,
@@ -551,9 +676,14 @@ testable. Le piège à focus tient en quinze lignes.
 
 ### Ce qu'il ne fait pas
 
-- **Aucun prénom n'est demandé.** Les équipes sont numérotées. Taper huit
-  prénoms sur un téléphone en pleine soirée coûte plus cher que ça ne rapporte,
-  et les mentions légales n'ont alors rien de plus à déclarer.
+- **Aucun prénom n'est demandé.** Taper huit prénoms sur un téléphone en pleine
+  soirée coûte plus cher que ça ne rapporte, et les mentions légales n'ont alors
+  rien de plus à déclarer. Les équipes de *Trois fois rien* sont donc numérotées,
+  et elles le restent : renommer y est un champ des paramètres avancés, jamais
+  une étape. La [feuille de match](#le-tableau-de-scores-seul) offre les mêmes
+  champs, pour la raison inverse — à seize lignes, « Joueur 11 » ne désigne plus
+  personne. Dans les deux cas c'est facultatif, vide par défaut, et rien ne quitte
+  l'appareil.
 - **Le temps restant ne se reporte pas** d'une manche à l'autre quand le pot se
   vide en plein tour. La règle officielle du jeu le prévoit ; les règles de la
   fiche n'en parlent pas.
@@ -766,7 +896,7 @@ npm run build:fonts
 
 ## Tests
 
-291 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+352 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -821,6 +951,21 @@ laisse l'onglet dans un état qui simule de faux bugs (vue figée, transformatio
 bloquées), et son tampon de console conserve d'anciennes erreurs. En cas de
 doute : onglet neuf, ou vérifier sur `npm run preview`.
 
+**Ne simulez jamais toutes les minuteries dans un test.** `vi.useFakeTimers()`
+sans `toFake` fige aussi l'ordonnanceur de React, et plus rien ne se rend.
+`setTimeout` en particulier est à laisser tranquille : les utilitaires
+asynchrones de Testing Library s'appuient dessus, et le test s'interbloque au
+lieu d'échouer. C'est pour cette raison que les deux fenêtres d'annulation
+(`EcranTour`, `FeuilleDeMatch`) se comptent en `setInterval` — ce qu'un test peut
+simuler seul. Avancer les minuteries hors d'un geste de l'utilisateur se fait
+dans `act()`, et `userEvent.setup` prend alors `delay: null`.
+
+**Un worktree oublié gonfle la suite de tests.** Vitest et ESLint parcourent
+`.claude/worktrees/` s'il en reste un : la suite y ramasse une copie périmée du
+dépôt, ce qui a déjà fait annoncer 410 puis 481 tests là où il y en avait 291 et
+352. Le compte réel se lit en ignorant les fichiers préfixés `.claude/`, et
+`git worktree list` dit s'il en traîne un.
+
 **Le site déployé peut servir du cache.** Une première lecture après un
 déploiement peut renvoyer la version précédente. Forcez le rechargement sans
 cache avant de conclure.
@@ -851,11 +996,11 @@ erreur en console : le rendu retombe simplement sur une police système.
 
 Par ordre d'intérêt selon la dernière revue :
 
-1. **Les kits de jeu** — huit sont écrits sur les 36 que le tableur source
-   alimente, plus sept jeux qui ont un bouton sans module. Les 28 restants sont
-   regroupés par famille de mécanique, avec l'ordre conseillé, dans
-   [Les familles qui restent](#les-familles-qui-restent). Les règles de sept jeux
-   mentionnent déjà une « liste » qui n'existera qu'avec leur kit.
+1. **Les kits de jeu** — treize sont écrits sur les 41 jeux qui attendent un
+   bouton. Les 28 restants sont regroupés par famille de mécanique, avec l'ordre
+   conseillé, dans [Les familles qui restent](#les-familles-qui-restent) : le
+   **quiz d'animateur** vient ensuite, et compte dix jeux à lui seul. Les règles
+   de sept jeux mentionnent déjà une « liste » qui n'existera qu'avec leur kit.
 2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
 3. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable

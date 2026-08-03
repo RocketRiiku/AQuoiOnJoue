@@ -209,9 +209,10 @@ gardent leur traitement propre, chacune cohérente en interne :
 
 | Famille | Où | Pourquoi à part |
 | --- | --- | --- |
-| Pastilles | `Pastille.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action. Trois vues s'en servent — les filtres (`Header.jsx`), le choix du tri (`TriJeux.jsx`) et le réglage d'un kit (`kit/`) |
-| Compteurs `< n >` | `Header.jsx`, `kit/` | réglage d'un nombre : même famille que les pastilles, un état et non une action |
+| Pastilles | `Pastille.jsx` | ce sont des **contrôles de formulaire** : elles portent un état sélectionné (`aria-pressed`), pas une action. Trois vues s'en servent — les filtres (`Header.jsx`), le choix du tri (`TriJeux.jsx`) et la désignation des joueurs qui marquent (`kit/KitFeuilleDeMatch.jsx`) |
+| Compteurs `< n >` | `Header.jsx`, `kit/Compteur.jsx` | réglage d'un nombre : même famille que les pastilles, un état et non une action |
 | Zones de réponse | `kit/EcranTour.jsx` | pendant un tour, « Trouvé » et « Passer » ne sont pas des actions de panneau mais **la table de jeu** — voir ci-dessous |
+| Lignes d'une feuille de match | `kit/FeuilleDeMatch.jsx` | la ligne entière marque le point : c'est le geste du jeu, répété toute la soirée, pas une commande de panneau — même famille que les zones de réponse |
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
 | Fermeture d'un panneau | `Introduction.jsx` | la croix en coin est une convention universelle, elle n'a pas besoin d'un niveau d'emphase |
@@ -266,7 +267,26 @@ les jeux de charades, Fishbowl :
   Deux surfaces larges et collées, tapées vite : l'erreur est prévisible, et un
   point volé sans retour en arrière fausse toute la partie.
 
-Sur cet écran, seuls **deux chiffres et le mot** ont droit à la grande taille :
+### La feuille de match suit la même règle
+
+Cinq jeux ne tiennent qu'un score, et rien d'autre : on désigne celui qui vient
+de marquer, ou de craquer. **La ligne entière du joueur est la cible**, comme la
+carte entière l'est dans la liste — c'est le geste du jeu, tapé cent fois dans la
+soirée, et non une commande de panneau. Le trio `− + ↺` de `TableauScores` reste
+ce qu'il est : une correction, sur un écran de bilan.
+
+Deux conséquences, les mêmes que pour les zones de réponse :
+
+- **elles occupent toute la largeur**, hautes d'une cinquantaine de pixels, et se
+  parcourent au pouce sans viser ;
+- **chaque geste s'annule**, par le même lien discret offert deux secondes et
+  demie. Vingt lignes identiques et collées : viser la mauvaise vole un point à
+  quelqu'un *et* en donne un à un autre.
+
+La forme reste `2500 ms` de part et d'autre. Ce n'est pas un réglage d'écran mais
+une règle d'interaction du site : si l'une change, l'autre suit.
+
+Sur l'écran de tour, seuls **deux chiffres et le mot** ont droit à la grande taille :
 le temps qui descend, les mots trouvés qui montent. Le nom de l'équipe et le
 tableau des scores ont leur place avant et après le tour, pas pendant.
 
