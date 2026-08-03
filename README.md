@@ -82,8 +82,12 @@ src/
     soiree.js              programme et fils rouges : affichage et déroulé
     partieEnCours.js       la partie de kit conservée entre deux visites
     kit.js                 affichage du bouton « Lancer le jeu », invariants
+    pioche.js              mélanger une liste, sans appartenir à un jeu
     troisFoisRien.js       le déroulé de ce jeu, en réducteur pur
+    defileur.js            le déroulé des six jeux « tirer et montrer »
+    blessureCritique.js    le jet de dé, tirage avec remise
     sonKit.js              tic-tac et vibration des dernières secondes
+    mouvement.js           lecture de « réduire les animations »
     contact.js             adresse de contact, liens mailto et signalements
     asset.js               chemins de public/ depuis le JS
 docs/boutons.md            ← le système de boutons
@@ -260,26 +264,36 @@ Certains jeux ne se contentent pas de règles à lire : il faut tirer des mots,
 tenir un chrono, compter les points. C'est le rôle du kit, ouvert par le bouton
 **« Lancer le jeu »** de la fiche et du déroulé de soirée.
 
-**Un seul kit est écrit à ce jour**, celui de *Trois fois rien* — choisi comme
-banc d'essai parce que c'est le plus exigeant du catalogue : équipes, pioche,
-score par manche, chrono, et surtout les mêmes mots rejoués trois fois de suite.
+**Huit jeux sur trente-six ont leur kit**, portés par trois orchestrateurs. Le
+premier écrit fut celui de *Trois fois rien*, choisi comme banc d'essai parce que
+c'est le plus exigeant du catalogue : équipes, pioche, score par manche, chrono,
+et surtout les mêmes mots rejoués trois fois de suite.
+
+Les suivants arrivent **par famille de mécanique**, pas jeu par jeu — voir
+[Un registre, pas un moteur unique](#un-registre-pas-un-moteur-unique).
 
 ### Où vit quoi
 
 ```
 src/data/lancerJeu.js              le contenu tiré (l'onglet « LancerJeu »)
 src/utils/kit.js                   règles d'affichage et invariants, sans JSX
+src/utils/pioche.js                le mélange, commun à tous les kits
 src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
+src/utils/defileur.js              le déroulé de six jeux, en réducteur pur
+src/utils/blessureCritique.js      le jet de dé, en réducteur pur
 src/utils/sonKit.js                tic-tac et vibration, sans fichier son
 src/utils/partieEnCours.js         la partie conservée entre deux visites
 src/components/kit/DialoguePot.jsx l'édition des mots, en modale
 src/components/kit/
   registre.js                      slug → composant, et « ce kit est-il prêt ? »
   KitJeu.jsx                       aiguillage + repli si le kit manque
+  CarteTiree.jsx                   brique : le papier qu'on vient de tirer
   Chrono.jsx                       brique : décompte d'un tour, avec pause
   EcranTour.jsx                    brique : l'écran de jeu (carte + réponses)
   TableauScores.jsx                brique : grille équipes × manches, corrigeable
-  KitTroisFoisRien.jsx             l'orchestrateur du jeu
+  KitTroisFoisRien.jsx             l'orchestrateur de ce jeu
+  KitDefileur.jsx                  l'orchestrateur des six « tirer et montrer »
+  KitBlessureCritique.jsx          l'orchestrateur du jet de dé
 ```
 
 ### Ce que l'écran de jeu doit au genre
@@ -329,6 +343,34 @@ rejoue son pot trois fois, Undercover distribue des rôles, Petit Bac tire deux
 pioches à la fois. Vouloir un moteur unique reviendrait à plier cinquante cas
 particuliers dans une même boucle.
 
+**Le registre grandit par familles, pas par jeux.** Six entrées y pointent vers
+le même `KitDefileur` — Le Joker, Oui ou non ?, Tu préfères ?, Du Coq à l'Âne,
+Qui de nous ?, Sang bleu. Ces jeux ne demandent au téléphone qu'une carte à lire
+à voix haute : ni score, ni réponse à révéler, ni équipes. Leur **mécanique est
+déduite du catalogue** — le `type` de leur contenu donne le mot du bouton
+(« Dilemme suivant », « Sujet suivant »), `chronoTour` décide s'il y a un
+décompte. Un septième jeu de cette forme ne coûterait qu'une ligne.
+
+Une seule chose s'y écrit jeu par jeu : le **rappel d'avant-partie**
+(`RAPPELS` dans [`defileur.js`](src/utils/defileur.js)). Un écran, une phrase, un
+bouton — ce n'est pas un réglage, il n'y a rien à régler, mais ce qui se perd
+entre la lecture des règles sur la fiche et la première carte : la contrainte qui
+fait le jeu (« ni justification, ni nuance »), ou le matériel à sortir avant de
+commencer. Une phrase d'accroche ne se déduit d'aucune donnée. Un jeu sans entrée
+ouvre directement sur sa première carte : le rappel est une aide, pas un péage.
+
+*La blessure critique* est de la même famille et garde pourtant son écran : son
+tirage est un **jet de dé**, donc avec remise. Le défileur, lui, parcourt sa pile
+sans répétition — revoir la même proposition à vingt minutes d'intervalle casse
+le jeu plus sûrement que d'arriver au bout d'une liste de cinquante. Une option
+de plus sur un composant partagé, pour une mécanique aussi différente, aurait
+coûté plus cher que vingt lignes à part.
+
+Le défileur **n'écrit rien dans le stockage local**, contrairement à *Trois fois
+rien*. Il n'y a pas de partie à perdre : ni score, ni pot, ni équipes, seulement
+une place dans une liste mélangée. Le tiroir des parties en cours n'en compte
+qu'un, et il vaut mieux le garder pour une soirée qui coûte quelque chose.
+
 Le bouton n'apparaît que si **deux conditions** sont réunies : le catalogue
 déclare un kit, *et* le composant existe (`registre.js`). La seconde est
 transitoire — sans elle, le bouton surgirait dès l'import des données, avant
@@ -354,7 +396,8 @@ navigateur fait ce qu'on attend. La partie, elle, n'entre jamais dans l'URL —
 une soirée ne se partage pas au milieu d'une manche.
 
 Elle est en revanche **écrite dans le stockage local à chaque geste**
-([`partieEnCours.js`](src/utils/partieEnCours.js)). On touche la bannière du
+([`partieEnCours.js`](src/utils/partieEnCours.js)) — pour les kits qui ont
+quelque chose à perdre, ce qui exclut le défileur. On touche la bannière du
 site par erreur, on répond à un message, l'onglet est recyclé : sans mémoire,
 une demi-heure de jeu disparaît sur un geste involontaire. Trois conséquences :
 
@@ -625,7 +668,7 @@ npm run build:fonts
 
 ## Tests
 
-410 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+286 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -710,11 +753,15 @@ erreur en console : le rendu retombe simplement sur une police système.
 
 Par ordre d'intérêt selon la dernière revue :
 
-1. **Les kits de jeu** — un seul est écrit, celui de Trois fois rien
-   (voir [Les kits de jeu](#les-kits-de-jeu)). Le tableur source porte de quoi
-   en alimenter 36. Les règles de sept autres jeux (Pyramide, Le Fitch, Le Petit
-   Menteur, Petit Bac, Sorry mon french, Pitch de ouf, Cow-boy) mentionnent déjà
-   une « liste » qui n'existera qu'avec leur kit.
+1. **Les kits de jeu** — huit sont écrits sur les 36 que le tableur source
+   alimente (voir [Les kits de jeu](#les-kits-de-jeu)). Les familles suivantes,
+   par ordre de rendement : le **quiz d'animateur** (tirer, révéler, attribuer le
+   point — 10 jeux, dont Sorry mon french, Le Fitch, Le souffleur), puis le
+   **tableau de scores seul** (7 jeux sans contenu à tirer, dont Le Liars Club et
+   Sur parole), le **tour de table chronométré** (3), les **équipes** (Pyramide
+   est le jumeau de Trois fois rien) et la **distribution secrète** (Undercover,
+   Insider, Cow-boy, La Murder party, Psycho). Les règles de sept jeux
+   mentionnent déjà une « liste » qui n'existera qu'avec leur kit.
 2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
 3. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable

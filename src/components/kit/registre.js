@@ -1,4 +1,6 @@
 import { kitJouable } from '../../utils/kit';
+import KitBlessureCritique from './KitBlessureCritique';
+import KitDefileur from './KitDefileur';
 import KitTroisFoisRien from './KitTroisFoisRien';
 
 /**
@@ -6,16 +8,31 @@ import KitTroisFoisRien from './KitTroisFoisRien';
  *
  * Un kit n'est pas un formulaire générique : « Trois fois rien » rejoue les
  * mêmes mots trois fois de suite, Undercover distribue des rôles, Petit Bac
- * tire deux pioches à la fois. Les briques sont communes — chrono, tableau de
- * scores, pastilles — mais l'enchaînement appartient au jeu. D'où ce registre,
- * plutôt qu'un moteur unique qu'on plierait à cinquante cas particuliers.
+ * tire deux pioches à la fois. Les briques sont communes — carte, chrono,
+ * tableau de scores, pastilles — mais l'enchaînement appartient au jeu. D'où ce
+ * registre, plutôt qu'un moteur unique qu'on plierait à cinquante cas
+ * particuliers.
  *
- * Il grandira par familles : la plupart des jeux se ramènent à « tirer, montrer,
- * compter » et pourront partager un même orchestrateur. Celui-ci est l'exception
- * qui justifie de garder la porte ouverte.
+ * **Il grandit par familles, pas par jeux.** Six entrées pointent ici vers le
+ * même `KitDefileur` : ces jeux ne demandent au téléphone qu'une carte à lire à
+ * voix haute, et tout ce qui les distingue — le mot du bouton de tirage, la
+ * présence d'un chrono — se déduit du catalogue. Ajouter un septième jeu de
+ * cette forme ne coûtera qu'une ligne.
+ *
+ * La blessure critique est de la même famille et garde pourtant son écran : son
+ * tirage est un jet de dé, donc **avec remise**. Le défileur, lui, parcourt sa
+ * pile sans répétition. Une option de plus sur un composant partagé pour une
+ * mécanique aussi différente aurait coûté plus cher que vingt lignes à part.
  */
 const KITS = {
-  'trois-fois-rien': KitTroisFoisRien
+  'le-joker': KitDefileur,
+  'la-blessure-critique': KitBlessureCritique,
+  'oui-ou-non': KitDefileur,
+  'trois-fois-rien': KitTroisFoisRien,
+  'tu-preferes': KitDefileur,
+  'du-coq-a-l-ane': KitDefileur,
+  'qui-de-nous': KitDefileur,
+  'sang-bleu': KitDefileur
 };
 
 export const kitDe = (game) => KITS[game.slug] ?? null;

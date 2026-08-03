@@ -111,7 +111,8 @@ export const gamesList = [
     typeGame: ['Chacun pour soi', 'Discussion'],
     level: 'Débutant',
     alcohol: true,
-    image: '/CarteLeJoker.png'
+    image: '/CarteLeJoker.png',
+    kit: ['prompts']
   },
   {
     id: 4,
@@ -515,7 +516,8 @@ export const gamesList = [
     material: ['Dé classique', 'Verres'],
     typeGame: ['Chacun pour soi'],
     level: 'Débutant',
-    alcohol: true
+    alcohol: true,
+    kit: ['prompts']
   },
   {
     id: 25,
@@ -591,7 +593,8 @@ export const gamesList = [
     material: [],
     typeGame: ['Discussion'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts']
   },
   {
     id: 29,
@@ -670,7 +673,9 @@ export const gamesList = [
     material: [],
     typeGame: ['Discussion'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    chronoTour: 60
   },
   {
     id: 33,
@@ -746,7 +751,8 @@ export const gamesList = [
     material: ['Papier & stylo'],
     typeGame: ['Coopératif'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts']
   },
   {
     id: 37,
@@ -822,7 +828,8 @@ export const gamesList = [
     material: [],
     typeGame: ['Discussion'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts']
   },
   {
     id: 41,
@@ -993,7 +1000,9 @@ export const gamesList = [
     material: ['Cartes à jouer'],
     typeGame: ['Chacun pour soi', 'Discussion'],
     level: 'Intermédiaire',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    chronoTour: 300
   },
   {
     id: 50,
