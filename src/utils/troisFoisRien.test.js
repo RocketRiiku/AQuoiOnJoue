@@ -4,13 +4,13 @@ import {
   etatInitial,
   MANCHES,
   MOTS_PAR_JOUEUR,
-  melangeAleatoire,
   motCourant,
   nomsEquipes,
   reducteur,
   totalEquipe,
   vainqueurs
 } from './troisFoisRien';
+import { melangeAleatoire } from './pioche';
 
 /** Mélange neutre : les tests portent sur le déroulé, pas sur le hasard. */
 const sansMelange = (tableau) => [...tableau];

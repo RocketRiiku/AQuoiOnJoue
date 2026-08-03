@@ -23,7 +23,6 @@ import {
   composerPot,
   etatInitial,
   MANCHES,
-  melangeAleatoire,
   MOTS_PAR_JOUEUR,
   motCourant,
   nomsEquipes,
@@ -33,6 +32,7 @@ import {
   totalEquipe,
   vainqueurs
 } from '../../utils/troisFoisRien';
+import { melangeAleatoire } from '../../utils/pioche';
 
 /** Bornes des réglages. Larges, mais pas absurdes. */
 const BORNES = { equipes: [2, 4], duree: [10, 180], motsParJoueur: [2, 12] };

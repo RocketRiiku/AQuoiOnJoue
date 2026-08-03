@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, SkipForward, Undo2 } from 'lucide-react';
+import CarteTiree from './CarteTiree';
 import Chrono from './Chrono';
 
 const DEPART = 3;
@@ -180,12 +181,13 @@ function EcranTour({
         </p>
       </div>
 
-      {/* La carte : le papier qu'on vient de tirer du chapeau. C'est la
-          métaphore du site — des cartes à jouer posées en vrac — et c'est elle
-          qui porte le mot, plutôt qu'une ligne de texte de plus. */}
+      {/* La carte est une brique commune (CarteTiree) ; ce qui lui est propre
+          ici, c'est le glissement — la transformation qui suit le doigt et
+          l'anneau qui confirme le geste avant qu'on relâche. */}
       <div className="flex-1 flex items-center justify-center py-6 touch-pan-y select-none">
-        <div
-          key={mot}
+        <CarteTiree
+          texte={mot}
+          cle={mot}
           onTouchStart={debutGeste}
           onTouchMove={gesteEnCours}
           onTouchEnd={finGeste}
@@ -195,21 +197,12 @@ function EcranTour({
               ? `translateX(${glissement}px) rotate(${glissement / 22}deg)`
               : undefined
           }}
-          className={`anim-carte-tiree w-full max-w-md min-h-[9rem] sm:min-h-[11rem] rounded-2xl bg-paille shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex items-center justify-center px-5 py-6 ${
-            glissement ? 'transition-none' : ''
-          } ${engage ? 'ring-4 ring-offset-2' : ''} ${
-            engage && glissement > 0 ? 'ring-herbe-sombre' : ''
-          } ${engage && glissement < 0 ? 'ring-ardoise/40' : ''}`}
-        >
-          <p
-            // Annoncé à voix haute par les lecteurs d'écran : celui qui tient
-            // le téléphone doit connaître le mot sans le chercher des yeux.
-            role="status"
-            className="font-titre text-brique text-4xl sm:text-5xl leading-tight text-center break-words"
-          >
-            {mot}
-          </p>
-        </div>
+          className={`${glissement ? 'transition-none' : ''} ${
+            engage ? 'ring-4 ring-offset-2' : ''
+          } ${engage && glissement > 0 ? 'ring-herbe-sombre' : ''} ${
+            engage && glissement < 0 ? 'ring-ardoise/40' : ''
+          }`}
+        />
       </div>
 
       <div className="flex items-center justify-center gap-3 mb-4 min-h-[1.75rem]">

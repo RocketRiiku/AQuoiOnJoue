@@ -7,6 +7,8 @@
  * réducteur pur, testable sans navigateur — l'écran ne fait que l'afficher.
  */
 
+import { melangeAleatoire } from './pioche';
+
 /** Papiers pliés par joueur, réglable depuis les paramètres avancés. */
 export const MOTS_PAR_JOUEUR = 5;
 
@@ -25,16 +27,6 @@ export const MANCHES = [
     consigne: 'Plus un son : uniquement le mime.'
   }
 ];
-
-/** Mélange sans modifier le tableau reçu (Fisher-Yates). */
-export function melangeAleatoire(tableau) {
-  const copie = [...tableau];
-  for (let i = copie.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copie[i], copie[j]] = [copie[j], copie[i]];
-  }
-  return copie;
-}
 
 /**
  * Le pot d'une partie : cinq mots par joueur, tirés une fois pour toutes.

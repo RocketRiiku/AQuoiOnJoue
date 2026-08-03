@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Bouton } from './Bouton';
 import { asset } from '../utils/asset';
+import { animationsReduites } from '../utils/mouvement';
 
 /**
  * « Surprends-moi ! » — le tirage au sort, précédé d'un mélange de cartes.
@@ -30,13 +31,6 @@ const CADENCE = [50, 50, 55, 65, 75, 90, 110, 135];
 const REPOS_FINAL = 130;
 
 const REPLI = '/CarteInterrogation.png';
-
-// Le réglage système prime : sans animation demandée, le tirage est immédiat.
-// La règle CSS globale ne suffirait pas — elle raccourcit les animations, mais
-// ne toucherait pas aux minuteries.
-const animationsReduites = () =>
-  typeof window.matchMedia === 'function' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function BoutonTirage({ candidats, onTirer, disabled = false }) {
   const [carte, setCarte] = useState(null);

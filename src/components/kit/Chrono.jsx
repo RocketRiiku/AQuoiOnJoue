@@ -7,6 +7,18 @@ export const SEUIL_TENSION = 10;
 const SEUIL_VIBRATION = 3;
 
 /**
+ * Au-delà, on lit des minutes.
+ *
+ * Un tour de trente secondes s'annonce « 30 s » ; les cinq minutes de débat de
+ * Sang bleu s'annonceraient « 300 s », qu'aucune table ne convertit de tête. Le
+ * seuil porte sur la **durée totale**, pas sur le temps restant : sans quoi le
+ * même décompte changerait de notation en cours de route.
+ */
+const SEUIL_MINUTES = 100;
+
+const enMinutes = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+/**
  * Décompte d'un tour, en secondes.
  *
  * Le temps restant se calcule à partir d'une échéance posée au démarrage, et
@@ -67,6 +79,7 @@ function Chrono({ secondes, enMarche, onFini, cle, son = true }) {
 
   const part = secondes > 0 ? restant / secondes : 0;
   const tendu = restant <= SEUIL_TENSION;
+  const longue = secondes >= SEUIL_MINUTES;
 
   return (
     <div className="w-full">
@@ -79,8 +92,8 @@ function Chrono({ secondes, enMarche, onFini, cle, son = true }) {
           tendu ? 'text-brique anim-pulsation' : 'text-encre'
         }`}
       >
-        {restant}
-        <span className="text-lg align-top ml-1 text-ardoise/70">s</span>
+        {longue ? enMinutes(restant) : restant}
+        {!longue && <span className="text-lg align-top ml-1 text-ardoise/70">s</span>}
       </p>
 
       <div
