@@ -10,9 +10,13 @@ const modules = (game) => game.kit ?? [];
  * renseigné. Ils restent indépendants : un jeu peut tenir un score sans rien
  * avoir à tirer, ou cadencer des tours sans compter de points.
  *
- * Six jeux du catalogue n'ont aucun des trois — Eau ou vodka ?, La pieuvre,
- * Tête d'affiche, Je n'ai jamais, Chef d'orchestre, Le 21. Mécaniques pures :
- * rien à tirer, rien à compter. C'est un état normal, pas un trou à combler.
+ * Neuf jeux du catalogue n'ont aucun des trois. Sept sont des mécaniques pures
+ * — Eau ou vodka ?, La pieuvre, Tête d'affiche, Je n'ai jamais, Chef
+ * d'orchestre, Le 21, Carte blanche : rien à tirer, rien à compter. Les deux
+ * autres sont des fils rouges à qui `scoring` est refusé par principe (Ban
+ * word, Histoires secrètes) : leur partie courrait en parallèle des autres
+ * kits, or le tiroir des parties en cours n'en tient qu'une. C'est un état
+ * normal, pas un trou à combler.
  */
 export function aUnKit(game) {
   return modules(game).length > 0 || Boolean(game.scoring) || Boolean(game.chronoTour);

@@ -17,8 +17,11 @@
  *                  unique annonçait la même durée à 3 et à 8 joueurs.
  *                  Voir dureeJeu() dans src/utils/formatGame.js.
  *  - filRouge    : le jeu se joue en fond, sur toute la soirée, en parallèle des
- *                  autres. Il n'a donc pas de durée propre : il est exclu du
- *                  total de la soirée et passe tous les filtres de durée.
+ *                  autres. Il est exclu du total de la soirée et passe tous les
+ *                  filtres de durée. Il ne porte **jamais** de `scoring` : sa
+ *                  partie courrait en parallèle des autres kits, et le tiroir
+ *                  des parties en cours n'en tient qu'une. Le décompte revient
+ *                  aux joueurs, et ses règles le disent.
  *  - material    : tableau. [] = aucun matériel requis, le jeu passe donc
  *                  tous les filtres « matériel ».
  *  - typeGame    : toujours un tableau, même pour une seule valeur.
@@ -37,7 +40,12 @@
  *                  `equipes`       constitution des équipes + score par équipe
  *                  `regle-secrete` écran privé du meneur + tirage d'une règle
  *  - scoring     : `compteur` (+1 / −1 par joueur), `manches` (un score par
- *                  manche), `elimination` (dedans ou dehors).
+ *                  manche), `elimination` (on sort de la partie). Cette
+ *                  dernière couvre deux formes : la sortie immédiate
+ *                  (Undercover, Tueur en série) et le seuil qui laisse une
+ *                  chance — deux avertissements pour Qui rit sort, trois pour
+ *                  Sur parole. Le seuil n'est dans aucune colonne : il se lit
+ *                  dans les règles et le kit le porte jeu par jeu.
  *  - chronoTour  : durée d'**un seul tour**, en **secondes**. À ne pas confondre
  *                  avec durationBase / durationPerPlayer, qui sont en minutes et
  *                  servent à estimer la soirée.
@@ -71,7 +79,9 @@ export const gamesList = [
     typeGame: ['Chacun pour soi', 'Bluff'],
     level: 'Intermédiaire',
     alcohol: false,
-    image: '/CarteLeLiarsClub.png'
+    image: '/CarteLeLiarsClub.png',
+    scoring: 'compteur',
+    chronoTour: 60
   },
   {
     id: 2,
@@ -486,7 +496,7 @@ export const gamesList = [
     slug: 'avez-vous-confiance',
     description: 'Six points, deux joueurs dos à dos, une décision : coopérer ou trahir.',
     rules:
-      "Chacun se fabrique deux étiquettes, CONFIANCE et TRAHIR, et les garde en main toute la partie. Deux joueurs tirés au sort se placent dos à dos. On pose six points entre eux. Au signal, chacun pose son étiquette face cachée, puis on retourne les deux ensemble. Deux CONFIANCE : trois points chacun. Une seule trahison : le traître rafle tout. Deux trahisons : les six points sont perdus. On enchaîne les duels jusqu'à ce que chacun soit passé au moins une fois. Rien n'interdit de promettre à voix haute ce qu'on ne compte pas tenir.",
+      "Chacun se fabrique deux étiquettes, CONFIANCE et TRAHIR, et les garde en main toute la partie. Deux joueurs tirés au sort se placent dos à dos, six points en jeu entre eux. Au signal, chacun pose son étiquette face cachée, puis on retourne les deux ensemble. Deux CONFIANCE : trois points chacun. Une seule trahison : le traître rafle tout. Deux trahisons : les six points sont perdus. On enchaîne les duels jusqu'à ce que chacun soit passé au moins une fois. Rien n'interdit de promettre à voix haute ce qu'on ne compte pas tenir.",
     minPlayers: 4,
     maxPlayers: 16,
     idealPlayersMin: 4,
@@ -497,7 +507,8 @@ export const gamesList = [
     material: ['Papier & stylo'],
     typeGame: ['Chacun pour soi', 'Bluff'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    scoring: 'compteur'
   },
   {
     id: 24,
@@ -525,7 +536,7 @@ export const gamesList = [
     slug: 'la-murder-party',
     description: 'Une mission secrète par joueur, à accomplir discrètement au fil de la soirée.',
     rules:
-      "Chaque joueur reçoit en secret une mission à accomplir sur quelqu'un d'autre au cours de la soirée : lui faire répéter une phrase, glisser une carte dans sa poche. La cible ne doit jamais comprendre qu'elle est visée. Si elle pose la question franchement, la tentative est perdue. Mission réussie, le joueur récupère la mission de sa victime et hérite de sa mission. Le plus de missions réussies en fin de soirée l'emporte.",
+      "Chaque joueur reçoit en secret une mission à accomplir sur quelqu'un d'autre au cours de la soirée : lui faire répéter une phrase, glisser une carte dans sa poche. La cible ne doit jamais comprendre qu'elle est visée. Si elle pose la question franchement, la tentative est perdue. Mission réussie, le joueur récupère la mission de sa victime et hérite de sa mission. Le plus de missions réussies en fin de soirée l'emporte : les papiers gardés en main font le compte.",
     minPlayers: 5,
     maxPlayers: 15,
     idealPlayersMin: 6,
@@ -683,7 +694,7 @@ export const gamesList = [
     slug: 'ban-word',
     description: 'Trois mots bannis pour toute la soirée. Piégez les autres et ne vous faites pas prendre.',
     rules:
-      "En début de soirée, le groupe bannit ensemble trois ou quatre mots courants : « oui », « jeu », un prénom fréquent. Chacun reçoit trois jetons. Dès qu'un joueur lâche un mot interdit et qu'un autre le relève dans la seconde, il lui cède un jeton. Tout l'art consiste à faire prononcer le mot aux autres sans le dire soi-même. Le jeu tourne en fond toute la soirée, en parallèle des autres. Le plus gros tas de jetons l'emporte.",
+      "En début de soirée, le groupe bannit ensemble trois ou quatre mots courants : « oui », « jeu », un prénom fréquent. Dès qu'un joueur lâche un mot interdit et qu'un autre le relève dans la seconde, celui qui a relevé marque un point. Tout l'art consiste à faire prononcer le mot aux autres sans le dire soi-même. Le jeu tourne en fond toute la soirée, en parallèle des autres : à chacun de garder ses points en tête. Le plus gros total l'emporte.",
     minPlayers: 3,
     maxPlayers: 20,
     idealPlayersMin: 5,
@@ -867,7 +878,8 @@ export const gamesList = [
     material: [],
     typeGame: ['Chacun pour soi'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    scoring: 'elimination'
   },
   {
     id: 43,
@@ -932,7 +944,7 @@ export const gamesList = [
     slug: 'histoires-secretes',
     description: "Chaque personne a un secret. Il est temps d'en parler !",
     rules:
-      "En début de soirée, chacun écrit un secret ou une anecdote sur lui, vrai et jamais raconté ici. On plie les papiers et on les jette dans un bol. Entre deux jeux, on en tire un au hasard et on le lit à voix haute, sans commentaire. Chacun désigne à main levée celui qu'il croit être l'auteur. Un point par joueur qui vise juste, deux à l'auteur s'il passe inaperçu. Il raconte la suite, ou pas !",
+      "En début de soirée, chacun écrit un secret ou une anecdote sur lui, vrai et jamais raconté ici. On plie les papiers et on les jette dans un bol. Entre deux jeux, on en tire un au hasard et on le lit à voix haute, sans commentaire. Chacun désigne à main levée celui qu'il croit être l'auteur. Un point par joueur qui vise juste, deux à l'auteur s'il passe inaperçu — à chacun de garder son total en tête, le jeu court toute la soirée. Il raconte la suite, ou pas !",
     minPlayers: 3,
     maxPlayers: 15,
     idealPlayersMin: 5,
@@ -951,7 +963,7 @@ export const gamesList = [
     slug: 'tudum',
     description: 'Imaginez un son que tous les autres doivent connaître.',
     rules:
-      "Chacun cherche en secret un son que tout le monde a déjà entendu : un générique de plateforme, un jingle de pub, un bruitage de jeu vidéo. À son tour, un joueur l'imite à la voix. Les autres écrivent leur réponse sans rien dire, et on révèle ensemble. Un point par joueur qui identifie le son. Deux points de plus au proposeur si au moins la moitié de la table trouve. Trois points si tout le monde trouve. Faites au moins deux tours de table.",
+      "Chacun cherche en secret un son que tout le monde a déjà entendu : un générique de plateforme, un jingle de pub, un bruitage de jeu vidéo. À son tour, un joueur l'imite à la voix. Les autres écrivent leur réponse sans rien dire, et on révèle ensemble. Un point par joueur qui identifie le son. Le proposeur marque deux points si au moins la moitié de la table trouve, trois si tout le monde trouve. Faites au moins deux tours de table.",
     minPlayers: 3,
     maxPlayers: 10,
     idealPlayersMin: 4,
@@ -959,10 +971,11 @@ export const gamesList = [
     durationBase: 5,
     durationPerPlayer: 2,
     filRouge: false,
-    material: ['Téléphone'],
+    material: ['Papier & stylo'],
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    scoring: 'compteur'
   },
   {
     id: 48,
@@ -1010,7 +1023,7 @@ export const gamesList = [
     slug: 'sur-parole',
     description: "Annoncez la valeur de votre main. Peut-être qu'on vous a menti.",
     rules:
-      "Chacun reçoit trois cartes face cachée et les regarde sans rien montrer : l'As vaut 11, les figures valent 10 (le total maximum est 33). Le premier joueur annonce un total, vrai ou faux, comme il veut. Son voisin doit annoncer un total strictement supérieur, ou exiger de voir la main précédente. Dans ce cas, on retourne les trois cartes. Si le total tient, le sceptique prend un jeton. Sinon, c'est le menteur. Trois jetons, et on sort. Le dernier debout gagne.",
+      "Chacun reçoit trois cartes face cachée et les regarde sans rien montrer : l'As vaut 11, les figures valent 10 (le total maximum est 33). Le premier joueur annonce un total, vrai ou faux, comme il veut. Son voisin doit annoncer un total strictement supérieur, ou exiger de voir la main précédente. Dans ce cas, on retourne les trois cartes. Si le total tient, le sceptique prend un avertissement. Sinon, c'est le menteur. Au troisième, on sort. Le dernier debout gagne.",
     minPlayers: 3,
     maxPlayers: 10,
     idealPlayersMin: 4,
@@ -1021,6 +1034,7 @@ export const gamesList = [
     material: ['Cartes à jouer'],
     typeGame: ['Chacun pour soi', 'Bluff'],
     level: 'Débutant',
-    alcohol: false
+    alcohol: false,
+    scoring: 'elimination'
   }
 ];
