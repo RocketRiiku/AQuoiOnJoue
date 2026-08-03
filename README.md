@@ -264,10 +264,12 @@ Certains jeux ne se contentent pas de règles à lire : il faut tirer des mots,
 tenir un chrono, compter les points. C'est le rôle du kit, ouvert par le bouton
 **« Lancer le jeu »** de la fiche et du déroulé de soirée.
 
-**Huit jeux sur trente-six ont leur kit**, portés par trois orchestrateurs. Le
-premier écrit fut celui de *Trois fois rien*, choisi comme banc d'essai parce que
-c'est le plus exigeant du catalogue : équipes, pioche, score par manche, chrono,
-et surtout les mêmes mots rejoués trois fois de suite.
+**Huit jeux ont leur kit écrit**, portés par trois orchestrateurs. Le bouton est
+attendu par 43 jeux du catalogue : 36 déclarent un module de `kit`, sept n'ont
+qu'un score ou un chrono. Le premier kit écrit fut celui de *Trois fois rien*,
+choisi comme banc d'essai parce que c'est le plus exigeant du catalogue :
+équipes, pioche, score par manche, chrono, et surtout les mêmes mots rejoués
+trois fois de suite.
 
 Les suivants arrivent **par famille de mécanique**, pas jeu par jeu — voir
 [Un registre, pas un moteur unique](#un-registre-pas-un-moteur-unique).
@@ -296,9 +298,10 @@ src/components/kit/
   KitBlessureCritique.jsx          l'orchestrateur du jet de dé
 ```
 
-### Ce que l'écran de jeu doit au genre
+### Ce que l'écran de tour doit au genre
 
-La première version affichait un formulaire : des lignes de texte, deux boutons
+Celui de *Trois fois rien*, et de tout jeu chronométré qui suivra. La première
+version affichait un formulaire : des lignes de texte, deux boutons
 de panneau, un chrono discret. Le tour se pilote autrement — voir
 [`docs/boutons.md`](docs/boutons.md#pendant-un-tour-lécran-nest-plus-un-panneau)
 pour les règles, et ce qui les motive :
@@ -333,8 +336,18 @@ sont de courts segments gris.
 **Le déroulé d'un jeu est un réducteur pur, séparé de son écran.** C'est ce qui
 rend testable la mécanique délicate — le pot qui se vide met fin à la manche
 même s'il reste du temps, un mot passé repart au fond, l'équipe qui n'a pas fini
-ouvre la manche suivante. Seize tests couvrent ces règles sans monter une seule
-ligne de DOM.
+ouvre la manche suivante. Vingt-quatre tests couvrent ces règles sans monter une
+seule ligne de DOM. La règle vaut pour les trois kits :
+[`troisFoisRien.js`](src/utils/troisFoisRien.js),
+[`defileur.js`](src/utils/defileur.js) et
+[`blessureCritique.js`](src/utils/blessureCritique.js) ne contiennent pas une
+ligne de rendu.
+
+**Le chrono lit des minutes au-delà de cent secondes.** Un tour de trente
+secondes s'annonce « 30 s » ; les cinq minutes de débat de *Sang bleu*
+s'annonceraient « 300 s », qu'aucune table ne convertit de tête. Le seuil porte
+sur la durée totale et non sur le temps restant, sans quoi le même décompte
+changerait de notation en cours de route.
 
 ### Un registre, pas un moteur unique
 
@@ -375,6 +388,91 @@ Le bouton n'apparaît que si **deux conditions** sont réunies : le catalogue
 déclare un kit, *et* le composant existe (`registre.js`). La seconde est
 transitoire — sans elle, le bouton surgirait dès l'import des données, avant
 l'écran qui va avec.
+
+### Le jet de dé
+
+*La blessure critique* est le seul écran à ne rien afficher tant qu'on ne lui a
+rien demandé. Trois choses le tiennent :
+
+- **le dé est un icosaèdre dessiné**, pas un carré arrondi — celui-ci aurait
+  annoncé six faces là où le jeu en promet vingt. La valeur est posée au centre
+  de gravité de sa face du dessus, remplie pour la dégager des arêtes ;
+- **la face définitive est tirée au premier geste**, et le roulement ne fait que
+  la retarder — jamais l'inverse. Même règle que « Surprends-moi ! » : une
+  minuterie perdue emporterait sinon le résultat avec elle. Le bouton se
+  verrouille dans le geste même du clic, et le réglage « réduire les animations »
+  saute l'attente au lieu de la raccourcir ;
+- **le roulement se compte en battements**, et non en `setTimeout`. Simuler
+  celui-ci dans un test fige aussi l'ordonnanceur de React — le piège déjà
+  rencontré sur le décompte d'entrée d'`EcranTour`.
+
+Le dé garde sa place et sa taille pendant tout le roulement : le chiffre change
+douze fois, la silhouette ne bouge pas. Un dé qui grandirait en s'arrêtant ferait
+sauter le gage qu'on lit juste dessous.
+
+Une seule région live sur l'écran, et elle ne s'ouvre qu'une fois le dé posé :
+les douze faces du roulement seraient annoncées une à une, et la seule qui compte
+se perdrait dedans.
+
+### Les familles qui restent
+
+Les 28 kits restants ont été regroupés par **ce que l'écran doit savoir faire**,
+pas par thème de jeu — c'est ça qui décide si deux jeux partagent un
+orchestrateur. Par ordre de rendement :
+
+| Famille | Jeux | Ce que l'écran fait |
+| --- | --- | --- |
+| Le quiz d'animateur | 10 | tire → « Révéler » → on désigne qui marque le point |
+| Le tableau de scores seul | 7 | ni pioche ni contenu : un score, parfois un chrono |
+| La distribution secrète | 5 | le téléphone tourne, chacun révèle puis masque |
+| Le classement à corriger | 3 | tous répondent, on révèle, on saisit des points variables |
+| Le tour de table chronométré | 3 | un thème, le chrono part, le joueur courant marque ou saute |
+| Le quiz à points dégressifs | 2 | idem quiz, plus une valeur qui descend de 5 à 1 |
+| Les équipes | 2 | Pyramide (le jumeau de Trois fois rien) et Best Friends Forever |
+| Les cas à part | 3 | Pitch de ouf, Petit Bac, Le Petit Menteur |
+
+Le détail, jeu par jeu :
+
+- **quiz d'animateur** — Sorry mon french, Lost in translation, Plan pas plan
+  plan, Le souffleur, Le blindlo-fi, ETSY c'était ça ?!, Le juste chiffre, Le
+  Fitch, Soyez logique, Cacophonie. C'est le défileur *plus* deux briques
+  neuves : la révélation, et un compteur par joueur ;
+- **tableau de scores seul** — Le Liars Club, Avez-vous confiance ?, Ban word,
+  Histoires secrètes, Tudum, Qui rit sort, Sur parole. Ces sept-là ont un bouton
+  (`scoring` ou `chronoTour` renseigné) **sans aucun module `kit`** : aucune
+  ligne à écrire dans `lancerJeu.js`, et la brique dont le quiz a besoin ;
+- **distribution secrète** — Undercover, Insider, Cow-boy, La Murder party, et
+  Psycho (`regle-secrete`, la même primitive en un seul écran) ;
+- **classement à corriger** — Best-sold, Qui vient avant ?, Duo carré ou cash ? ;
+- **tour de table chronométré** — 30 secondes chrono, Tueur en série, On connaît
+  la chanson. C'est la famille qui recycle le plus d'`EcranTour` ;
+- **points dégressifs** — Emo'Quiz, Harry Cover.
+
+L'ordre conseillé fait de chaque étape une extension stricte de la précédente :
+le **tableau de scores seul** pose le compteur par joueur sur sept jeux sans
+contenu à tirer, puis le **quiz d'animateur** n'est plus que la composition du
+défileur et de ce compteur, plus la révélation.
+
+### Ce qui reste à découpler
+
+Deux dettes que la prochaine famille rencontrera, notées ici pour qu'elles ne se
+redécouvrent pas :
+
+- **`TableauScores` importe `MANCHES` depuis `troisFoisRien.js`.** La brique est
+  annoncée comme commune mais elle est couplée à un jeu. À découpler à l'arrivée
+  du premier kit qui compte des points par joueur, pour que l'interface se
+  dessine contre un second client réel et non à l'aveugle.
+- **`scoring: manches` fait deux métiers.** Au sens strict, des points variables
+  *selon la manche* : Trois fois rien, Pyramide, Duo carré ou cash. Au sens
+  élargi, des points variables tout court : Harry Cover et Emo'Quiz (5 → 1 selon
+  les indices lâchés), Best-sold, Qui vient avant ?, Petit Bac. Les seconds ont
+  besoin d'une **saisie libre de points**, pas de la grille équipes × manches.
+
+Deux corrections attendent par ailleurs côté tableur, relevées en comparant les
+règles aux colonnes : **Tueur en série** porte `compteur` alors que ses règles
+éliminent, et **Best Friends Forever** porte `manches` alors qu'elle compte un
+point par réponse identique. Aucun des deux n'a encore de champ de kit importé
+dans `games.js` : la correction doit partir du tableur.
 
 ### Les trois champs du catalogue
 
@@ -668,7 +766,7 @@ npm run build:fonts
 
 ## Tests
 
-286 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+291 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
@@ -754,13 +852,9 @@ erreur en console : le rendu retombe simplement sur une police système.
 Par ordre d'intérêt selon la dernière revue :
 
 1. **Les kits de jeu** — huit sont écrits sur les 36 que le tableur source
-   alimente (voir [Les kits de jeu](#les-kits-de-jeu)). Les familles suivantes,
-   par ordre de rendement : le **quiz d'animateur** (tirer, révéler, attribuer le
-   point — 10 jeux, dont Sorry mon french, Le Fitch, Le souffleur), puis le
-   **tableau de scores seul** (7 jeux sans contenu à tirer, dont Le Liars Club et
-   Sur parole), le **tour de table chronométré** (3), les **équipes** (Pyramide
-   est le jumeau de Trois fois rien) et la **distribution secrète** (Undercover,
-   Insider, Cow-boy, La Murder party, Psycho). Les règles de sept jeux
+   alimente, plus sept jeux qui ont un bouton sans module. Les 28 restants sont
+   regroupés par famille de mécanique, avec l'ordre conseillé, dans
+   [Les familles qui restent](#les-familles-qui-restent). Les règles de sept jeux
    mentionnent déjà une « liste » qui n'existera qu'avec leur kit.
 2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
