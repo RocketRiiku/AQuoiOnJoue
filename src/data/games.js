@@ -496,7 +496,7 @@ export const gamesList = [
     slug: 'avez-vous-confiance',
     description: 'Six points, deux joueurs dos à dos, une décision : coopérer ou trahir.',
     rules:
-      "Chacun se fabrique deux étiquettes, CONFIANCE et TRAHIR, et les garde en main toute la partie. Deux joueurs tirés au sort se placent dos à dos, six points en jeu entre eux. Au signal, chacun pose son étiquette face cachée, puis on retourne les deux ensemble. Deux CONFIANCE : trois points chacun. Une seule trahison : le traître rafle tout. Deux trahisons : les six points sont perdus. On enchaîne les duels jusqu'à ce que chacun soit passé au moins une fois. Rien n'interdit de promettre à voix haute ce qu'on ne compte pas tenir.",
+      "Chacun se fabrique deux étiquettes, CONFIANCE et TRAHIR, et les garde en main toute la partie. Deux joueurs tirés au sort s'installent dos à dos. Six points attendent sur la table. Au signal, chacun pose une étiquette face cachée, puis on retourne les deux ensemble. Deux CONFIANCE, et les six points se partagent : trois chacun. Une seule trahison, et le traître en emporte cinq ; le sixième disparaît. Deux trahisons, un point chacun. Plus on se méfie, plus le pot brûle. On enchaîne les duels jusqu'à ce que chacun soit passé. Rien n'interdit de promettre à voix haute ce qu'on ne tiendra pas.",
     minPlayers: 4,
     maxPlayers: 16,
     idealPlayersMin: 4,
@@ -536,7 +536,7 @@ export const gamesList = [
     slug: 'la-murder-party',
     description: 'Une mission secrète par joueur, à accomplir discrètement au fil de la soirée.',
     rules:
-      "Chaque joueur reçoit en secret une mission à accomplir sur quelqu'un d'autre au cours de la soirée : lui faire répéter une phrase, glisser une carte dans sa poche. La cible ne doit jamais comprendre qu'elle est visée. Si elle pose la question franchement, la tentative est perdue. Mission réussie, le joueur récupère la mission de sa victime et hérite de sa mission. Le plus de missions réussies en fin de soirée l'emporte : les papiers gardés en main font le compte.",
+      "Chaque joueur reçoit en secret une mission à accomplir sur quelqu'un d'autre au cours de la soirée : lui faire répéter une phrase, glisser une carte dans sa poche. La cible ne doit jamais comprendre qu'elle est visée. Si elle pose la question franchement, la tentative est perdue. Mission réussie, le joueur récupère la mission de sa victime et hérite de sa mission. Le plus de missions réussies en fin de soirée l'emporte : les papiers qu'on garde en main font le compte.",
     minPlayers: 5,
     maxPlayers: 15,
     idealPlayersMin: 6,
@@ -694,7 +694,7 @@ export const gamesList = [
     slug: 'ban-word',
     description: 'Trois mots bannis pour toute la soirée. Piégez les autres et ne vous faites pas prendre.',
     rules:
-      "En début de soirée, le groupe bannit ensemble trois ou quatre mots courants : « oui », « jeu », un prénom fréquent. Dès qu'un joueur lâche un mot interdit et qu'un autre le relève dans la seconde, celui qui a relevé marque un point. Tout l'art consiste à faire prononcer le mot aux autres sans le dire soi-même. Le jeu tourne en fond toute la soirée, en parallèle des autres : à chacun de garder ses points en tête. Le plus gros total l'emporte.",
+      "En début de soirée, le groupe bannit ensemble trois ou quatre mots courants : « oui », « jeu », un prénom fréquent. Dès qu'un joueur lâche un mot interdit, le premier qui le relève marque un point. Tout l'art consiste à faire prononcer le mot aux autres sans le dire soi-même. Le jeu tourne en fond toute la soirée, en parallèle des autres : à chacun de garder ses points en tête. Le plus gros total l'emporte.",
     minPlayers: 3,
     maxPlayers: 20,
     idealPlayersMin: 5,
@@ -944,7 +944,7 @@ export const gamesList = [
     slug: 'histoires-secretes',
     description: "Chaque personne a un secret. Il est temps d'en parler !",
     rules:
-      "En début de soirée, chacun écrit un secret ou une anecdote sur lui, vrai et jamais raconté ici. On plie les papiers et on les jette dans un bol. Entre deux jeux, on en tire un au hasard et on le lit à voix haute, sans commentaire. Chacun désigne à main levée celui qu'il croit être l'auteur. Un point par joueur qui vise juste, deux à l'auteur s'il passe inaperçu — à chacun de garder son total en tête, le jeu court toute la soirée. Il raconte la suite, ou pas !",
+      "En début de soirée, chacun écrit un secret ou une anecdote sur lui, vrai et jamais raconté ici. On plie les papiers et on les jette dans un bol. Entre deux jeux, on en tire un au hasard et on le lit à voix haute, sans commentaire. Chacun désigne à main levée celui qu'il croit être l'auteur. Un point par joueur qui vise juste, deux à l'auteur s'il passe inaperçu. Le jeu court toute la soirée : à chacun de garder son total en tête. Il raconte la suite, ou pas !",
     minPlayers: 3,
     maxPlayers: 15,
     idealPlayersMin: 5,
@@ -1023,7 +1023,7 @@ export const gamesList = [
     slug: 'sur-parole',
     description: "Annoncez la valeur de votre main. Peut-être qu'on vous a menti.",
     rules:
-      "Chacun reçoit trois cartes face cachée et les regarde sans rien montrer : l'As vaut 11, les figures valent 10 (le total maximum est 33). Le premier joueur annonce un total, vrai ou faux, comme il veut. Son voisin doit annoncer un total strictement supérieur, ou exiger de voir la main précédente. Dans ce cas, on retourne les trois cartes. Si le total tient, le sceptique prend un avertissement. Sinon, c'est le menteur. Au troisième, on sort. Le dernier debout gagne.",
+      "Chacun reçoit trois cartes face cachée et les regarde sans rien montrer : l'As vaut 11, les figures valent 10 (le total maximum est 33). Le premier joueur annonce un total, vrai ou faux, comme il veut. Son voisin doit annoncer un total strictement supérieur, ou exiger de voir la main précédente. Dans ce cas, on retourne les trois cartes. Si le total tient, le sceptique prend un avertissement. Sinon, c'est le menteur. Au troisième, il sort et le dernier debout gagne.",
     minPlayers: 3,
     maxPlayers: 10,
     idealPlayersMin: 4,

@@ -213,6 +213,7 @@ gardent leur traitement propre, chacune cohérente en interne :
 | Compteurs `< n >` | `Header.jsx`, `kit/Compteur.jsx` | réglage d'un nombre : même famille que les pastilles, un état et non une action |
 | Zones de réponse | `kit/EcranTour.jsx` | pendant un tour, « Trouvé » et « Passer » ne sont pas des actions de panneau mais **la table de jeu** — voir ci-dessous |
 | Lignes d'une feuille de match | `kit/FeuilleDeMatch.jsx` | la ligne entière marque le point : c'est le geste du jeu, répété toute la soirée, pas une commande de panneau — même famille que les zones de réponse |
+| Cases d'une matrice de gains | `kit/KitFeuilleDeMatch.jsx` | les quatre issues d'un duel : on tape celle qui s'est produite. La matrice est à la fois le barème qu'on lit et la commande qu'on presse, ce qu'aucun bouton de panneau ne sait faire |
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
 | Fermeture d'un panneau | `Introduction.jsx` | la croix en coin est une convention universelle, elle n'a pas besoin d'un niveau d'emphase |
@@ -243,6 +244,16 @@ document combat.
 L'action de sortie du kit est un `discret destructeur` : quitter fait perdre la
 partie en cours. Son libellé nomme l'écran où l'on retourne — « Retour à la
 fiche » ou « Retour à la soirée » — parce que le kit se pose sur les deux.
+
+**Les règles restent à portée pendant toute la partie**, par un « ? » posé sur la
+ligne du titre du jeu. On lit la fiche, on lance le jeu, et vingt minutes plus
+tard quelqu'un arrive ou une question tombe : sans lui, il faut quitter le kit,
+donc mettre la partie de côté, pour relire trois phrases.
+
+C'est une action qui porte sur l'objet affiché, donc une icône seule en haut à
+droite — la place que ce document lui assigne, et la seule où une icône sans
+libellé est admise. Elle vit dans `App.jsx`, sur le bandeau commun aux quatre
+orchestrateurs, plutôt que dans chacun d'eux.
 
 ### Pendant un tour, l'écran n'est plus un panneau
 

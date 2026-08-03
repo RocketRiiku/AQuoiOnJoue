@@ -56,7 +56,7 @@ describe('KitFeuilleDeMatch — l’écran de réglage', () => {
 
   it('rappelle la règle avant de commencer', () => {
     monter('sur-parole', 5);
-    expect(screen.getByText(/l’As vaut 11/)).toBeInTheDocument();
+    expect(screen.getByText(/as vaut 11/i)).toBeInTheDocument();
   });
 
   it('renomme les joueurs, et garde « Joueur n » pour les champs vides', async () => {
@@ -216,28 +216,52 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
 });
 
 describe('KitFeuilleDeMatch — le duel (Avez-vous confiance ?)', () => {
-  it('tire deux duellistes, puis répartit les six points', async () => {
+  const tirerLeDuel = async () => {
     monter('avez-vous-confiance', 4);
     await ouvrirLaFeuille();
-
     await userEvent.click(screen.getByRole('button', { name: /Tirer deux duellistes/ }));
-    expect(screen.getByText(/contre/)).toBeInTheDocument();
+  };
 
-    await userEvent.click(screen.getByRole('button', { name: /^Deux CONFIANCE/ }));
-    // Trois points chacun, et à personne d'autre : six points en jeu, six
-    // points distribués.
+  it('présente les quatre cases du barème, une seule tape chacune', async () => {
+    await tirerLeDuel();
+
+    expect(screen.getByText(/contre/)).toBeInTheDocument();
+    // Quatre cases, et pas cinq boutons de prose : chaque combinaison d'étiquettes
+    // a la sienne, y compris la trahison unilatérale dans les deux sens.
+    const cases = screen.getAllByRole('button', { name: /pose (CONFIANCE|TRAHIR)/ });
+    expect(cases).toHaveLength(4);
+  });
+
+  it('donne trois points à chacun quand les deux font confiance', async () => {
+    await tirerLeDuel();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /pose CONFIANCE et .* pose CONFIANCE/ })
+    );
     expect(screen.getAllByText('3')).toHaveLength(2);
   });
 
-  it('demande lequel des deux a trahi', async () => {
-    monter('avez-vous-confiance', 4);
-    await ouvrirLaFeuille();
-    await userEvent.click(screen.getByRole('button', { name: /Tirer deux duellistes/ }));
+  it('distingue le traître de sa victime sans le demander deux fois', async () => {
+    await tirerLeDuel();
 
-    // L'issue asymétrique prend deux boutons, un par duelliste ; les issues
-    // symétriques n'en demandent qu'un.
-    expect(screen.getAllByRole('button', { name: /Une seule trahison/ })).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: /Deux trahisons/ })).toHaveLength(1);
+    // La case dit qui a posé quoi : cinq points pour le traître, zéro pour
+    // l'autre, en une tape.
+    const [cinqPourLePremier] = screen.getAllByRole('button', {
+      name: /pose TRAHIR et .* pose CONFIANCE/
+    });
+    await userEvent.click(cinqPourLePremier);
+
+    expect(screen.getByText('5')).toBeInTheDocument();
+    // Le reste de la table n'a rien touché : trois zéros pour quatre joueurs.
+    expect(screen.getAllByText('0')).toHaveLength(3);
+  });
+
+  it('laisse un point à chacun quand les deux trahissent', async () => {
+    await tirerLeDuel();
+
+    await userEvent.click(screen.getByRole('button', { name: /pose TRAHIR et .* pose TRAHIR/ }));
+    // Le pot a brûlé : deux points distribués sur les six.
+    expect(screen.getAllByText('1')).toHaveLength(2);
   });
 });
 

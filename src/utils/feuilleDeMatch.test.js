@@ -264,13 +264,40 @@ describe('feuille de match — les barèmes écrits jeu par jeu', () => {
     expect(bonus([])).toBe(0);
   });
 
-  it('Avez-vous confiance ? : les six points d’un duel se répartissent en trois issues', () => {
-    const { issues } = reglesDe('avez-vous-confiance');
-    // Aucune issue ne crée de point : six au plus, jamais davantage.
-    for (const issue of issues) {
-      expect(issue.gains.reduce((somme, n) => somme + n, 0)).toBeLessThanOrEqual(6);
+  /**
+   * Ce test verrouille le *game design*, pas le code.
+   *
+   * Le barème d'origine — 3/3, 6/0, 0/0 — n'était pas un dilemme : avec P = S,
+   * trahir ne coûtait jamais rien, donc tout le monde trahissait et personne ne
+   * marquait. Les deux conditions ci-dessous sont ce qui distingue un dilemme du
+   * prisonnier d'un jeu mort, et rien d'autre ne les rappellerait si un jour
+   * quelqu'un retouche les chiffres.
+   */
+  it('Avez-vous confiance ? : la matrice est un vrai dilemme du prisonnier', () => {
+    const { gains } = reglesDe('avez-vous-confiance').matrice;
+    // Du point de vue du premier duelliste : coopérer d'abord, trahir ensuite.
+    const [R, S] = [gains[0][0][0], gains[0][1][0]];
+    const [T, P] = [gains[1][0][0], gains[1][1][0]];
+
+    expect(T).toBeGreaterThan(R); // trahir seul rapporte plus que coopérer
+    expect(R).toBeGreaterThan(P); // coopérer à deux vaut mieux que se méfier à deux
+    expect(P).toBeGreaterThan(S); // se méfier à deux vaut mieux que se faire avoir
+    expect(2 * R).toBeGreaterThan(T + S); // coopérer maximise le total distribué
+  });
+
+  it('Avez-vous confiance ? : la matrice est symétrique et ne crée aucun point', () => {
+    const { etiquettes, gains } = reglesDe('avez-vous-confiance').matrice;
+    expect(etiquettes).toHaveLength(2);
+
+    for (const [i, ligne] of gains.entries()) {
+      for (const [j, points] of ligne.entries()) {
+        // Six points sur la table, jamais davantage.
+        expect(points[0] + points[1]).toBeLessThanOrEqual(6);
+        // Échanger les deux joueurs échange leurs gains : aucune place n'est
+        // avantagée, alors que le tirage désigne l'ordre au hasard.
+        expect([...gains[j][i]].reverse()).toEqual(points);
+      }
     }
-    expect(issues.map((i) => i.gains)).toEqual([[3, 3], [6, 0], [0, 0]]);
   });
 
   it('les cinq jeux de la famille ont leurs règles, et personne d’autre', () => {

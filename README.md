@@ -55,6 +55,7 @@ src/
     BoutonTirage.jsx       « Surprends-moi ! » et son mélange de cartes
     Tuile.jsx              entrée vers une section (« Ma soirée »)
     Infobulle.jsx          infobulle au survol et au focus
+    Dialogue.jsx           coquille de modale : voile, panneau, piège à focus
     Header.jsx             les filtres (deux niveaux)
     TriJeux.jsx            l’ordre de la liste
     GameCard.jsx           une carte de la liste
@@ -468,7 +469,7 @@ la même feuille :
 | --- | --- | --- |
 | `auFil` | Qui rit sort, Sur parole | l'événement tombe n'importe quand, on tape la ligne |
 | `parTour` | Le Liars Club, Tudum | un joueur désigné, on coche qui a trouvé, on résout d'un coup |
-| `duel` | Avez-vous confiance ? | deux joueurs tirés au sort, trois issues |
+| `duel` | Avez-vous confiance ? | deux joueurs tirés au sort, une matrice 2×2 de gains |
 
 **La ligne est la cible**, pour la forme `auFil`
 ([`FeuilleDeMatch.jsx`](src/components/kit/FeuilleDeMatch.jsx)). C'est le geste
@@ -511,6 +512,42 @@ Faute de seuil, **aucune règle ne dit quand s'arrêter** : la table tranche. Le
 bouton passe de `discret` à `secondaire` une fois le tour de table complet, ce
 que trois de ces jeux demandent explicitement (« jusqu'à ce que chacun soit passé
 au moins une fois »).
+
+#### Le duel se joue sur une matrice, et son barème a été corrigé
+
+*Avez-vous confiance ?* est un dilemme du prisonnier, et son barème n'en était
+pas un. Le jeu n'existe que si deux conditions tiennent, `T > R > P > S` et
+`2R > T + S` ([Dilemma Game, ScienceDirect](https://www.sciencedirect.com/topics/engineering/dilemma-game)).
+Avec 3/3, 6/0 et 0/0, la mise d'origine échouait aux deux : `P = S = 0` rendait
+la trahison **gratuite** — face à un traître on marquait zéro quoi qu'on fasse,
+face à un joueur loyal on gagnait trois. Tout le monde trahissait, personne ne
+marquait, et la partie mourait au deuxième duel.
+
+3/3, 5/0 et 1/1 rétablissent les deux conditions. Le total distribué descend de
+six à cinq puis à deux : plus on se méfie, plus le pot brûle, ce qui se raconte
+mieux à table que « les six points sont perdus ».
+[`feuilleDeMatch.test.js`](src/utils/feuilleDeMatch.test.js) verrouille les deux
+inégalités — c'est le seul endroit qui rappellera la règle à qui retouchera les
+chiffres.
+
+**La matrice 2×2 est la forme canonique de ce jeu, et elle sert d'entrée** : on
+tape la case qui s'est produite, une fois, et les points tombent des deux côtés.
+La version d'avant listait les trois issues en boutons de prose, dont une à
+dédoubler pour dire lequel des deux avait trahi. Quatre boutons et trois lignes à
+lire, pour un geste unique. La matrice montre en plus ce que le texte des règles
+dit mal : les quatre issues côte à côte, donc le fait que trahir seul rapporte le
+plus et que se méfier à deux ne rapporte presque rien. C'est ce que la table doit
+voir pour que le choix ait du sel.
+
+#### Les règles restent à portée
+
+Un « ? » sur la ligne du titre rouvre les règles du jeu en modale, pendant toute
+la partie. On lit la fiche, on lance le jeu, et vingt minutes plus tard quelqu'un
+arrive : sans lui, il faut quitter le kit — donc mettre la partie de côté — pour
+relire trois phrases. Il vit dans [`App.jsx`](src/App.jsx), sur le bandeau commun
+aux quatre orchestrateurs, et la coquille de la modale est celle de
+[`Dialogue.jsx`](src/components/Dialogue.jsx), sortie de `DialoguePot` à cette
+occasion : les quinze lignes de piège à focus n'ont pas à exister deux fois.
 
 ### Les familles qui restent
 
@@ -672,7 +709,9 @@ tromperait sur ce qui va être joué.
 
 La modale est écrite à la main plutôt qu'avec `<dialog>` : jsdom n'implémente pas
 `showModal`, et un dialogue que la suite de tests ne peut pas ouvrir n'est pas
-testable. Le piège à focus tient en quinze lignes.
+testable. Le piège à focus tient en quinze lignes, et vit désormais dans
+[`Dialogue.jsx`](src/components/Dialogue.jsx) — partagé avec les règles qu'on
+rouvre en cours de partie.
 
 ### Ce qu'il ne fait pas
 
@@ -896,7 +935,7 @@ npm run build:fonts
 
 ## Tests
 
-352 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+355 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 

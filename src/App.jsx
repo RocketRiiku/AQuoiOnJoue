@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { PartyPopper, Search, Star, Timer } from 'lucide-react';
+import { CircleHelp, PartyPopper, Search, Star, Timer } from 'lucide-react';
+import { BoutonIcone } from './components/Bouton';
+import Dialogue from './components/Dialogue';
 import BoutonTirage from './components/BoutonTirage';
 import Header from './components/Header';
 import Tuile from './components/Tuile';
@@ -65,6 +67,11 @@ function App() {
    */
   const [partieEnCours, setPartieEnCours] = useState(lirePartie);
   useEffect(() => setPartieEnCours(lirePartie()), [vue]);
+
+  // Les règles rouvertes pendant une partie. Refermées en quittant le kit :
+  // les retrouver ouvertes à la partie suivante n'aurait aucun sens.
+  const [reglesOuvertes, setReglesOuvertes] = useState(false);
+  useEffect(() => setReglesOuvertes(false), [vue, jeuAffiche]);
 
   /**
    * L'effectif de la soirée, saisi une fois dans le filtre « Joueurs », suit
@@ -239,7 +246,7 @@ function App() {
                     {/* Le titre du jeu ancre l'écran : on peut y arriver par un
                         lien, sans être passé par la fiche. Deux crans sous le
                         titre d'une fiche — ici, c'est la partie qui compte. */}
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="relative flex items-center gap-3 mb-4">
                       {/* La carte du jeu, en petit : le kit reste rattaché à
                           l'objet qu'on a ouvert, et non un écran hors sol. */}
                       <div className="w-10 h-14 shrink-0 rounded-lg overflow-hidden shadow-md -rotate-2 bg-paille">
@@ -247,11 +254,43 @@ function App() {
                       </div>
                       <h2
                         id="titre-kit"
-                        className="font-titre text-2xl text-brique leading-tight"
+                        className="font-titre text-2xl text-brique leading-tight pr-11"
                       >
                         {jeuDuKit.title}
                       </h2>
+                      {/* Les règles restent à portée pendant toute la partie.
+                          On lit la fiche, on lance le jeu, et vingt minutes
+                          plus tard quelqu'un arrive ou une question tombe :
+                          sans ça, il faut quitter le kit — donc mettre la
+                          partie de côté — pour relire trois phrases.
+
+                          Une action qui porte sur l'objet affiché, donc une
+                          icône seule en haut à droite (docs/boutons.md). Elle
+                          vaut pour les quatre orchestrateurs, d'où sa place
+                          ici plutôt que dans chacun d'eux. */}
+                      <div className="absolute top-0 right-0 flex items-center">
+                        <BoutonIcone
+                          icone={CircleHelp}
+                          infobulle="Revoir les règles"
+                          // Les guillemets évitent l'élision : « les règles de
+                          // Avez-vous confiance ? » se lit mal, et une règle
+                          // par titre à voyelle initiale serait ingérable.
+                          nomAccessible={`Revoir les règles de « ${jeuDuKit.title} »`}
+                          onClick={() => setReglesOuvertes(true)}
+                        />
+                      </div>
                     </div>
+
+                    {reglesOuvertes && (
+                      <Dialogue
+                        titre={`Comment on joue à ${jeuDuKit.title}`}
+                        onFermer={() => setReglesOuvertes(false)}
+                      >
+                        <p className="text-ardoise font-texte text-lg leading-relaxed whitespace-pre-line">
+                          {jeuDuKit.rules}
+                        </p>
+                      </Dialogue>
+                    )}
                     {/* Le kit se pose sur la fiche ou sur le déroulé : le
                         libellé de sortie doit nommer l'écran où l'on retourne,
                         sans quoi il promet la fiche et rend la soirée. */}

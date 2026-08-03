@@ -138,7 +138,7 @@ function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRe
                   Facultatif, donc — aucun prénom n'est *demandé*, et rien ne
                   quitte l'appareil. */}
               <p className="text-ardoise/70 text-sm mt-0.5">
-                Facultatif. Laissé vide, on garde « Joueur&nbsp;n ».
+                Facultatif&nbsp;: sans prénom, on garde « Joueur&nbsp;n ».
               </p>
               <div className="flex flex-col gap-2 mt-3">
                 {nomsJoueurs(nombre).map((defaut, i) => (
@@ -256,21 +256,35 @@ function PanneauTour({ etat, regles, onResoudre }) {
 }
 
 /**
- * Panneau de duel : deux joueurs tirés au sort, trois issues possibles.
+ * Panneau de duel : deux joueurs tirés au sort, et la matrice de leurs choix.
  *
- * Le tirage vit dans l'état plutôt que dans le composant, pour qu'une partie
- * reprise retrouve son duel en cours. Chaque issue est un bouton, parce que
- * choisir l'issue *est* l'action de l'écran — mais elles sont trois et
- * mutuellement exclusives : `secondaire` pour toutes, aucune n'étant plus
- * probable que les autres (la règle du principal unique interdirait d'en
- * distinguer une arbitrairement).
+ * **La matrice 2×2 est la forme canonique de ce jeu**, et c'est elle qui sert
+ * d'entrée : on tape la case qui vient de se produire, une fois, et les points
+ * tombent des deux côtés. La version d'avant listait les trois issues en boutons
+ * de prose, dont une à dédoubler pour dire lequel des deux avait trahi — quatre
+ * boutons et trois lignes à lire pour un geste unique.
+ *
+ * Elle fait aussi le travail que le texte des règles fait mal : le barème
+ * complet se lit d'un coup d'œil, ses quatre cases côte à côte. On voit que
+ * trahir seul rapporte le plus, que se méfier à deux ne rapporte presque rien,
+ * et que le pot fond à mesure. C'est ce que la table doit comprendre pour que le
+ * choix ait du sel, et une liste de trois phrases ne le montre pas.
+ *
+ * Un vrai `<table>` : deux entrées, deux en-têtes, et les lecteurs d'écran
+ * savent les parcourir. Chaque case est une **surface de jeu** et non un bouton
+ * de panneau, comme la ligne d'une feuille de match (docs/boutons.md). Son nom
+ * accessible nomme les deux joueurs et leurs points : « 5 / 0 » ne dit pas qui
+ * prend quoi.
+ *
+ * Le tirage vit dans l'état et non dans le composant, pour qu'une partie reprise
+ * retrouve son duel en cours.
  */
 function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
   if (!etat.duel) {
     return (
       <div className="text-center">
         <p className="text-ardoise font-texte text-lg">
-          Deux joueurs s’affrontent, dos à dos, six points en jeu.
+          Six points sur la table, deux joueurs dos à dos.
         </p>
         <BarreActions className="justify-center">
           <Bouton variante="principal" icone={Shuffle} onClick={onTirer}>
@@ -282,6 +296,7 @@ function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
   }
 
   const [a, b] = etat.duel;
+  const { etiquettes, gains } = regles.matrice;
 
   return (
     <div>
@@ -292,48 +307,76 @@ function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
       <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-8">
         Qu’annoncent les deux étiquettes&nbsp;?
       </p>
-      {/* Une issue asymétrique — « une seule trahison » — ne dit pas encore qui
-          a trahi : elle prend donc deux boutons, un par duelliste. Les issues
-          symétriques n'en demandent qu'un. */}
-      <div className="flex flex-col gap-2 mt-2">
-        {regles.issues.map((issue) => (
-          <div key={issue.cle} className="flex flex-wrap items-center gap-2">
-            <Bouton
-              variante="secondaire"
-              onClick={() =>
-                onResoudre(
-                  [
-                    { joueur: a, points: issue.gains[0] },
-                    { joueur: b, points: issue.gains[1] }
-                  ],
-                  [a, b]
-                )
-              }
-            >
-              {issue.gains[0] !== issue.gains[1]
-                ? `${issue.libelle} — ${etat.joueurs[a]}`
-                : issue.libelle}
-            </Bouton>
-            {issue.gains[0] !== issue.gains[1] && (
-              <Bouton
-                variante="secondaire"
-                onClick={() =>
-                  onResoudre(
-                    [
-                      { joueur: a, points: issue.gains[1] },
-                      { joueur: b, points: issue.gains[0] }
-                    ],
-                    [a, b]
-                  )
-                }
-              >
-                {`${issue.libelle} — ${etat.joueurs[b]}`}
-              </Bouton>
-            )}
-            <span className="text-ardoise/60 text-xs">{issue.detail}</span>
-          </div>
-        ))}
+
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full border-collapse table-fixed">
+          <caption className="sr-only">
+            Points gagnés selon l’étiquette posée par chaque duelliste
+          </caption>
+          <thead>
+            <tr>
+              <th className="w-20 sm:w-28">
+                <span className="sr-only">Étiquette posée</span>
+              </th>
+              {etiquettes.map((etiquette) => (
+                <th key={etiquette} scope="col" className="font-normal pb-2 px-1">
+                  <span className="block truncate font-titre text-sm sm:text-base text-encre">
+                    {etat.joueurs[b]}
+                  </span>
+                  <span className="font-titre text-xs uppercase tracking-wide text-ardoise/70">
+                    {etiquette}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {gains.map((ligne, i) => (
+              <tr key={etiquettes[i]}>
+                <th scope="row" className="font-normal text-left pr-2 align-middle">
+                  <span className="block truncate font-titre text-sm sm:text-base text-encre">
+                    {etat.joueurs[a]}
+                  </span>
+                  <span className="font-titre text-xs uppercase tracking-wide text-ardoise/70">
+                    {etiquettes[i]}
+                  </span>
+                </th>
+                {ligne.map((points, j) => (
+                  <td key={etiquettes[j]} className="p-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onResoudre(
+                          [
+                            { joueur: a, points: points[0] },
+                            { joueur: b, points: points[1] }
+                          ],
+                          [a, b]
+                        )
+                      }
+                      aria-label={`${etat.joueurs[a]} pose ${etiquettes[i]} et ${etat.joueurs[b]} pose ${etiquettes[j]} : ${points[0]} pour ${etat.joueurs[a]}, ${points[1]} pour ${etat.joueurs[b]}`}
+                      className="w-full rounded-xl bg-paille hover:bg-paille/70 active:bg-white/80 py-4 sm:py-5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="font-titre text-2xl sm:text-3xl tabular-nums text-encre"
+                      >
+                        {points[0]}
+                        <span className="text-ardoise/50 mx-1">/</span>
+                        {points[1]}
+                      </span>
+                    </button>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      <p className="text-ardoise/60 text-xs text-center mt-2">
+        Touchez la case qui s’est produite.
+      </p>
     </div>
   );
 }
@@ -417,7 +460,7 @@ function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }
         <>
           <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70">
             {regles.seuil !== null
-              ? `${regles.seuil} avertissements et l’on sort`
+              ? `${regles.seuil} avertissements et on sort`
               : 'Touchez une ligne pour marquer un point'}
           </p>
           <div className="mt-4">
@@ -480,7 +523,7 @@ function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }
             icone={Flag}
             onClick={() => envoyer({ type: 'clore' })}
           >
-            {complet ? 'Tout le monde est passé — voir le classement' : 'Terminer la partie'}
+            {complet ? 'Tout le monde est passé : voir le classement' : 'Terminer la partie'}
           </Bouton>
         )}
         <Bouton variante="discret" icone={ArrowLeft} onClick={onQuitter}>

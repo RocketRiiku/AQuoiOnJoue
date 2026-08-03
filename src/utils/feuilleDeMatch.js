@@ -40,7 +40,7 @@ const JEUX = {
     forme: 'auFil',
     seuil: 2,
     rappel:
-      'Tout le monde dans la même pièce. Un sourire repéré vaut un avertissement : touchez la ligne de celui qui a craqué.',
+      'Tout le monde dans la même pièce, et une seule consigne : faire rire sans rire. Quand quelqu’un craque, touchez sa ligne. Deux avertissements et il sort.',
     // L'éliminé reste à l'écran : il rejoint le public et continue à saboter.
     libelleGeste: 'a souri'
   },
@@ -49,7 +49,7 @@ const JEUX = {
     forme: 'auFil',
     seuil: 3,
     rappel:
-      'Trois cartes chacun, face cachée : l’As vaut 11, les figures valent 10. Touchez la ligne de celui qui perd le duel — au troisième avertissement, il sort.',
+      'Trois cartes chacun, face cachée. L’As vaut 11, les figures 10. Touchez la ligne de celui qui perd le duel. Au troisième avertissement, il sort.',
     libelleGeste: 'perd le duel'
   },
 
@@ -58,7 +58,7 @@ const JEUX = {
     roleCourant: 'raconte',
     questionTrouveurs: 'Qui a démasqué la vraie ?',
     rappel:
-      'Chacun son tour, trois anecdotes : une vraie, deux inventées. La table interroge une minute, puis tout le monde vote en même temps.',
+      'Chacun son tour, trois anecdotes : une vraie, deux inventées. La table interroge une minute. Puis tout le monde vote en même temps.',
     /**
      * Un point à chaque joueur qui a trouvé, et **autant de points au conteur
      * qu'il a trompé de monde**. Le second chiffre se déduit du premier : le
@@ -75,7 +75,7 @@ const JEUX = {
     roleCourant: 'imite',
     questionTrouveurs: 'Qui a reconnu le son ?',
     rappel:
-      'À son tour, un joueur imite son son à la voix. Les autres écrivent leur réponse sans rien dire, puis on révèle ensemble.',
+      'À son tour, un joueur reproduit son extrait à la voix. Les autres écrivent leur réponse sans rien dire. On révèle ensemble.',
     /**
      * Le bonus du proposeur **se substitue**, il ne s'ajoute pas : trois points
      * si toute la table a trouvé, deux si la moitié y est arrivée, rien sinon.
@@ -94,17 +94,39 @@ const JEUX = {
   'avez-vous-confiance': {
     forme: 'duel',
     rappel:
-      'Deux étiquettes par joueur, CONFIANCE et TRAHIR, gardées en main toute la partie. Les duellistes se placent dos à dos, six points en jeu.',
+      'Deux étiquettes par joueur, CONFIANCE et TRAHIR. Les duellistes s’installent dos à dos, six points sur la table. Plus on se méfie, plus le pot brûle.',
     /**
-     * Les trois issues d'un duel, et leurs six points. Le barème est posé par
-     * les règles : coopérer partage, trahir seul rafle, trahir tous les deux
-     * brûle la mise.
+     * Le barème du duel, en matrice 2×2 : ce que chacun a posé décide de tout.
+     *
+     * **Il a été corrigé, et il fallait le faire.** Le dilemme du prisonnier
+     * n'en est un que si deux conditions tiennent : `T > R > P > S` et
+     * `2R > T + S`. Le barème d'origine — 3/3, 6/0, 0/0 — échouait aux deux.
+     * Avec P = S = 0, trahir ne coûtait jamais rien : face à un traître on
+     * marquait zéro quoi qu'on fasse, face à un joueur loyal on gagnait trois.
+     * Trahir était donc gratuit, tout le monde trahissait, personne ne marquait
+     * et la partie mourait au deuxième duel. Et 2R = T + S retirait à la
+     * coopération son avantage collectif.
+     *
+     * 3/3, 5/0 et 1/1 rétablissent les deux conditions (5 > 3 > 1 > 0, et
+     * 6 > 5). Le total distribué descend de six à cinq puis à deux : plus on se
+     * méfie, plus le pot brûle. C'est une meilleure histoire à raconter à table
+     * que « les six points sont perdus », et c'est surtout un vrai choix.
      */
-    issues: [
-      { cle: 'confiance', libelle: 'Deux CONFIANCE', detail: 'trois points chacun', gains: [3, 3] },
-      { cle: 'trahison', libelle: 'Une seule trahison', detail: 'le traître rafle les six', gains: [6, 0] },
-      { cle: 'double', libelle: 'Deux trahisons', detail: 'les six points sont perdus', gains: [0, 0] }
-    ]
+    matrice: {
+      /** Ce qu'on peut poser. L'ordre fixe celui des lignes et des colonnes. */
+      etiquettes: ['CONFIANCE', 'TRAHIR'],
+      /** `gains[ceQuA a posé][ceQue B a posé]` → `[points de A, points de B]`. */
+      gains: [
+        [
+          [3, 3],
+          [0, 5]
+        ],
+        [
+          [5, 0],
+          [1, 1]
+        ]
+      ]
+    }
   }
 };
 
