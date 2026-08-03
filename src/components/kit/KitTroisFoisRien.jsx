@@ -147,13 +147,10 @@ function Reglage({ game, mots, joueursConnus, onDemarrer, onQuitter, libelleReto
 
   return (
     <>
-      {/* Le chapô du catalogue d'abord — ce que le jeu est —, la mécanique du
-          kit ensuite — ce que le site prend en charge. */}
+      {/* Le chapô du catalogue, et rien de plus. Annoncer que le site tient le
+          chrono et compte les points décrivait l'évidence à qui vient de lire
+          les règles — et la durée se règle deux lignes plus bas. */}
       <p className="text-ardoise font-texte text-lg">{game.description}</p>
-      <p className="text-ardoise/80 text-sm mt-1">
-        {duree} secondes par tour. Je tire le pot, je tiens le chrono et je compte les
-        points.
-      </p>
 
       <div className="mt-6 flex flex-col gap-5">
         <div>
