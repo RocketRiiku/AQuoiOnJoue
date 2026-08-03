@@ -1,0 +1,632 @@
+import { useEffect, useId, useReducer, useState } from 'react';
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Flag,
+  Play,
+  RotateCw,
+  Settings2,
+  Shuffle,
+  Trash2
+} from 'lucide-react';
+import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
+import Pastille from '../Pastille';
+import Chrono from './Chrono';
+import Compteur from './Compteur';
+import FeuilleDeMatch from './FeuilleDeMatch';
+import TableauScores from './TableauScores';
+import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
+import {
+  enJeu,
+  etatInitial,
+  nomsJoueurs,
+  reducteur,
+  reglesDe,
+  reprendre,
+  tousPasses,
+  vainqueurs
+} from '../../utils/feuilleDeMatch';
+
+/** Le mot du point, déduit du catalogue : on encaisse ou on marque. */
+const uniteDe = (game) => (game.scoring === 'elimination' ? 'avertissement' : 'point');
+
+const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
+
+/**
+ * L'état du jeu traduit en lignes de `TableauScores`.
+ *
+ * Une seule valeur par joueur, donc aucune colonne : la brique se réduit alors
+ * à un classement. C'est ce second client, réel, qui a permis de la découpler de
+ * « Trois fois rien » sans dessiner son interface à l'aveugle.
+ */
+const lignesDeScore = (etat, { montrerVainqueur = false } = {}) => {
+  const enTete = montrerVainqueur ? vainqueurs(etat) : [];
+  return etat.joueurs.map((nom, i) => ({
+    nom,
+    total: etat.scores[i],
+    enTete: enTete.includes(i),
+    sortie: etat.sortis[i],
+    retraitPossible: etat.scores[i] > 0
+  }));
+};
+
+/**
+ * Écran d'avant-partie : combien êtes-vous, et le rappel de la règle.
+ *
+ * Une seule question, parce que l'effectif est la condition d'existence de la
+ * feuille — on ne dessine pas N lignes sans N. Il arrive pré-rempli par le
+ * filtre « Joueurs » de la liste : dans le cas courant, un coup d'œil et une
+ * tape. Le défileur se passe d'un tel écran à raison, n'ayant rien à régler.
+ *
+ * Le rappel d'avant-partie y est fondu au lieu d'occuper son propre écran :
+ * puisqu'il faut de toute façon s'arrêter ici, un péage de plus ne se justifie
+ * pas. Même contenu que les `RAPPELS` du défileur — ce qui se perd entre la
+ * lecture des règles et le premier point.
+ */
+function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRetour }) {
+  const [nombre, setNombre] = useState(
+    Math.min(Math.max(joueursConnus ?? game.idealPlayersMin, game.minPlayers), game.maxPlayers)
+  );
+  // Vides au départ, et non pré-remplis de « Joueur n » : le champ annonce son
+  // repli par son indice de saisie, et une valeur déjà là obligerait à
+  // l'effacer avant d'écrire un prénom.
+  const [noms, setNoms] = useState(() => []);
+  const [deplie, setDeplie] = useState(false);
+  const idPanneau = useId();
+
+  // Un nom laissé vide retombe sur « Joueur n » : mieux vaut un nom générique
+  // qu'une ligne sans en-tête. Même règle que les noms d'équipes.
+  const nomsRetenus = nomsJoueurs(nombre).map((defaut, i) => noms[i]?.trim() || defaut);
+
+  // La liste part vide et se remplit par index : un `map` n'aurait rien à
+  // parcourir, et le premier nom saisi serait perdu.
+  const renommer = (index, valeur) =>
+    setNoms((actuels) => {
+      const suite = [...actuels];
+      suite[index] = valeur;
+      return suite;
+    });
+
+  return (
+    <>
+      <p className="text-ardoise font-texte text-lg">{regles.rappel}</p>
+
+      <div className="mt-6">
+        <p className="font-titre text-encre">Combien êtes-vous&nbsp;?</p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+          <Compteur
+            label="nombre de joueurs"
+            valeur={nombre}
+            min={game.minPlayers}
+            max={game.maxPlayers}
+            onChange={setNombre}
+          />
+          <span className="text-ardoise/80 text-sm">
+            soit {pluriel(nombre, 'ligne')} sur la feuille
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <Bouton
+          variante="discret"
+          icone={Settings2}
+          iconeApres={deplie ? ChevronUp : ChevronDown}
+          onClick={() => setDeplie((v) => !v)}
+          aria-expanded={deplie}
+          aria-controls={idPanneau}
+        >
+          Paramètres avancés
+        </Bouton>
+
+        <div
+          id={idPanneau}
+          inert={!deplie}
+          className={`grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none ${
+            deplie ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="mt-4 bg-paille/60 rounded-2xl px-4 py-4">
+              <p className="font-titre text-encre">Noms des joueurs</p>
+              {/* Les équipes de « Trois fois rien » sont numérotées et ça
+                  suffit, elles sont deux à quatre. Une feuille de match en
+                  compte jusqu'à seize : « Joueur 11 » ne désigne plus personne,
+                  et un score qu'on ne sait pas s'attribuer ne sert à rien.
+                  Facultatif, donc — aucun prénom n'est *demandé*, et rien ne
+                  quitte l'appareil. */}
+              <p className="text-ardoise/70 text-sm mt-0.5">
+                Facultatif. Laissé vide, on garde « Joueur&nbsp;n ».
+              </p>
+              <div className="flex flex-col gap-2 mt-3">
+                {nomsJoueurs(nombre).map((defaut, i) => (
+                  <label key={defaut} className="flex items-center gap-3 text-sm">
+                    <span className="text-ardoise/80 w-20 shrink-0">Joueur {i + 1}</span>
+                    <input
+                      type="text"
+                      value={noms[i] ?? ''}
+                      placeholder={defaut}
+                      maxLength={24}
+                      onChange={(e) => renommer(i, e.target.value)}
+                      className="flex-1 min-w-0 rounded-full bg-white/80 px-3 py-1.5 text-encre placeholder:text-ardoise/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <BarreActions>
+        <Bouton
+          variante="principal"
+          icone={Play}
+          onClick={() =>
+            onDemarrer(
+              etatInitial({
+                joueurs: nomsRetenus,
+                seuil: regles.seuil ?? null,
+                forme: regles.forme
+              })
+            )
+          }
+        >
+          Ouvrir la feuille
+        </Bouton>
+        <Bouton variante="secondaire" icone={ArrowLeft} onClick={onQuitter}>
+          {libelleRetour}
+        </Bouton>
+      </BarreActions>
+    </>
+  );
+}
+
+/**
+ * Panneau de résolution d'un tour : un joueur désigné, on coche qui a trouvé.
+ *
+ * **C'est là que le barème disparaît de la table.** Le Liars Club veut « autant
+ * de points au conteur qu'il a trompé de monde », Tudum « trois points si tout
+ * le monde a reconnu le son » : demander ces chiffres à qui tient le téléphone
+ * serait lui faire compter deux fois la même chose. On coche les trouveurs, le
+ * reste se déduit.
+ *
+ * Des `Pastille` parce que ce sont des contrôles de formulaire portant un état
+ * sélectionné, pas des actions — le premier kit à s'en servir, comme
+ * docs/boutons.md l'annonçait.
+ */
+function PanneauTour({ etat, regles, onResoudre }) {
+  const [trouveurs, setTrouveurs] = useState([]);
+  const courant = etat.courant;
+  const participants = enJeu(etat).filter((i) => i !== courant);
+
+  // Changer de joueur courant remet la sélection à plat : les coches du tour
+  // précédent n'ont plus de sens.
+  useEffect(() => setTrouveurs([]), [courant]);
+
+  const basculer = (joueur) =>
+    setTrouveurs((actuels) =>
+      actuels.includes(joueur) ? actuels.filter((i) => i !== joueur) : [...actuels, joueur]
+    );
+
+  return (
+    <div>
+      <p className="font-titre text-3xl sm:text-4xl text-brique text-center" role="status">
+        {etat.joueurs[courant]} {regles.roleCourant}
+      </p>
+
+      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-8">
+        {regles.questionTrouveurs}
+      </p>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {participants.map((joueur) => (
+          <Pastille
+            key={joueur}
+            actif={trouveurs.includes(joueur)}
+            onClick={() => basculer(joueur)}
+          >
+            {etat.joueurs[joueur]}
+          </Pastille>
+        ))}
+      </div>
+      <p className="text-ardoise/60 text-xs mt-2">
+        {trouveurs.length === 0
+          ? 'Personne, pour l’instant.'
+          : `${pluriel(trouveurs.length, 'joueur')} sur ${participants.length}.`}
+      </p>
+
+      <BarreActions>
+        <Bouton
+          variante="principal"
+          icone={Check}
+          onClick={() => {
+            onResoudre(
+              regles.resoudre({ courant, trouveurs, enJeu: enJeu(etat) })
+            );
+            setTrouveurs([]);
+          }}
+        >
+          Compter les points
+        </Bouton>
+      </BarreActions>
+    </div>
+  );
+}
+
+/**
+ * Panneau de duel : deux joueurs tirés au sort, trois issues possibles.
+ *
+ * Le tirage vit dans l'état plutôt que dans le composant, pour qu'une partie
+ * reprise retrouve son duel en cours. Chaque issue est un bouton, parce que
+ * choisir l'issue *est* l'action de l'écran — mais elles sont trois et
+ * mutuellement exclusives : `secondaire` pour toutes, aucune n'étant plus
+ * probable que les autres (la règle du principal unique interdirait d'en
+ * distinguer une arbitrairement).
+ */
+function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
+  if (!etat.duel) {
+    return (
+      <div className="text-center">
+        <p className="text-ardoise font-texte text-lg">
+          Deux joueurs s’affrontent, dos à dos, six points en jeu.
+        </p>
+        <BarreActions className="justify-center">
+          <Bouton variante="principal" icone={Shuffle} onClick={onTirer}>
+            Tirer deux duellistes
+          </Bouton>
+        </BarreActions>
+      </div>
+    );
+  }
+
+  const [a, b] = etat.duel;
+
+  return (
+    <div>
+      <p className="font-titre text-2xl sm:text-3xl text-brique text-center" role="status">
+        {etat.joueurs[a]} <span className="text-ardoise/60">contre</span> {etat.joueurs[b]}
+      </p>
+
+      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-8">
+        Qu’annoncent les deux étiquettes&nbsp;?
+      </p>
+      {/* Une issue asymétrique — « une seule trahison » — ne dit pas encore qui
+          a trahi : elle prend donc deux boutons, un par duelliste. Les issues
+          symétriques n'en demandent qu'un. */}
+      <div className="flex flex-col gap-2 mt-2">
+        {regles.issues.map((issue) => (
+          <div key={issue.cle} className="flex flex-wrap items-center gap-2">
+            <Bouton
+              variante="secondaire"
+              onClick={() =>
+                onResoudre(
+                  [
+                    { joueur: a, points: issue.gains[0] },
+                    { joueur: b, points: issue.gains[1] }
+                  ],
+                  [a, b]
+                )
+              }
+            >
+              {issue.gains[0] !== issue.gains[1]
+                ? `${issue.libelle} — ${etat.joueurs[a]}`
+                : issue.libelle}
+            </Bouton>
+            {issue.gains[0] !== issue.gains[1] && (
+              <Bouton
+                variante="secondaire"
+                onClick={() =>
+                  onResoudre(
+                    [
+                      { joueur: a, points: issue.gains[1] },
+                      { joueur: b, points: issue.gains[0] }
+                    ],
+                    [a, b]
+                  )
+                }
+              >
+                {`${issue.libelle} — ${etat.joueurs[b]}`}
+              </Bouton>
+            )}
+            <span className="text-ardoise/60 text-xs">{issue.detail}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Le classement, et ce qu'on en fait. */
+function Classement({ etat, game, onRejouer, onQuitter, libelleRetour }) {
+  const gagnants = vainqueurs(etat);
+  const unite = uniteDe(game);
+
+  return (
+    <div className="mt-8">
+      <p className="font-titre text-3xl sm:text-4xl text-brique text-center" role="status">
+        {gagnants.length > 1
+          ? 'Égalité parfaite'
+          : `${etat.joueurs[gagnants[0]]} l’emporte`}
+      </p>
+      <p className="text-ardoise font-texte text-center mt-1">
+        {etat.seuil !== null
+          ? 'Le dernier debout.'
+          : `${pluriel(etat.scores[gagnants[0]], unite)}.`}
+      </p>
+
+      <div className="mt-6 overflow-x-auto">
+        <TableauScores
+          lignes={lignesDeScore(etat, { montrerVainqueur: true })}
+          legende={`Classement par joueur, en ${unite}s`}
+        />
+      </div>
+
+      <BarreActions className="justify-center">
+        <Bouton variante="principal" icone={RotateCw} onClick={onRejouer}>
+          Rejouer
+        </Bouton>
+        <Bouton variante="secondaire" icone={ArrowLeft} onClick={onQuitter}>
+          {libelleRetour}
+        </Bouton>
+      </BarreActions>
+    </div>
+  );
+}
+
+/**
+ * La partie en cours : la feuille, et ce qui se pose dessus.
+ *
+ * Les cinq jeux partagent tout — l'effectif, les scores, le seuil, l'annulation,
+ * la persistance, le classement — et ne divergent que par la façon dont un point
+ * s'attribue. D'où un seul orchestrateur et trois panneaux, plutôt que trois
+ * écrans qui recopieraient la même feuille.
+ */
+function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }) {
+  const [etat, envoyer] = useReducer(reducteur, depart);
+  const unite = uniteDe(game);
+
+  // Écrite à chaque geste : une soirée de points se perd sur un onglet recyclé.
+  // Une partie close s'efface — il n'y a plus rien à reprendre.
+  useEffect(() => {
+    if (etat.phase === 'fin') effacerPartie();
+    else ecrirePartie({ slug: game.slug, titre: game.title, etat });
+  }, [etat, game.slug, game.title]);
+
+  const resoudre = (gains, passes = [etat.courant]) =>
+    envoyer({ type: 'marquer', gains, passes, avancer: regles.forme === 'parTour' });
+
+  if (etat.phase === 'fin') {
+    return (
+      <Classement
+        etat={etat}
+        game={game}
+        onRejouer={() => envoyer({ type: 'rejouer' })}
+        onQuitter={onQuitter}
+        libelleRetour={libelleRetour}
+      />
+    );
+  }
+
+  const complet = tousPasses(etat);
+
+  return (
+    <div>
+      {regles.forme === 'auFil' && (
+        <>
+          <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70">
+            {regles.seuil !== null
+              ? `${regles.seuil} avertissements et l’on sort`
+              : 'Touchez une ligne pour marquer un point'}
+          </p>
+          <div className="mt-4">
+            <FeuilleDeMatch
+              etat={etat}
+              seuil={regles.seuil ?? null}
+              libelleGeste={regles.libelleGeste}
+              unite={unite}
+              onMarquer={(joueur) =>
+                envoyer({ type: 'marquer', gains: [{ joueur, points: 1 }], passes: [joueur] })
+              }
+              onAnnuler={() => envoyer({ type: 'annuler' })}
+            />
+          </div>
+          <p className="text-ardoise/60 text-xs text-center">
+            {pluriel(enJeu(etat).length, 'joueur')} encore en course.
+          </p>
+        </>
+      )}
+
+      {regles.forme !== 'auFil' && (
+        <>
+          {regles.forme === 'parTour' ? (
+            <PanneauTour etat={etat} regles={regles} onResoudre={resoudre} />
+          ) : (
+            <PanneauDuel
+              etat={etat}
+              regles={regles}
+              onTirer={() => envoyer({ type: 'tirerDuel' })}
+              onResoudre={resoudre}
+            />
+          )}
+
+          {/* Le chrono ne vient pas d'ici : `chronoTour` est au catalogue, et
+              c'est la minute d'interrogation du Liars Club. Rien à cadencer
+              chez les autres, donc rien ne s'affiche. */}
+          {game.chronoTour && <MinuteDeQuestions secondes={game.chronoTour} cle={etat.courant} />}
+
+          <div className="mt-8 overflow-x-auto">
+            <TableauScores
+              lignes={lignesDeScore(etat)}
+              legende={`Scores par joueur, en ${unite}s`}
+              onAjuster={(joueur, delta) => envoyer({ type: 'ajuster', joueur, delta })}
+              onReinitialiser={(joueur) => envoyer({ type: 'reinitialiser', joueur })}
+            />
+          </div>
+          <p className="text-ardoise/60 text-xs text-center mt-2">
+            Un point de trop&nbsp;? Corrigez-le ici, la partie continue.
+          </p>
+        </>
+      )}
+
+      <BarreActionsSecondaire className="justify-center">
+        {/* Aucune règle ne dit quand s'arrêter faute de seuil : la table
+            tranche. Le bouton se met en avant une fois le tour de table
+            complet, ce que trois de ces jeux demandent explicitement. */}
+        {etat.seuil === null && (
+          <Bouton
+            variante={complet ? 'secondaire' : 'discret'}
+            icone={Flag}
+            onClick={() => envoyer({ type: 'clore' })}
+          >
+            {complet ? 'Tout le monde est passé — voir le classement' : 'Terminer la partie'}
+          </Bouton>
+        )}
+        <Bouton variante="discret" icone={ArrowLeft} onClick={onQuitter}>
+          {libelleRetour}
+        </Bouton>
+        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
+          Abandonner la partie
+        </Bouton>
+      </BarreActionsSecondaire>
+    </div>
+  );
+}
+
+/**
+ * La minute d'interrogation, quand le catalogue en annonce une.
+ *
+ * Volontairement pas `EcranTour` : personne ne court après le temps, et il n'y a
+ * ni carte ni glissement. La minute borne un interrogatoire, elle ne met pas la
+ * table sous pression — d'où un simple décompte qu'on lance et qu'on arrête.
+ */
+function MinuteDeQuestions({ secondes, cle }) {
+  const [enMarche, setEnMarche] = useState(false);
+
+  // Chaque tour repart d'un décompte neuf et à l'arrêt.
+  useEffect(() => setEnMarche(false), [cle]);
+
+  return (
+    <div className="flex items-end gap-4 max-w-md w-full mx-auto mt-8">
+      <div className="flex-1 min-w-0">
+        <Chrono secondes={secondes} enMarche={enMarche} cle={cle} onFini={() => setEnMarche(false)} />
+      </div>
+      <Bouton
+        variante="discret"
+        icone={Play}
+        onClick={() => setEnMarche((v) => !v)}
+        className="mb-1"
+      >
+        {enMarche ? 'Pause' : 'Questions'}
+      </Bouton>
+    </div>
+  );
+}
+
+/**
+ * Écran d'accueil quand une partie dort en mémoire.
+ *
+ * Poser la question plutôt que trancher : reprendre d'office empêcherait d'en
+ * lancer une neuve, et repartir de zéro effacerait une soirée sans prévenir.
+ */
+function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, libelleRetour }) {
+  const { etat } = partie;
+  const totaux = etat.joueurs
+    .map((nom, i) => `${nom} ${etat.scores[i]}`)
+    .join(' · ');
+
+  return (
+    <>
+      <p className="font-titre text-3xl text-brique">Une partie est en cours</p>
+      <p className="text-ardoise font-texte text-lg mt-2">
+        {pluriel(enJeu(etat).length, 'joueur')} encore en course sur {etat.joueurs.length}.
+      </p>
+      <p className="text-ardoise/80 mt-1">{totaux}</p>
+
+      <BarreActions>
+        <Bouton variante="principal" icone={Play} onClick={onReprendre}>
+          Reprendre la partie
+        </Bouton>
+        <Bouton variante="secondaire" icone={RotateCw} onClick={onNouvelle}>
+          Nouvelle partie
+        </Bouton>
+      </BarreActions>
+      <BarreActionsSecondaire>
+        <Bouton variante="discret" icone={ArrowLeft} onClick={onQuitter}>
+          {libelleRetour}
+        </Bouton>
+        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
+          Abandonner la partie
+        </Bouton>
+      </BarreActionsSecondaire>
+    </>
+  );
+}
+
+/**
+ * Kit des cinq jeux qui ne tiennent qu'un score.
+ *
+ * Le Liars Club, Avez-vous confiance ?, Tudum, Qui rit sort, Sur parole. Aucun
+ * ne déclare de module de `kit` : il n'y a rien à tirer, et l'invariant du
+ * catalogue interdit de leur écrire du contenu. Ce qui les distingue tient dans
+ * `feuilleDeMatch.js` — la forme de l'écran, le seuil, le barème — et le reste
+ * se déduit du catalogue : `scoring` donne le mot du point, `chronoTour` décide
+ * du décompte, `minPlayers` et `maxPlayers` bornent l'effectif.
+ */
+function KitFeuilleDeMatch({ game, joueurs, onQuitter, onRetourAccueil, libelleRetour }) {
+  const regles = reglesDe(game.slug);
+
+  // Lue une seule fois au montage : la partie s'écrit ensuite en continu, et
+  // relire le stockage à chaque rendu proposerait de reprendre celle qu'on joue.
+  const [sauvegarde] = useState(() => partieDuJeu(game.slug));
+  const [depart, setDepart] = useState(null);
+  const [choixFait, setChoixFait] = useState(!sauvegarde);
+
+  if (!choixFait) {
+    return (
+      <Reprise
+        partie={sauvegarde}
+        libelleRetour={libelleRetour}
+        onQuitter={onQuitter}
+        onAbandonner={() => {
+          effacerPartie();
+          onRetourAccueil();
+        }}
+        onReprendre={() => {
+          setDepart(reprendre(sauvegarde.etat));
+          setChoixFait(true);
+        }}
+        onNouvelle={() => {
+          effacerPartie();
+          setChoixFait(true);
+        }}
+      />
+    );
+  }
+
+  return depart ? (
+    <Partie
+      game={game}
+      regles={regles}
+      depart={depart}
+      onQuitter={onQuitter}
+      onAbandonner={() => {
+        effacerPartie();
+        onRetourAccueil();
+      }}
+      libelleRetour={libelleRetour}
+    />
+  ) : (
+    <Reglage
+      game={game}
+      regles={regles}
+      joueursConnus={joueurs}
+      onDemarrer={setDepart}
+      onQuitter={onQuitter}
+      libelleRetour={libelleRetour}
+    />
+  );
+}
+
+export default KitFeuilleDeMatch;

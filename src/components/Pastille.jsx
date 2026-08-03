@@ -3,8 +3,9 @@
  *
  * Ce n'est pas une action mais un **contrôle de formulaire** : elle porte un
  * état sélectionné, pas une commande. Elle ne relève donc pas du système de
- * boutons (cf. docs/boutons.md), et vit ici parce que deux vues s'en servent —
- * les filtres du bandeau et le choix du tri.
+ * boutons (cf. docs/boutons.md), et vit ici parce que trois vues s'en servent —
+ * les filtres du bandeau, le choix du tri, et la désignation des joueurs qui
+ * marquent dans la feuille de match.
  *
  * Les filtres secondaires étaient présentés comme quatre cartes de cases à
  * cocher, soit près de 400 px occupés en permanence. Les pastilles disent la

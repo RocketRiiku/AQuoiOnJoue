@@ -587,10 +587,13 @@ describe('parcours : lancer le kit d’un jeu', () => {
   });
 
   it('ne propose pas de kit sur un jeu qui n’en a pas', async () => {
-    window.history.replaceState({}, '', '/?jeu=le-liars-club');
-    window.history.replaceState({}, '', '/?jeu=liars-club');
+    // Le jeu est choisi dans le catalogue plutôt qu'écrit en dur : « sans kit »
+    // veut dire sans aucun des trois champs, et le slug de l'exemple changeait
+    // à chaque famille écrite — Le Liars Club a fini par en avoir un.
+    const sansKit = gamesList.find((g) => !g.kit && !g.scoring && !g.chronoTour);
+    window.history.replaceState({}, '', `/?jeu=${sansKit.slug}`);
     rendre();
-    await screen.findByRole('heading', { name: 'Le Liars Club', level: 2 });
+    await screen.findByRole('heading', { name: sansKit.title, level: 2 });
 
     expect(screen.queryByRole('button', { name: /lancer le jeu/i })).not.toBeInTheDocument();
   });

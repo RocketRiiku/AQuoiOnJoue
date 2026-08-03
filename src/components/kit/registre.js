@@ -1,6 +1,7 @@
 import { kitJouable } from '../../utils/kit';
 import KitBlessureCritique from './KitBlessureCritique';
 import KitDefileur from './KitDefileur';
+import KitFeuilleDeMatch from './KitFeuilleDeMatch';
 import KitTroisFoisRien from './KitTroisFoisRien';
 
 /**
@@ -17,22 +18,31 @@ import KitTroisFoisRien from './KitTroisFoisRien';
  * même `KitDefileur` : ces jeux ne demandent au téléphone qu'une carte à lire à
  * voix haute, et tout ce qui les distingue — le mot du bouton de tirage, la
  * présence d'un chrono — se déduit du catalogue. Ajouter un septième jeu de
- * cette forme ne coûtera qu'une ligne.
+ * cette forme ne coûterait qu'une ligne. Cinq autres pointent vers
+ * `KitFeuilleDeMatch` : celles-là ne tirent rien du tout, elles comptent.
  *
- * La blessure critique est de la même famille et garde pourtant son écran : son
- * tirage est un jet de dé, donc **avec remise**. Le défileur, lui, parcourt sa
- * pile sans répétition. Une option de plus sur un composant partagé pour une
- * mécanique aussi différente aurait coûté plus cher que vingt lignes à part.
+ * La blessure critique est de la même famille que le défileur et garde pourtant
+ * son écran : son tirage est un jet de dé, donc **avec remise**. Le défileur,
+ * lui, parcourt sa pile sans répétition. Une option de plus sur un composant
+ * partagé pour une mécanique aussi différente aurait coûté plus cher que vingt
+ * lignes à part.
+ *
+ * Rangé dans l'ordre du catalogue, celui de `games.js`.
  */
 const KITS = {
+  'liars-club': KitFeuilleDeMatch,
   'le-joker': KitDefileur,
+  'avez-vous-confiance': KitFeuilleDeMatch,
   'la-blessure-critique': KitBlessureCritique,
   'oui-ou-non': KitDefileur,
   'trois-fois-rien': KitTroisFoisRien,
   'tu-preferes': KitDefileur,
   'du-coq-a-l-ane': KitDefileur,
   'qui-de-nous': KitDefileur,
-  'sang-bleu': KitDefileur
+  'qui-rit-sort': KitFeuilleDeMatch,
+  tudum: KitFeuilleDeMatch,
+  'sang-bleu': KitDefileur,
+  'sur-parole': KitFeuilleDeMatch
 };
 
 export const kitDe = (game) => KITS[game.slug] ?? null;
