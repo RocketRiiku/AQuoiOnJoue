@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
+import Compteur from './Compteur';
 import EcranTour from './EcranTour';
 import TableauScores from './TableauScores';
 import DialoguePot from './DialoguePot';
@@ -45,44 +46,37 @@ const maxEquipes = (joueurs) =>
   Math.max(BORNES.equipes[0], Math.min(BORNES.equipes[1], Math.floor(joueurs / 2)));
 
 /**
- * Réglage d'un nombre : deux flèches et une valeur.
+ * Les colonnes du tableau des scores, dérivées des manches du jeu.
  *
- * Repris du filtre « Joueurs » de la liste. C'est un contrôle de formulaire,
- * pas une action — il ne relève donc pas du système de boutons, cf.
- * docs/boutons.md.
+ * `TableauScores` ne connaît plus `MANCHES` : c'est ici que les trois manches
+ * deviennent trois colonnes, et le second client de la brique — un classement
+ * sans manche — n'en passe aucune.
  */
-function Compteur({ label, valeur, unite, min, max, pas = 1, onChange }) {
-  const borner = (n) => Math.min(max, Math.max(min, n));
-  return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        aria-label={`Diminuer : ${label}`}
-        onClick={() => onChange(borner(valeur - pas))}
-        disabled={valeur <= min}
-        className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
-      >
-        &lt;
-      </button>
-      <span
-        aria-live="polite"
-        className="font-titre text-2xl text-encre tabular-nums min-w-[3rem] text-center"
-      >
-        {valeur}
-        {unite && <span className="text-base text-ardoise/70 ml-0.5">{unite}</span>}
-      </span>
-      <button
-        type="button"
-        aria-label={`Augmenter : ${label}`}
-        onClick={() => onChange(borner(valeur + pas))}
-        disabled={valeur >= max}
-        className="w-10 h-10 text-2xl text-orange font-bold leading-none disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-orange rounded-full"
-      >
-        &gt;
-      </button>
-    </div>
-  );
-}
+const COLONNES = MANCHES.map((manche, i) => ({
+  cle: manche.titre,
+  libelle: `M${i + 1}`,
+  libelleLong: `Manche ${i + 1} : ${manche.titre}`
+}));
+
+/**
+ * L'état du jeu traduit en lignes de tableau.
+ *
+ * Le total et la mise en tête sont calculés ici, parce que c'est le jeu qui
+ * sait ce que « mener » veut dire chez lui — le plus grand total, et non le
+ * dernier debout comme chez les jeux à élimination.
+ */
+const lignesDeScore = (etat, montrerVainqueur) => {
+  const enTete = montrerVainqueur ? vainqueurs(etat) : [];
+  return etat.equipes.map((nom, i) => ({
+    nom,
+    cases: etat.scores[i],
+    total: totalEquipe(etat, i),
+    enTete: enTete.includes(i),
+    // On ne retire un point que là où il y en a un : la correction porte sur la
+    // manche en cours, pas sur celles déjà closes.
+    retraitPossible: etat.scores[i][etat.manche] > 0
+  }));
+};
 
 /**
  * Réglage d'avant-partie.
@@ -368,8 +362,12 @@ function Bilan({ annonce, precision, etat, montrerVainqueur, onAjuster, onReinit
       )}
       <div className="mt-6 overflow-x-auto">
         <TableauScores
-          etat={etat}
-          montrerVainqueur={montrerVainqueur}
+          lignes={lignesDeScore(etat, montrerVainqueur)}
+          colonnes={COLONNES}
+          // La manche en cours ressort du reste — sauf à la fin, où il n'y en a
+          // plus.
+          colonneActive={montrerVainqueur ? null : etat.manche}
+          legende="Scores par équipe et par manche"
           onAjuster={onAjuster}
           onReinitialiser={onReinitialiser}
         />

@@ -1,5 +1,4 @@
 import { Minus, Plus, RotateCcw } from 'lucide-react';
-import { MANCHES, totalEquipe, vainqueurs } from '../../utils/troisFoisRien';
 
 /**
  * Micro-commande d'une ligne de score.
@@ -26,38 +25,59 @@ function Commande({ label, icone: Icone, onClick, disabled = false }) {
 /**
  * La grille des scores : une colonne par manche, plus le total.
  *
+ * **Elle ne connaît plus le jeu qu'elle affiche.** Elle importait `MANCHES` de
+ * `troisFoisRien.js`, si bien qu'une brique annoncée comme commune était
+ * clouée à un jeu : les colonnes sont devenues une donnée, et les totaux comme
+ * la mise en tête sont calculés par l'appelant, qui seul sait ce que « gagner »
+ * veut dire chez lui. Le découplage s'est fait contre un second client réel —
+ * le classement des jeux qui ne comptent qu'un score par joueur, sans manche,
+ * qui passe simplement `colonnes: []`.
+ *
  * C'est la forme que réclame « scoring: manches » — un score unique par équipe
  * perdrait ce que chaque manche a rapporté, alors que c'est précisément ce que
- * la table commente à la fin.
+ * la table commente à la fin. Sans colonnes, il ne reste que le nom et le
+ * total : un classement.
  *
  * **Corrigeable.** Un pouce qui glisse sur « Trouvé » au milieu d'un tour est
  * l'accident le plus banal du genre, et rien n'est plus agaçant qu'un score
- * faux qu'on ne peut pas rattraper. Les deux commandes portent sur la manche
- * en cours ; la remise à zéro, sur toute la ligne.
+ * faux qu'on ne peut pas rattraper. Passer `onAjuster` fait apparaître les
+ * commandes ; sans lui, la grille se lit sans se toucher.
  *
  * Un vrai `<table>` : ce sont des données à deux entrées, et les lecteurs
  * d'écran savent les parcourir dès lors que les en-têtes sont déclarés.
+ *
+ * @param lignes        `[{ nom, cases, total, enTete, sortie }]` — `cases` suit
+ *                      l'ordre de `colonnes`, `enTete` désigne qui mène,
+ *                      `sortie` un joueur éliminé (barré, mais gardé à l'écran)
+ * @param colonnes      `[{ cle, libelle, libelleLong }]` — vide pour un simple
+ *                      classement. `libelle` est l'abrégé affiché (« M1 »),
+ *                      `libelleLong` ce qu'annonce le lecteur d'écran
+ * @param colonneActive index de la colonne en cours, ou `null` s'il n'y en a
+ *                      plus — en fin de partie, aucune manche ne ressort
+ * @param legende       le `<caption>`, lu par les lecteurs d'écran seuls
  */
-function TableauScores({ etat, montrerVainqueur = false, onAjuster, onReinitialiser }) {
-  const enTete = montrerVainqueur ? vainqueurs(etat) : [];
-  // La manche en cours ressort du reste — sauf à la fin, où il n'y en a plus.
-  const mancheEnCours = montrerVainqueur ? null : etat.manche;
+function TableauScores({
+  lignes,
+  colonnes = [],
+  colonneActive = null,
+  legende = 'Scores',
+  onAjuster,
+  onReinitialiser
+}) {
   const corrigeable = Boolean(onAjuster);
 
   return (
     <table className="w-full text-left border-collapse">
-      <caption className="sr-only">Scores par équipe et par manche</caption>
+      <caption className="sr-only">{legende}</caption>
       <thead>
         <tr className="text-xs uppercase tracking-wide text-ardoise/70">
           <th scope="col" className="font-normal py-1">
-            Équipe
+            {colonnes.length > 0 ? 'Équipe' : 'Joueur'}
           </th>
-          {MANCHES.map((manche, i) => (
-            <th key={manche.titre} scope="col" className="font-normal py-1 text-center w-10">
-              <span aria-hidden="true">M{i + 1}</span>
-              <span className="sr-only">
-                Manche {i + 1} : {manche.titre}
-              </span>
+          {colonnes.map((colonne) => (
+            <th key={colonne.cle} scope="col" className="font-normal py-1 text-center w-10">
+              <span aria-hidden="true">{colonne.libelle}</span>
+              <span className="sr-only">{colonne.libelleLong ?? colonne.libelle}</span>
             </th>
           ))}
           <th scope="col" className="font-normal py-1 text-right w-14">
@@ -71,51 +91,54 @@ function TableauScores({ etat, montrerVainqueur = false, onAjuster, onReinitiali
         </tr>
       </thead>
       <tbody>
-        {etat.equipes.map((equipe, i) => (
-          <tr key={equipe} className="border-t border-encre/10">
+        {lignes.map((ligne, i) => (
+          <tr key={ligne.nom} className="border-t border-encre/10">
             <th
               scope="row"
               // Le nom ne se coupe pas en deux : avec les trois commandes de
               // correction, la colonne devenait trop étroite sur téléphone et
               // « Équipe 1 » passait à la ligne. Le tableau défile plutôt.
               className={`font-titre text-lg py-2 pr-3 whitespace-nowrap ${
-                enTete.includes(i) ? 'text-brique' : 'text-encre'
-              }`}
+                ligne.enTete ? 'text-brique' : 'text-encre'
+              } ${ligne.sortie ? 'line-through decoration-2 text-ardoise/50' : ''}`}
             >
-              {equipe}
-              {enTete.includes(i) && <span className="sr-only"> — en tête</span>}
+              {ligne.nom}
+              {ligne.enTete && <span className="sr-only"> — en tête</span>}
+              {/* Un éliminé reste à l'écran : chez Qui rit sort, il rejoint le
+                  public et continue à saboter les survivants. */}
+              {ligne.sortie && <span className="sr-only"> — éliminé</span>}
             </th>
-            {etat.scores[i].map((points, m) => (
+            {(ligne.cases ?? []).map((points, m) => (
               <td
-                key={MANCHES[m].titre}
+                key={colonnes[m]?.cle ?? m}
                 className={`text-center tabular-nums py-2 ${
-                  m === mancheEnCours ? 'text-encre' : 'text-ardoise/60'
+                  m === colonneActive ? 'text-encre' : 'text-ardoise/60'
                 }`}
               >
                 {points}
               </td>
             ))}
             <td className="text-right font-titre text-2xl tabular-nums py-2 text-encre">
-              {totalEquipe(etat, i)}
+              {ligne.total}
             </td>
             {corrigeable && (
               <td className="py-1">
                 <div className="flex items-center justify-end">
                   <Commande
-                    label={`Retirer un point à ${equipe}`}
+                    label={`Retirer un point à ${ligne.nom}`}
                     icone={Minus}
-                    disabled={etat.scores[i][etat.manche] === 0}
+                    disabled={ligne.retraitPossible === false}
                     onClick={() => onAjuster(i, -1)}
                   />
                   <Commande
-                    label={`Ajouter un point à ${equipe}`}
+                    label={`Ajouter un point à ${ligne.nom}`}
                     icone={Plus}
                     onClick={() => onAjuster(i, 1)}
                   />
                   <Commande
-                    label={`Remettre ${equipe} à zéro`}
+                    label={`Remettre ${ligne.nom} à zéro`}
                     icone={RotateCcw}
-                    disabled={totalEquipe(etat, i) === 0}
+                    disabled={ligne.total === 0}
                     onClick={() => onReinitialiser(i)}
                   />
                 </div>
