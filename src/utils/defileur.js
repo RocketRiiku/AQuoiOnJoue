@@ -66,7 +66,7 @@ export function libelles(type) {
  */
 const RAPPELS = {
   'le-joker':
-    'Chacun démarre avec un seul Joker. Refuser une question le brûle — et après ça, il faudra répondre à tout.',
+    'Chacun démarre avec un seul Joker. Refuser une question le brûle : après ça, il faudra répondre à tout.',
   'oui-ou-non':
     'On répond par oui ou par non, tous en même temps, à main levée. Ni justification, ni nuance.',
   'tu-preferes':

@@ -202,7 +202,7 @@ function App() {
                 À quoi on joue
                 {/* Le texte visible reste le début du nom accessible : la
                     précision ne s'ajoute qu'à l'oral. */}
-                <span className="sr-only"> — retour à l’accueil</span>
+                <span className="sr-only">, retour à l’accueil</span>
               </h1>
               <img
                 src={asset('/CarteInterrogation.png')}
@@ -449,8 +449,8 @@ function App() {
                           idéal à {joueurs} joueurs
                           {tri === TRI_PAR_DEFAUT &&
                             (nbRecommandes > 1
-                              ? ` — ces ${nbRecommandes} jeux sont placés en tête`
-                              : ' — ce jeu est placé en tête')}
+                              ? `, et ces ${nbRecommandes} jeux passent en tête`
+                              : ', et ce jeu passe en tête')}
                         </span>
                       </p>
                     )}

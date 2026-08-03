@@ -95,6 +95,20 @@ function TableauScores({
           <tr key={ligne.nom} className="border-t border-encre/10">
             <th
               scope="row"
+              /**
+               * L'état s'ajoute au nom accessible, et non dans un `<span>`
+               * masqué : l'algorithme de nom accessible insère une espace entre
+               * deux nœuds, ce qui donnait « Équipe 1 , en tête ». Un éliminé
+               * reste par ailleurs affiché — chez Qui rit sort, il rejoint le
+               * public et continue à saboter les survivants.
+               */
+              aria-label={
+                ligne.sortie
+                  ? `${ligne.nom}, éliminé`
+                  : ligne.enTete
+                    ? `${ligne.nom}, en tête`
+                    : undefined
+              }
               // Le nom ne se coupe pas en deux : avec les trois commandes de
               // correction, la colonne devenait trop étroite sur téléphone et
               // « Équipe 1 » passait à la ligne. Le tableau défile plutôt.
@@ -103,10 +117,6 @@ function TableauScores({
               } ${ligne.sortie ? 'line-through decoration-2 text-ardoise/50' : ''}`}
             >
               {ligne.nom}
-              {ligne.enTete && <span className="sr-only"> — en tête</span>}
-              {/* Un éliminé reste à l'écran : chez Qui rit sort, il rejoint le
-                  public et continue à saboter les survivants. */}
-              {ligne.sortie && <span className="sr-only"> — éliminé</span>}
             </th>
             {(ligne.cases ?? []).map((points, m) => (
               <td

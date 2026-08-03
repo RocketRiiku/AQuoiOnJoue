@@ -106,14 +106,18 @@ export function formatTypes(game) {
 }
 
 /**
- * Message pré-rempli du partage d'un jeu — le même sur toutes les fiches.
+ * Message pré-rempli du partage d'un jeu, le même sur toutes les fiches.
  *
  * Il doit se suffire à lui-même une fois collé dans une conversation : la
  * feuille de partage native ne laisse pas la place d'expliquer, et le
  * destinataire ne voit souvent que ce texte avant de décider s'il ouvre le lien.
+ *
+ * L'accroche du catalogue finit par un point, d'où la phrase de format posée à
+ * la suite. Un tiret cadratin les séparait, ce qui donnait « … de dialogue. — 4
+ * à 16 joueurs » : deux ponctuations pour une seule coupure.
  */
 export function messagePartage(game, joueurs = null) {
-  return `On joue à ${game.title} ? ${game.description} — ${formatPlayers(game)}, ${formatDuration(
+  return `On joue à ${game.title} ? ${game.description} ${formatPlayers(game)}, ${formatDuration(
     game,
     joueurs
   )}.`;
@@ -122,7 +126,7 @@ export function messagePartage(game, joueurs = null) {
 /** Même message, pour un programme de soirée entier. */
 export function messagePartageSoiree(soiree, plageTotale) {
   const titres = soiree.map((game) => game.title).join(' · ');
-  return `Le programme de la soirée : ${titres} — ${soiree.length} jeu${
+  return `Le programme de la soirée : ${titres}. ${soiree.length} jeu${
     soiree.length > 1 ? 'x' : ''
   }, ${formatPlageTotale(plageTotale)} environ.`;
 }

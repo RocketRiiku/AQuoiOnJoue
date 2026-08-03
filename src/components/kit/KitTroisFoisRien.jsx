@@ -314,7 +314,7 @@ function EnTete({ etat, manche, onPause }) {
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
         <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70">
-          Manche {etat.manche + 1} sur {MANCHES.length} — {manche.titre}
+          Manche {etat.manche + 1} sur {MANCHES.length} : {manche.titre}
         </p>
         <ol className="flex gap-1.5 mt-1.5" aria-hidden="true">
           {MANCHES.map((m, i) => (
@@ -565,7 +565,7 @@ function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelle
             >
               {derniereManche
                 ? 'Voir le résultat'
-                : `Manche ${etat.manche + 2} — ${MANCHES[etat.manche + 1].titre}`}
+                : `Manche ${etat.manche + 2} : ${MANCHES[etat.manche + 1].titre}`}
             </Bouton>
           </BarreActions>
         </Bilan>

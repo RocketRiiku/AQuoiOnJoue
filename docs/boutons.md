@@ -130,6 +130,30 @@ Deux déclencheurs de ce type aujourd'hui : le tri
 ([`TriJeux.jsx`](../src/components/TriJeux.jsx)) et les filtres secondaires
 ([`Header.jsx`](../src/components/Header.jsx)).
 
+## La ponctuation des libellés
+
+**Le tiret cadratin ne survit qu'à deux endroits** : entre un nom de page et le
+nom du site (`Ma soirée — À quoi on joue ?`, un titre de document, et la
+convention du Web), et dans un objet de courriel. Partout ailleurs il se remplace,
+et le remplacement dit lequel des trois rôles il jouait :
+
+- **deux-points** quand il séparait une étiquette de sa valeur : « Manche 2 : Un
+  seul mot », « Trier : A → Z » ;
+- **virgule** dans un nom accessible, parce qu'elle se prononce en pause. Le
+  tiret, lui, est lu littéralement par certains lecteurs d'écran et ignoré par
+  d'autres : « Joueur 2, éliminé » ;
+- **point** dans une phrase, où il servait d'incise commode.
+
+La règle existe parce qu'un tiret cadratin dans un texte d'une ou deux phrases
+est le marqueur d'écriture automatique le plus reconnaissable qui soit, et qu'il
+s'était glissé dans des rappels de jeu, des noms accessibles et deux messages de
+partage.
+
+**Le nom accessible se compose en une seule chaîne**, pas en concaténant un
+`<span class="sr-only">`. L'algorithme de nom accessible insère une espace entre
+deux nœuds : « Équipe 1 » suivi de « , en tête » s'annonce « Équipe 1 , en tête ».
+Passer par `aria-label` donne la ponctuation exacte.
+
 ## Icônes
 
 - Une icône **précède** le libellé.

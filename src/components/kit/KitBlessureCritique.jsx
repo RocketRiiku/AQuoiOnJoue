@@ -248,7 +248,7 @@ function KitBlessureCritique({ game, onQuitter, libelleRetour }) {
           posé. Elle porte la face *et* son effet : les deux sont sur des
           éléments trop éloignés pour être lus d'un trait autrement. */}
       <p className="sr-only" role="status">
-        {effet ? `${etat.face} sur ${FACES} — ${effet}` : ''}
+        {effet ? `${etat.face} sur ${FACES} : ${effet}` : ''}
       </p>
     </div>
   );

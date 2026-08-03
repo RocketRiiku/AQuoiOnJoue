@@ -368,7 +368,7 @@ describe('kit de Trois fois rien', () => {
     }
 
     expect(screen.getByText(/le pot est vide/i)).toBeInTheDocument();
-    await clic(u, new RegExp(`manche 2 — ${MANCHES[1].titre}`, 'i'));
+    await clic(u, new RegExp(`manche 2 : ${MANCHES[1].titre}`, 'i'));
 
     expect(screen.getByText(/manche 2 sur 3/i)).toBeInTheDocument();
     expect(screen.getByText(MANCHES[1].consigne)).toBeInTheDocument();

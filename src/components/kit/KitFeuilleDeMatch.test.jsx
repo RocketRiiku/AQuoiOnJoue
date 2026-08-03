@@ -77,7 +77,7 @@ describe('KitFeuilleDeMatch — la feuille qu’on tape (Qui rit sort)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /^Joueur 2 a souri/ }));
     expect(
-      screen.getByRole('button', { name: 'Joueur 2 a souri — 1 avertissement sur 2' })
+      screen.getByRole('button', { name: 'Joueur 2 a souri, 1 avertissement sur 2' })
     ).toBeInTheDocument();
   });
 
@@ -90,7 +90,7 @@ describe('KitFeuilleDeMatch — la feuille qu’on tape (Qui rit sort)', () => {
     await userEvent.click(cible());
 
     // Il rejoint le public, d'où il continue à saboter : il reste affiché.
-    expect(screen.getByRole('button', { name: 'Joueur 2 — éliminé' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Joueur 2, éliminé' })).toBeDisabled();
     expect(screen.getByText(/3 joueurs encore en course/)).toBeInTheDocument();
   });
 
@@ -116,7 +116,7 @@ describe('KitFeuilleDeMatch — la feuille qu’on tape (Qui rit sort)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }));
 
     expect(
-      screen.getByRole('button', { name: 'Joueur 2 a souri — 0 avertissement sur 2' })
+      screen.getByRole('button', { name: 'Joueur 2 a souri, 0 avertissement sur 2' })
     ).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Annuler' })).not.toBeInTheDocument();
   });
@@ -152,7 +152,7 @@ describe('KitFeuilleDeMatch — la fenêtre d’annulation', () => {
     expect(screen.queryByRole('button', { name: 'Annuler' })).not.toBeInTheDocument();
     // Le geste, lui, tient : c'est l'offre qui expire, pas le point.
     expect(
-      screen.getByRole('button', { name: 'Joueur 2 a souri — 1 avertissement sur 2' })
+      screen.getByRole('button', { name: 'Joueur 2 a souri, 1 avertissement sur 2' })
     ).toBeInTheDocument();
   });
 });
@@ -277,7 +277,7 @@ describe('KitFeuilleDeMatch — la partie conservée', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /Reprendre la partie/ }));
     expect(
-      screen.getByRole('button', { name: 'Joueur 2 a souri — 1 avertissement sur 2' })
+      screen.getByRole('button', { name: 'Joueur 2 a souri, 1 avertissement sur 2' })
     ).toBeInTheDocument();
   });
 

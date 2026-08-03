@@ -42,7 +42,7 @@ describe('TableauScores', () => {
 
     expect(screen.getByRole('columnheader', { name: 'Joueur' })).toBeInTheDocument();
     expect(screen.queryByRole('columnheader', { name: /Manche/ })).not.toBeInTheDocument();
-    expect(screen.getByRole('rowheader', { name: /Joueur 1 — en tête/ })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: /Joueur 1, en tête/ })).toBeInTheDocument();
   });
 
   it('annonce un joueur sorti sans le retirer du tableau', () => {
@@ -50,7 +50,7 @@ describe('TableauScores', () => {
     // le faire disparaître de l'écran le rendrait invisible à la table.
     render(<TableauScores lignes={[{ nom: 'Joueur 3', total: 2, sortie: true }]} />);
 
-    expect(screen.getByRole('rowheader', { name: /Joueur 3 — éliminé/ })).toBeInTheDocument();
+    expect(screen.getByRole('rowheader', { name: /Joueur 3, éliminé/ })).toBeInTheDocument();
   });
 
   it('ne montre les commandes de correction que si on peut corriger', () => {

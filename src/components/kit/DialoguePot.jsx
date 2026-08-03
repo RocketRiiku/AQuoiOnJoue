@@ -54,7 +54,7 @@ function DialoguePot({ mots, onNouveauTirage, onValider, onFermer }) {
         <>
           <p className="text-ardoise/80 text-sm mt-0.5" aria-live="polite">
             {liste.length} mot{liste.length > 1 ? 's' : ''}
-            {tropCourt && ` — il en faut au moins ${MINIMUM}`}
+            {tropCourt && `, il en faut au moins ${MINIMUM}`}
           </p>
 
           <form onSubmit={ajouter} className="flex gap-2 mt-3">

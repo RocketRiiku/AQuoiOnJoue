@@ -70,10 +70,14 @@ function FeuilleDeMatch({
                 onClick={() => onMarquer(i)}
                 // L'annonce dit le geste *et* l'état : au doigt on voit la
                 // ligne, au lecteur d'écran il faut les deux.
+                //
+                // Ponctué à la virgule et non au tiret cadratin : la virgule se
+                // prononce en pause, le tiret est lu littéralement par certains
+                // lecteurs d'écran et ignoré par d'autres.
                 aria-label={
                   sorti
-                    ? `${nom} — éliminé`
-                    : `${nom} ${libelleGeste} — ${score} ${unite}${score > 1 ? 's' : ''}${
+                    ? `${nom}, éliminé`
+                    : `${nom} ${libelleGeste}, ${score} ${unite}${score > 1 ? 's' : ''}${
                         seuil !== null ? ` sur ${seuil}` : ''
                       }`
                 }
