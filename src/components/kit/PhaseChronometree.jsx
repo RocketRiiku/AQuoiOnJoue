@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
-import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
+import { Bouton } from '../Bouton';
 import Chrono from './Chrono';
 
 /**
@@ -57,7 +57,7 @@ function PhaseChronometree({
   }, [cle]);
 
   return (
-    <div className="flex flex-col min-h-[62svh]">
+    <div className="flex flex-col flex-1">
       {entete}
 
       <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-4 text-center">
@@ -77,8 +77,11 @@ function PhaseChronometree({
         {consigne}
       </p>
 
+      {/* Centré comme le reste de l'écran, et à la largeur du bloc de boutons :
+          aligné à gauche, il cassait la colonne alors qu'il est l'objet principal
+          de la phase. */}
       {secondes && (
-        <div className="mt-8 max-w-md w-full mx-auto">
+        <div className="mt-8 max-w-sm w-full mx-auto">
           <Chrono
             secondes={secondes}
             enMarche={enMarche}
@@ -86,17 +89,18 @@ function PhaseChronometree({
             son={son}
             onFini={() => setEnMarche(false)}
           />
-          <div className="flex items-baseline justify-between gap-3 mt-2">
-            <p className="text-ardoise/60 text-xs">
+          <div className="flex items-center justify-center gap-3 mt-3">
+            {/* Cette ligne dit pourquoi rien ne bouge : elle se lit, elle ne se
+                devine pas. En 12 px à 60 % d'opacité, personne ne la voyait. */}
+            <p className="text-ardoise font-texte">
               {!lance
                 ? 'Le chrono attend votre signal.'
                 : enMarche
                   ? 'Le chrono tourne.'
                   : 'Le chrono est en pause.'}
             </p>
-            {/* La pause reste accrochée au chrono, et non rangée dans la barre
-                d'actions : elle commande le décompte, elle ne fait pas avancer
-                le jeu. */}
+            {/* La pause reste accrochée au chrono : elle commande le décompte,
+                elle ne fait pas avancer le jeu. */}
             {lance && (
               <Bouton
                 variante="discret"
@@ -110,19 +114,19 @@ function PhaseChronometree({
         </div>
       )}
 
-      {/* `mt-auto` : la barre tombe au même endroit d'une phase à l'autre, quelle
-          que soit la longueur de la consigne.
-
-          Avant le départ, lancer le chrono *est* le mouvement vers l'avant :
-          c'est lui qui prend l'emphase principale. Une fois le temps parti, elle
-          revient à la phase suivante, la table pouvant toujours couper court —
-          elle a fini avant la fin du temps aussi souvent que l'inverse. */}
-      {/* Reculer à gauche, avancer à droite : la paire décide de l'ordre, comme
-          le sens de lecture. Le retour est rendu même quand il n'y a rien
-          derrière, sinon le bouton principal se déplacerait sous le pouce d'une
-          phase à l'autre. */}
-      <div className="mt-auto">
-        <BarreActions className="justify-center">
+      {/**
+       * Deux directions en vis-à-vis, l'action seule en dessous.
+       *
+       * Trois boutons empilés sur deux rangées ne disaient plus lequel faisait
+       * quoi. Reculer et avancer sont symétriques et de part et d'autre, à taille
+       * réduite ; le geste de la phase prend toute la largeur, seul, et tombe
+       * toujours au même endroit sous le pouce.
+       *
+       * Le retour reste rendu et désactivé quand il n'y a rien derrière : sans
+       * lui, la rangée changerait de hauteur d'une phase à l'autre.
+       */}
+      <div className="mt-auto pt-6 max-w-sm w-full mx-auto">
+        <div className="flex items-center justify-between gap-2">
           <Bouton
             variante="discret"
             icone={ArrowLeft}
@@ -131,10 +135,23 @@ function PhaseChronometree({
           >
             {libellePrecedent ?? 'Précédent'}
           </Bouton>
+          {/* Avancer ne se dédouble que si le bouton principal fait autre chose :
+              lancer le chrono. */}
+          {secondes && !lance ? (
+            <Bouton variante="discret" iconeApres={ArrowRight} onClick={onSuivant}>
+              {action}
+            </Bouton>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+        </div>
+
+        <div className="mt-3">
           {secondes && !lance ? (
             <Bouton
               variante="principal"
               icone={Play}
+              className="w-full"
               onClick={() => {
                 setLance(true);
                 setEnMarche(true);
@@ -143,21 +160,16 @@ function PhaseChronometree({
               Lancer le chrono
             </Bouton>
           ) : (
-            <Bouton variante="principal" iconeApres={ArrowRight} onClick={onSuivant}>
+            <Bouton
+              variante="principal"
+              iconeApres={ArrowRight}
+              className="w-full"
+              onClick={onSuivant}
+            >
               {action}
             </Bouton>
           )}
-        </BarreActions>
-
-        {/* Tant que le chrono n'est pas parti, le lancer occupe l'emphase
-            principale : passer outre reste possible, mais d'un cran plus bas. */}
-        {secondes && !lance && (
-          <BarreActionsSecondaire className="justify-center">
-            <Bouton variante="discret" iconeApres={ArrowRight} onClick={onSuivant}>
-              {action}
-            </Bouton>
-          </BarreActionsSecondaire>
-        )}
+        </div>
       </div>
     </div>
   );

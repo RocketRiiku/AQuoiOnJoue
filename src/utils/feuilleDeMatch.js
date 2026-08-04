@@ -55,7 +55,6 @@ const JEUX = {
 
   'liars-club': {
     forme: 'parTour',
-    roleCourant: 'raconte',
     questionTrouveurs: 'Qui a trouvé la vraie histoire ?',
     rappel:
       'Chacun son tour, trois anecdotes : une vraie, deux inventées. La table interroge une minute. Puis tout le monde vote en même temps.',
@@ -70,11 +69,16 @@ const JEUX = {
      * `secondes: 'chronoTour'` reprend la valeur du catalogue : les règles
      * donnent une minute d'interrogation, et c'est ce que la colonne porte. Le
      * temps du récit, lui, n'est nulle part ailleurs qu'ici.
+     *
+     * **`role` change avec la phase.** L'écran annonçait « Joueur 1 raconte »
+     * sous le titre « LES QUESTIONS », alors qu'à ce moment-là il ne raconte
+     * plus, il répond. Le rôle appartient donc à l'étape, pas au jeu.
      */
     etapes: [
       {
         cle: 'recit',
         titre: 'Le récit',
+        role: 'raconte',
         consigne: 'Trois anecdotes sur vous : une vraie, deux inventées. Personne ne coupe.',
         // Aucun chrono : on ne met pas quelqu'un sous pression pendant qu'il
         // raconte sa vie, et les règles n'en prévoient pas. La minute
@@ -85,6 +89,7 @@ const JEUX = {
       {
         cle: 'questions',
         titre: 'Les questions',
+        role: 'répond',
         consigne: 'La table interroge, le conteur répond. Il a le droit de mentir.',
         secondes: 'chronoTour',
         action: 'Passer au vote'

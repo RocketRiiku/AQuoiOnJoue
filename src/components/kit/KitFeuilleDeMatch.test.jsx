@@ -295,7 +295,7 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
     // Le tableau occupait la moitié de l'écran en permanence, pour une
     // correction qui sert une fois sur vingt.
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.getByText(/Personne n’a encore marqué/)).toBeInTheDocument();
+    expect(screen.getByText(/Scores à zéro/)).toBeInTheDocument();
 
     await ouvrirLesScores();
     expect(screen.getByRole('table')).toBeInTheDocument();

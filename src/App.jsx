@@ -111,17 +111,17 @@ function App() {
   const enListe = vue === 'liste';
 
   /**
-   * Une partie prend l'écran entier.
+   * Une partie prend la hauteur qui reste.
    *
-   * L'en-tête du site et le pied de page mangeaient près de 300 px sur
-   * téléphone, soit un tiers de la hauteur utile, pour deux choses dont on n'a
-   * aucun besoin en pleine partie : le nom du site et trois liens d'éditeur. Le
-   * kit récupère la place, ce qui permet enfin d'écrire le nom du joueur assez
-   * grand pour se lire depuis l'autre bout de la table.
+   * **Le titre du site ne disparaît pas** : c'est le repère de l'endroit où l'on
+   * est, et le seul lien vers l'accueil. Il se réduit — deux tailles de moins,
+   * sans son sous-titre, sans son grand retrait — ce qui rend une centaine de
+   * pixels au jeu sans faire disparaître l'ancre. Le pied de page, lui, s'efface :
+   * ses trois liens d'éditeur n'ont rien à dire à qui joue.
    *
-   * Le titre du site était par ailleurs le seul moyen de sortir sans passer par
-   * les boutons du kit ; c'est maintenant le rôle du menu de la partie, qui
-   * demande confirmation au lieu de tout perdre sur un clic.
+   * Le panneau du kit **occupe ensuite toute la place disponible** au lieu de
+   * s'arrêter à la hauteur de son contenu. Sur un écran haut, un jeu au contenu
+   * court laissait la moitié du décor à nu sous un petit panneau crème.
    */
   const enKit = vue === 'kit';
 
@@ -216,15 +216,27 @@ function App() {
       />
 
       <div className="relative z-20 flex flex-1 flex-col">
-        {!enKit && (
-        <header className="flex flex-col items-center text-center leading-tight pt-16 sm:pt-20 px-4">
+        {/* Le titre reste sur toutes les vues, partie comprise : c'est l'ancre
+            de l'endroit où l'on est, et le seul lien vers l'accueil. En partie il
+            se réduit — deux tailles de moins, sans sous-titre, sans grand retrait
+            — ce qui rend une centaine de pixels au jeu sans rien faire
+            disparaître. */}
+        <header
+          className={`flex flex-col items-center text-center leading-tight px-4 ${
+            enKit ? 'pt-5' : 'pt-16 sm:pt-20'
+          }`}
+        >
           <div className="anim-entree flex flex-col items-center">
             <a
               href={asset('/')}
               onClick={allerAccueil}
               className="group flex items-center gap-3 rounded-2xl px-2 -mx-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
             >
-              <h1 className="text-encre text-4xl sm:text-6xl font-titre">
+              <h1
+                className={`text-encre font-titre ${
+                  enKit ? 'text-2xl' : 'text-4xl sm:text-6xl'
+                }`}
+              >
                 À quoi on joue
                 {/* Le texte visible reste le début du nom accessible : la
                     précision ne s'ajoute qu'à l'oral. */}
@@ -234,23 +246,29 @@ function App() {
                 src={asset('/CarteInterrogation.png')}
                 alt=""
                 aria-hidden="true"
-                className="w-10 sm:w-12 h-auto rotate-6 transition-transform duration-200 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:group-hover:rotate-6"
+                className={`h-auto rotate-6 transition-transform duration-200 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:group-hover:rotate-6 ${
+                  enKit ? 'w-6' : 'w-10 sm:w-12'
+                }`}
               />
             </a>
             {/* Petit Formal Script est sensiblement plus large et plus haute
                 que l'ancienne Corsiva à taille égale : au 3xl d'origine, la
                 ligne dépassait le titre de 21 % en largeur et lui volait la
                 vedette. Deux crans en dessous, le sous-titre repasse sous la
-                largeur du titre. */}
-            <p className="text-brique font-manuscrit text-base sm:text-xl leading-snug mt-1">
-              Pour toujours avoir des cartes
-              <br />à jouer en soirée
-            </p>
+                largeur du titre.
+
+                Il s'efface en partie : la promesse du site n'a plus rien à dire
+                à qui joue déjà, et ces deux lignes valent 50 px de jeu. */}
+            {!enKit && (
+              <p className="text-brique font-manuscrit text-base sm:text-xl leading-snug mt-1">
+                Pour toujours avoir des cartes
+                <br />à jouer en soirée
+              </p>
+            )}
           </div>
         </header>
-        )}
 
-        <main className="flex-1">
+        <main className="flex-1 flex flex-col">
           {/* Une vue s'affiche d'un bloc, bandeau de recherche et filtres
               compris : rendus à l'extérieur, ils disparaissaient d'un coup
               pendant que la liste mettait 200 ms à s'effacer, et ce décalage
@@ -258,21 +276,26 @@ function App() {
               Le retrait sous l'en-tête est porté ici plutôt que par la barre de
               recherche, pour que toutes les vues en bénéficient. */}
           <div
-            className={`relative z-30 px-4 min-h-[70svh] ${
-              enKit ? 'pt-4 pb-6' : 'pt-8 pb-16'
+            className={`relative z-30 px-4 flex flex-col ${
+              enKit ? 'pt-4 pb-6 flex-1' : 'pt-8 pb-16 min-h-[70svh]'
             }`}
           >
             {/* Une clé par vue : React remonte le conteneur, ce qui rejoue
                 l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
                 cycle de vie JavaScript et ne peut pas rester bloqué. */}
-            <div key={vue} className="anim-vue">
+            <div key={vue} className="anim-vue flex-1 flex flex-col">
               {vue === 'kit' ? (
-                <div className="flex justify-center items-start min-h-[60svh]">
+                // `items-stretch` : le panneau s'arrêtait à la hauteur de son
+                // contenu, si bien qu'un jeu à l'écran court laissait la moitié
+                // du décor à nu en dessous. Pas de hauteur minimale en plus —
+                // `flex-1` donne exactement la place restante, et un minimum
+                // fixe s'ajoutait à l'en-tête pour dépasser l'écran de 28 px.
+                <div className="flex-1 flex justify-center items-stretch">
                   {/* Le kit prend le même panneau crème que les autres vues :
                       c'est le même objet — un jeu — vu pendant qu'on y joue. */}
                   <section
                     aria-labelledby="titre-kit"
-                    className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10"
+                    className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10 flex flex-col"
                   >
                     {/* Le titre du jeu ancre l'écran : on peut y arriver par un
                         lien, sans être passé par la fiche. Deux crans sous le
@@ -331,14 +354,18 @@ function App() {
                     {/* Le kit se pose sur la fiche ou sur le déroulé : le
                         libellé de sortie doit nommer l'écran où l'on retourne,
                         sans quoi il promet la fiche et rend la soirée. */}
-                    <KitJeu
-                      game={jeuDuKit}
-                      joueurs={joueurs}
-                      ancreMenu={ancreMenu}
-                      onQuitter={fermerKit}
-                      onRetourAccueil={retourAccueil}
-                      libelleRetour={etape != null ? 'Retour à la soirée' : 'Retour à la fiche'}
-                    />
+                    {/* Le kit hérite de la hauteur restante : c'est lui qui
+                        décide où poser sa scène et ses boutons dedans. */}
+                    <div className="flex-1 flex flex-col">
+                      <KitJeu
+                        game={jeuDuKit}
+                        joueurs={joueurs}
+                        ancreMenu={ancreMenu}
+                        onQuitter={fermerKit}
+                        onRetourAccueil={retourAccueil}
+                        libelleRetour={etape != null ? 'Retour à la soirée' : 'Retour à la fiche'}
+                      />
+                    </div>
                   </section>
                 </div>
               ) : vue === 'suggestions' ? (

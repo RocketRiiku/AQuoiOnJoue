@@ -307,6 +307,22 @@ le libellé d'un déplacement vers l'avant. Le retour reste **rendu et désactiv
 quand il n'y a rien derrière, sans quoi le bouton principal se déplacerait sous le
 pouce d'un écran à l'autre.
 
+**Sur un écran de jeu, les deux directions se font face et l'action passe en
+dessous, pleine largeur.**
+
+```
+     ← Le récit              Passer au vote →
+     ┌──────────────────────────────────────┐
+     │         ▷ Lancer le chrono           │
+     └──────────────────────────────────────┘
+```
+
+Trois boutons empilés sur deux rangées ne disaient plus lequel faisait quoi. Les
+deux navigations sont symétriques et de taille réduite ; le geste de la phase prend
+toute la largeur, seul, et tombe toujours au même endroit. La navigation vers
+l'avant ne se dédouble que si le bouton principal fait autre chose — lancer le
+chrono.
+
 **Le bouton principal tombe toujours au même endroit.** Les écrans de phase sont
 des colonnes qui poussent leur barre d'actions contre le bas, quelle que soit la
 longueur de la consigne. C'est ce qui rend le jeu rapide au bout de trois tours :

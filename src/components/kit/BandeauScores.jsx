@@ -23,8 +23,10 @@ import TableauScores from './TableauScores';
  */
 function BandeauScores({ resume, onVoir }) {
   return (
-    <div className="flex items-center gap-3 rounded-full bg-paille/60 pl-4 pr-1.5 py-1.5">
-      <p className="flex-1 min-w-0 truncate text-sm">
+    // À la largeur de son texte, et non de l'écran : une pastille pleine largeur
+    // pour cinq mots d'information pesait autant qu'un titre.
+    <div className="self-start inline-flex items-center gap-3 max-w-full rounded-full bg-paille/60 pl-4 pr-1.5 py-1.5">
+      <p className="min-w-0 truncate text-sm">
         {resume.couronne && (
           <Crown
             className="w-4 h-4 inline-block align-[-2px] mr-1.5 text-orange"

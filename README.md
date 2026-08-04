@@ -490,7 +490,15 @@ la même feuille :
 Club présentait le vote, puis le chrono, puis les scores — l'ordre inverse de
 celui de la table, qui joue le récit, puis les questions, puis le vote. Chaque
 phase prend donc l'écran entier, avec son nom, sa consigne, son chrono et un seul
-bouton. Les phases se déclarent par jeu (`etapes` dans
+bouton. **Le rôle du joueur suit la phase** : « Joueur 1 raconte », puis
+« Joueur 1 répond ». L'écran annonçait qu'il racontait sous le titre « LES
+QUESTIONS », où il ne raconte plus.
+
+La progression n'affiche **qu'une échelle**. « Tour 1 sur 5 » surmontait trois
+segments dont deux remplis, qui comptaient en fait les phases : deux comptes
+superposés sans qu'on sache lequel on lisait. Les segments comptent désormais les
+tours, ce que dit le libellé ; les phases se nomment juste en dessous, et n'ont pas
+besoin de barre. Les phases se déclarent par jeu (`etapes` dans
 [`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js)) et vivent dans l'état, pour
 qu'une partie reprise reparte du début d'un tour plutôt qu'au milieu d'un chrono.
 Tudum n'en déclare aucune : on imite, on écrit, on révèle dans le même souffle, et
@@ -588,19 +596,29 @@ dit mal : les quatre issues côte à côte, donc le fait que trahir seul rapport
 plus et que se méfier à deux ne rapporte presque rien. C'est ce que la table doit
 voir pour que le choix ait du sel.
 
-#### Une partie prend l'écran entier
+#### Une partie prend la hauteur qui reste
 
-L'en-tête du site et le pied de page mangeaient près de 300 px sur téléphone, un
-tiers de la hauteur utile, pour deux choses dont on n'a aucun besoin en pleine
-partie : le nom du site et trois liens d'éditeur. Ils disparaissent pendant un
-kit, ce qui a permis d'écrire le nom du joueur à 72 px — 18 % de la hauteur d'un
-écran de 812 px, au-dessus du seuil à partir duquel on peut poser le téléphone au
-milieu de la table. La feuille de match tient désormais sans un pixel de
-défilement.
+**Le titre du site ne disparaît pas** : c'est le repère de l'endroit où l'on est,
+et le seul lien vers l'accueil. Il se réduit — deux tailles de moins, sans son
+sous-titre, sans son grand retrait — ce qui rend une centaine de pixels au jeu sans
+faire disparaître l'ancre. Le pied de page, lui, s'efface : ses trois liens
+d'éditeur n'ont rien à dire à qui joue.
 
-Le titre du site était par ailleurs le seul moyen de sortir sans passer par les
-boutons du kit. C'est maintenant le rôle du menu `⋯`, qui demande confirmation au
-lieu de tout perdre sur un clic — voir
+**Le panneau occupe ensuite toute la place disponible.** Il s'arrêtait à la hauteur
+de son contenu, si bien qu'un jeu à l'écran court — *Oui ou non ?* et sa seule
+carte — laissait la moitié du décor à nu en dessous. Il fait maintenant 88 % de la
+hauteur d'un écran de 812 px, sans un pixel de défilement, et chaque kit décide où
+poser sa scène dedans : la carte du défileur se centre dans la place libre, les
+boutons tombent en bas.
+
+Pas de hauteur minimale en plus de `flex-1` : les deux s'additionnaient à
+l'en-tête et dépassaient l'écran de 28 px. C'est `flex-1` qui donne exactement la
+place restante.
+
+Le nom du joueur qui parle atteint ainsi 72 px, soit 18 % de la hauteur d'écran —
+au-dessus du seuil à partir duquel on peut poser le téléphone au milieu de la
+table. Les sorties passent par le menu `⋯`, qui demande confirmation au lieu de
+tout perdre sur un clic : voir
 [`docs/boutons.md`](docs/boutons.md#une-partie-prend-lécran-et-na-quune-sortie).
 
 #### Les règles restent à portée

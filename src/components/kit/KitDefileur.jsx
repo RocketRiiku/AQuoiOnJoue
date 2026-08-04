@@ -165,7 +165,7 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col flex-1">
       {menu}
       {/* Le compteur dit où l'on en est dans la pile. Sans lui, cinquante-cinq
           questions se ressemblent et rien n'indique qu'elles s'épuisent. */}
@@ -173,7 +173,9 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
         {mots.nom} {etat.index + 1} sur {etat.pile.length}
       </p>
 
-      <div className="flex justify-center py-6">
+      {/* La carte absorbe la hauteur libre et se centre dedans : sur un écran
+          haut, elle restait collée en tête et le panneau s'arrêtait au tiers. */}
+      <div className="flex-1 flex justify-center items-center py-6">
         <CarteTiree texte={carte.contenu} cle={etat.index} taille="phrase" />
       </div>
 

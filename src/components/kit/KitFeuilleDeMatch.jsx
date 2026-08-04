@@ -99,8 +99,10 @@ function resumeDesScores(etat, lignes, unite) {
   }
 
   const meneurs = lignes.filter((l) => l.enTete);
+  // Court à dessein : avec le bouton à côté, une phrase entière poussait le
+  // bandeau à toute la largeur de l'écran pour dire qu'il ne s'est rien passé.
   if (meneurs.length === 0 || meneurs[0].total === 0) {
-    return { texte: 'Personne n’a encore marqué.' };
+    return { texte: 'Scores à zéro' };
   }
   return {
     texte: `${meneurs.length > 1 ? 'Égalité' : meneurs[0].nom} · ${pluriel(
@@ -326,25 +328,33 @@ function EcranVote({
   const gains = regles.resoudre({ courant, trouveurs, enJeu: enJeu(etat) });
 
   return (
-    <div className="flex flex-col min-h-[62svh]">
+    // `flex-1` et non une hauteur minimale : le panneau donne sa hauteur, l'écran
+    // la remplit. Une valeur fixe laissait du décor à nu sous les écrans courts.
+    <div className="flex flex-col flex-1">
       {entete}
 
       <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-4 text-center">
         Le vote
       </p>
+      {/* Deux crans sous la scène des phases : ici, ce qu'on doit lire de loin,
+          ce sont les noms qu'on désigne, pas la question. En 48 px elle prenait
+          trois lignes et poussait le bouton sous la ligne de flottaison. */}
       <p
-        className="font-titre text-brique text-center leading-none mt-2 text-[clamp(1.75rem,11svh,3rem)] break-words"
+        className="font-titre text-brique text-center leading-tight mt-2 text-2xl sm:text-3xl break-words"
         role="status"
       >
         {regles.questionTrouveurs}
       </p>
       {regles.consigneVote && (
-        <p className="text-ardoise font-texte mt-3 max-w-md mx-auto text-center">
+        <p className="text-ardoise font-texte text-sm mt-2 max-w-md mx-auto text-center">
           {regles.consigneVote}
         </p>
       )}
 
-      <ul className="flex flex-col gap-2 mt-6 list-none">
+      {/* La liste défile dans sa propre zone : à seize joueurs — le maximum
+          d'Avez-vous confiance ? — elle repousserait sinon le bouton hors de
+          l'écran, alors qu'il doit tomber au même endroit à chaque tour. */}
+      <ul className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 mt-4 list-none">
         {participants.map((joueur) => (
           <li key={joueur}>
             <LigneJoueur
@@ -358,17 +368,17 @@ function EcranVote({
         ))}
       </ul>
 
-      <div className="mt-auto">
+      <div className="mt-auto max-w-sm w-full mx-auto">
         {/* L'aperçu se lit juste au-dessus du bouton : c'est là que le pouce
             s'arrête avant de valider. */}
-        <div className="mt-6">
+        <div className="mt-4">
           <ApercuGains gains={gains} joueurs={etat.joueurs} unite={unite} />
         </div>
 
-        {/* Même paire qu'ailleurs : reculer à gauche, avancer à droite, et le
-            retour rendu même quand il n'y a rien derrière pour que le bouton
-            principal ne bouge pas d'un écran à l'autre. */}
-        <BarreActions className="justify-center">
+        {/* Même disposition que les écrans de phase : le retour à gauche, et le
+            geste de l'écran seul en dessous, pleine largeur, toujours au même
+            endroit sous le pouce. */}
+        <div className="mt-3 flex items-center justify-between gap-2">
           <Bouton
             variante="discret"
             icone={ArrowLeft}
@@ -377,9 +387,13 @@ function EcranVote({
           >
             {libellePrecedent ?? 'Précédent'}
           </Bouton>
+          <span aria-hidden="true" />
+        </div>
+        <div className="mt-3">
           <Bouton
             variante="principal"
             icone={Check}
+            className="w-full"
             onClick={() => {
               onResoudre(gains);
               setTrouveurs([]);
@@ -387,7 +401,7 @@ function EcranVote({
           >
             Compter les points
           </Bouton>
-        </BarreActions>
+        </div>
       </div>
     </div>
   );
@@ -659,7 +673,7 @@ function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libe
    */
   const entete = regles.forme === 'auFil' ? bandeau : (
     <div className="flex flex-col gap-3">
-      <Progression {...tourDeTable(etat)} etapes={regles.etapes} etape={etat.etape} />
+      <Progression {...tourDeTable(etat)} />
       {bandeau}
     </div>
   );
@@ -668,7 +682,9 @@ function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libe
   const etapeCourante = regles.etapes?.[etat.etape] ?? null;
 
   return (
-    <div>
+    // La partie hérite de la hauteur du panneau et la passe à ses écrans, qui
+    // décident où poser leur scène et leurs boutons dedans.
+    <div className="flex flex-col flex-1">
       {menu}
       {scores && (
         <DialogueScores
@@ -709,7 +725,8 @@ function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libe
           <PhaseChronometree
             entete={entete}
             titre={etapeCourante.titre}
-            nom={`${etat.joueurs[etat.courant]} ${regles.roleCourant}`}
+            // Le rôle suit la phase : on raconte, puis on répond.
+            nom={`${etat.joueurs[etat.courant]} ${etapeCourante.role}`}
             consigne={etapeCourante.consigne}
             secondes={
               etapeCourante.secondes === 'chronoTour'
