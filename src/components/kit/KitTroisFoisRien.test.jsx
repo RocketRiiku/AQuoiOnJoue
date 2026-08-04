@@ -341,14 +341,20 @@ describe('kit de Trois fois rien', () => {
     expect(screen.getByRole('button', { name: /remettre Équipe 1 à zéro/i })).toBeDisabled();
   });
 
-  it('recommence la partie depuis la pause', async () => {
+  it('recommence la partie depuis le menu', async () => {
     const { utilisateur: u } = monter();
     await clic(u, /remplir le pot/i);
     await lancerTour(u);
     await clic(u, /trouvé/i);
 
+    // Le voile de pause ne garde que « Reprendre ». Recommencer, couper le son
+    // et les sorties sont dans le menu de l'en-tête, qui reste atteignable
+    // par-dessus le voile — les réunir là évite justement de faire réapparaître
+    // quatre boutons dès qu'on met le jeu en pause.
     await clic(u, /mettre le jeu en pause/i);
-    await clic(u, /recommencer la partie/i);
+    await clic(u, /autres actions/i);
+    const menu = screen.getByRole('dialog');
+    await u.click(within(menu).getByRole('button', { name: /recommencer la partie/i }));
 
     // Pot neuf, scores à zéro, et on repart de l'écran d'annonce.
     expect(screen.getByText(/20 mots dans le pot/i)).toBeInTheDocument();

@@ -382,44 +382,29 @@ function Bilan({ annonce, precision, etat, montrerVainqueur, onAjuster, onReinit
 }
 
 /** Voile de pause : le chrono s'arrête, rien ne se perd. */
-function Pause({ onReprendre, onRecommencer, son, onBasculerSon }) {
+function Pause({ onReprendre }) {
   return (
     // Opaque, et non translucide : à 5 % de transparence le mot en cours
     // restait lisible derrière, et une pause ne doit pas donner la réponse.
     // Le voile déborde sur les côtés et le bas — le rembourrage du panneau —
-    // mais s'arrête au titre du jeu, qui reste le repère de l'écran.
+    // mais s'arrête au titre du jeu, si bien que le menu « ⋯ » de l'en-tête
+    // reste atteignable par-dessus.
     <div className="absolute -inset-x-6 sm:-inset-x-10 -bottom-6 sm:-bottom-10 top-0 z-30 flex flex-col items-center justify-center gap-6 bg-creme px-6">
       <p className="font-titre text-4xl text-brique" role="status">
         Pause
       </p>
-      <p className="text-ardoise font-texte text-center">
+      <p className="text-ardoise font-texte text-center max-w-xs">
         Le chrono est arrêté. Le pot et les scores vous attendent.
       </p>
+      {/* Un seul bouton : reprendre. Couper le son, recommencer, quitter et
+          abandonner sont dans le menu de l'en-tête, qui reste visible au-dessus
+          du voile — les réunir là a justement servi à ne plus faire réapparaître
+          quatre boutons dès qu'on met le jeu en pause. */}
       <BarreActions className="mt-0 justify-center">
         <Bouton variante="principal" icone={Play} onClick={onReprendre}>
           Reprendre
         </Bouton>
       </BarreActions>
-      <BarreActionsSecondaire className="mt-0 justify-center">
-        {/* Le tic-tac des dix dernières secondes se coupe ici : un son qu'on ne
-            peut pas éteindre finit par se retourner contre le jeu. */}
-        <Bouton
-          variante="discret"
-          icone={son ? Volume2 : VolumeX}
-          onClick={onBasculerSon}
-          aria-pressed={son}
-        >
-          {son ? 'Couper le son' : 'Remettre le son'}
-        </Bouton>
-        <Bouton variante="discret" icone={RotateCw} onClick={onRecommencer}>
-          Recommencer la partie
-        </Bouton>
-        {/* Quitter et abandonner ont quitté ce voile pour le menu de l'en-tête,
-            qui reste atteignable par-dessus : le voile s'arrête au titre du jeu.
-            Ils y sont hors de portée du pouce, et l'abandon demande
-            confirmation — deux boutons voisins dont l'un fait perdre la partie
-            se confondaient. */}
-      </BarreActionsSecondaire>
     </div>
   );
 }
@@ -615,12 +600,7 @@ function Partie({
       )}
 
       {enPause && (
-        <Pause
-          onReprendre={() => setEnPause(false)}
-          onRecommencer={recommencer}
-          son={son}
-          onBasculerSon={() => setSon((v) => !v)}
-        />
+        <Pause onReprendre={() => setEnPause(false)} />
       )}
     </div>
   );

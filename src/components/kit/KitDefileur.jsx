@@ -34,10 +34,12 @@ import {
  */
 function Rappel({ texte, onCommencer, onQuitter, libelleRetour }) {
   return (
-    <div className="text-center mt-4">
+    // Centré dans la hauteur disponible : calé en haut, il laissait 400 px de
+    // vide sous ses deux boutons.
+    <div className="flex-1 flex flex-col justify-center text-center py-6">
       <p className="font-titre text-3xl sm:text-4xl text-brique">Avant de commencer</p>
-      <p className="text-ardoise font-texte text-lg mt-3 max-w-md mx-auto">{texte}</p>
-      <BarreActions className="justify-center">
+      <p className="text-ardoise font-texte text-lg mt-4 max-w-md mx-auto">{texte}</p>
+      <BarreActions className="justify-center mt-8">
         <Bouton variante="principal" icone={Play} onClick={onCommencer}>
           C’est parti&nbsp;!
         </Bouton>
@@ -126,7 +128,7 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
 
   if (!commence) {
     return (
-      <>
+      <div className="flex flex-col flex-1">
         {menu}
         <Rappel
           texte={rappel}
@@ -134,15 +136,15 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
           onQuitter={onQuitter}
           libelleRetour={libelleRetour}
         />
-      </>
+      </div>
     );
   }
 
   if (epuise(etat)) {
     return (
-      <>
+      <div className="flex flex-col flex-1">
         {menu}
-        <div className="text-center mt-6">
+        <div className="flex-1 flex flex-col justify-center text-center py-6">
           <p className="font-titre text-3xl sm:text-4xl text-brique" role="status">
             La pile est vide
           </p>
@@ -160,7 +162,7 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
             </Bouton>
           </BarreActions>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -173,10 +175,14 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
         {mots.nom} {etat.index + 1} sur {etat.pile.length}
       </p>
 
-      {/* La carte absorbe la hauteur libre et se centre dedans : sur un écran
-          haut, elle restait collée en tête et le panneau s'arrêtait au tiers. */}
-      <div className="flex-1 flex justify-center items-center py-6">
-        <CarteTiree texte={carte.contenu} cle={etat.index} taille="phrase" />
+      {/* La carte prend la hauteur libre au lieu de flotter dedans. À 144 px de
+          haut au milieu de 400 px de vide, elle donnait un écran creux en haut
+          comme en bas ; elle respire maintenant à la mesure de la place. */}
+      {/* `items-center` et non `items-stretch` : passé son plafond, la carte
+          cesse de grandir, et le reste de la place se répartit de part et
+          d'autre au lieu de s'accumuler sous elle. */}
+      <div className="flex-1 flex justify-center items-center py-5">
+        <CarteTiree texte={carte.contenu} cle={etat.index} taille="phrase" plein />
       </div>
 
       {game.chronoTour && (

@@ -621,6 +621,24 @@ table. Les sorties passent par le menu `⋯`, qui demande confirmation au lieu d
 tout perdre sur un clic : voir
 [`docs/boutons.md`](docs/boutons.md#une-partie-prend-lécran-et-na-quune-sortie).
 
+**La scène se centre dans la place libre, et ce qui peut grandir grandit.** Tout
+était calé en haut du panneau : la carte du défileur restait à 144 px au milieu de
+400 px de vide, et l'écran de rappel laissait quatre cents pixels sous ses deux
+boutons. La carte monte à 422 px sur un écran de 812, le vide se répartit de part
+et d'autre au lieu de s'accumuler dessous, et les écrans courts se centrent en
+entier.
+
+**À partir de `lg`, une phase chronométrée passe à deux colonnes** : le nom du
+joueur d'un côté, le décompte de l'autre. Sur 1 900 px, les empiler au centre
+laissait tout le reste inoccupé ; le panneau s'élargit alors à 1 024 px, un écran
+de jeu n'ayant pas de prose à lire sur une colonne étroite. Sans chrono, la scène
+reste une colonne centrée.
+
+**Le voile de pause ne garde qu'un bouton**, « Reprendre ». Recommencer, couper le
+son, quitter et abandonner avaient reparu là alors qu'ils vivent dans le menu de
+l'en-tête — et celui-ci reste atteignable par-dessus le voile, qui s'arrête au
+titre du jeu.
+
 #### Les règles restent à portée
 
 Un « ? » sur la ligne du titre rouvre les règles du jeu en modale, pendant toute

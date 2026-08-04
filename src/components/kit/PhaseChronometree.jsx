@@ -60,59 +60,79 @@ function PhaseChronometree({
     <div className="flex flex-col flex-1">
       {entete}
 
-      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-4 text-center">
-        {titre}
-      </p>
-
-      {/* 15 % de la hauteur d'écran au minimum, borné pour qu'un nom long ne
-          déborde pas sur grand écran. */}
-      <p
-        className="font-titre text-brique text-center leading-none mt-2 text-[clamp(2rem,15svh,4.5rem)] break-words"
-        role="status"
+      {/**
+       * La scène occupe l'espace libre et s'y centre.
+       *
+       * Tout était calé en haut, si bien que la moitié basse de l'écran restait
+       * vide entre la consigne et les boutons. Centrer répartit ce vide de part
+       * et d'autre, ce qui donne la respiration qui manquait sans rien ajouter.
+       *
+       * **Deux colonnes sur grand écran**, quand il y a un chrono : sur 1 900 px,
+       * empiler le nom du joueur et le décompte au milieu d'une colonne étroite
+       * laissait tout le reste inoccupé. Le nom à gauche, le temps à droite, tous
+       * deux à hauteur d'œil.
+       */}
+      <div
+        className={`flex-1 flex flex-col justify-center gap-4 py-4 ${
+          secondes ? 'lg:grid lg:grid-cols-2 lg:gap-10 lg:items-center' : ''
+        }`}
       >
-        {nom}
-      </p>
+        <div>
+          <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 text-center">
+            {titre}
+          </p>
 
-      <p className="text-ardoise font-texte text-lg mt-4 max-w-md mx-auto text-center">
-        {consigne}
-      </p>
+          {/* 15 % de la hauteur d'écran au minimum, borné pour qu'un nom long ne
+              déborde pas sur grand écran. */}
+          <p
+            className="font-titre text-brique text-center leading-none mt-2 text-[clamp(2rem,15svh,4.5rem)] break-words"
+            role="status"
+          >
+            {nom}
+          </p>
 
-      {/* Centré comme le reste de l'écran, et à la largeur du bloc de boutons :
-          aligné à gauche, il cassait la colonne alors qu'il est l'objet principal
-          de la phase. */}
-      {secondes && (
-        <div className="mt-8 max-w-sm w-full mx-auto">
-          <Chrono
-            secondes={secondes}
-            enMarche={enMarche}
-            cle={cle}
-            son={son}
-            onFini={() => setEnMarche(false)}
-          />
-          <div className="flex items-center justify-center gap-3 mt-3">
-            {/* Cette ligne dit pourquoi rien ne bouge : elle se lit, elle ne se
-                devine pas. En 12 px à 60 % d'opacité, personne ne la voyait. */}
-            <p className="text-ardoise font-texte">
-              {!lance
-                ? 'Le chrono attend votre signal.'
-                : enMarche
-                  ? 'Le chrono tourne.'
-                  : 'Le chrono est en pause.'}
-            </p>
-            {/* La pause reste accrochée au chrono : elle commande le décompte,
-                elle ne fait pas avancer le jeu. */}
-            {lance && (
-              <Bouton
-                variante="discret"
-                icone={enMarche ? Pause : Play}
-                onClick={() => setEnMarche((v) => !v)}
-              >
-                {enMarche ? 'Pause' : 'Reprendre'}
-              </Bouton>
-            )}
-          </div>
+          <p className="text-ardoise font-texte text-lg mt-5 max-w-md mx-auto text-center">
+            {consigne}
+          </p>
         </div>
-      )}
+
+        {/* Centré comme le reste, et à la largeur du bloc de boutons : aligné à
+            gauche, il cassait la colonne alors qu'il est l'objet principal de la
+            phase. */}
+        {secondes && (
+          <div className="max-w-sm w-full mx-auto">
+            <Chrono
+              secondes={secondes}
+              enMarche={enMarche}
+              cle={cle}
+              son={son}
+              onFini={() => setEnMarche(false)}
+            />
+            <div className="flex items-center justify-center gap-3 mt-3">
+              {/* Cette ligne dit pourquoi rien ne bouge : elle se lit, elle ne se
+                  devine pas. En 12 px à 60 % d'opacité, personne ne la voyait. */}
+              <p className="text-ardoise font-texte">
+                {!lance
+                  ? 'Le chrono attend votre signal.'
+                  : enMarche
+                    ? 'Le chrono tourne.'
+                    : 'Le chrono est en pause.'}
+              </p>
+              {/* La pause reste accrochée au chrono : elle commande le décompte,
+                  elle ne fait pas avancer le jeu. */}
+              {lance && (
+                <Bouton
+                  variante="discret"
+                  icone={enMarche ? Pause : Play}
+                  onClick={() => setEnMarche((v) => !v)}
+                >
+                  {enMarche ? 'Pause' : 'Reprendre'}
+                </Bouton>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/**
        * Deux directions en vis-à-vis, l'action seule en dessous.

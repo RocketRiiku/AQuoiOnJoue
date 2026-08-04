@@ -293,9 +293,13 @@ function App() {
                 <div className="flex-1 flex justify-center items-stretch">
                   {/* Le kit prend le même panneau crème que les autres vues :
                       c'est le même objet — un jeu — vu pendant qu'on y joue. */}
+                  {/* Plus large que les autres vues à partir de `lg` : un écran
+                      de jeu n'a pas de prose à lire sur une colonne étroite, et
+                      les phases y passent à deux colonnes — le nom du joueur d'un
+                      côté, le chrono de l'autre. */}
                   <section
                     aria-labelledby="titre-kit"
-                    className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl p-6 sm:p-10 flex flex-col"
+                    className="anim-panneau bg-creme rounded-2xl shadow-xl w-full max-w-3xl lg:max-w-5xl p-6 sm:p-10 flex flex-col"
                   >
                     {/* Le titre du jeu ancre l'écran : on peut y arriver par un
                         lien, sans être passé par la fiche. Deux crans sous le

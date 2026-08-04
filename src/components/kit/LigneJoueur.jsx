@@ -35,11 +35,14 @@ function LigneJoueur({
       onClick={onClick}
       aria-pressed={selectionnable && !sortie ? actif : undefined}
       aria-label={nomAccessible}
-      className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange ${
+      // Les deux anneaux sont **intérieurs** : la liste du vote défile dans sa
+      // propre zone, et un anneau dessiné hors de la boîte s'y faisait couper
+      // net sur la ligne sélectionnée comme au focus clavier.
+      className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange ${
         sortie
           ? 'bg-ardoise/10 cursor-not-allowed'
           : actif
-            ? 'bg-paille ring-2 ring-orange'
+            ? 'bg-paille ring-2 ring-inset ring-orange'
             : 'bg-paille hover:bg-paille/70 active:bg-white/80'
       }`}
     >

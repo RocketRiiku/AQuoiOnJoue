@@ -333,6 +333,23 @@ qui parle, le mot à faire deviner. En dessous, on ne peut pas poser le téléph
 au centre de la table. D'où un `clamp()` en `svh` plutôt qu'une taille en points,
 plafonné pour qu'un ordinateur n'hérite pas d'un titre de 140 px.
 
+**Un écran de jeu se lit en trois zones : l'en-tête, la scène, les actions.** La
+scène prend la place libre et **s'y centre**, les actions restent en bas. Tout
+était calé en haut, si bien que la moitié basse restait vide : centrer répartit ce
+vide de part et d'autre, et c'est ce qui donne la respiration sans rien ajouter.
+Un écran qui n'a qu'une phrase et deux boutons — un rappel de règle, un classement
+— se centre en entier.
+
+Ce qui peut grandir, grandit. La carte du défileur passait sa vie à 144 px au
+milieu de 400 px de vide : elle prend maintenant la hauteur disponible, plafonnée,
+et le surplus se répartit autour d'elle plutôt que de s'accumuler dessous.
+
+**À partir de `lg`, une phase chronométrée passe à deux colonnes** : le nom du
+joueur d'un côté, le décompte de l'autre, tous deux à hauteur d'œil. Sur 1 900 px,
+les empiler au centre d'une colonne étroite laissait tout le reste inoccupé. Le
+panneau d'un kit est aussi plus large que celui des autres vues — un écran de jeu
+n'a pas de prose à lire sur une colonne de lecture.
+
 **Le décompte dit s'il tourne.** Un chrono figé sur sa durée pleine, barre
 comprise, ne se distingue pas d'un chrono en attente. Le bouton nomme donc le
 geste (« Lancer le chrono », puis « Pause »), et une ligne annonce l'état. Tant

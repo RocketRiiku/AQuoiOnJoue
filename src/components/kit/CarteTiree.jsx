@@ -21,19 +21,26 @@ const TAILLES = {
  * @param cle     remonte la carte à neuf, ce qui rejoue l'animation d'arrivée
  * @param annonce lue à voix haute par les lecteurs d'écran : celui qui tient le
  *                téléphone doit connaître le contenu sans le chercher des yeux
+ * @param plein   la carte prend la hauteur qu'on lui donne au lieu de son
+ *                minimum. Un papier de 144 px flottant au milieu de 400 px de
+ *                vide ne ressemblait à rien ; plafonné, pour qu'elle ne devienne
+ *                pas une affiche sur grand écran
  */
 function CarteTiree({
   texte,
   cle,
   taille = 'mot',
   annonce = true,
+  plein = false,
   className = '',
   ...props
 }) {
   return (
     <div
       key={cle}
-      className={`anim-carte-tiree w-full max-w-md min-h-[9rem] sm:min-h-[11rem] rounded-2xl bg-paille shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex items-center justify-center px-5 py-6 ${className}`}
+      className={`anim-carte-tiree w-full max-w-md rounded-2xl bg-paille shadow-[0_10px_30px_rgba(0,0,0,0.12)] flex items-center justify-center px-5 py-6 ${
+        plein ? 'h-full max-h-[26rem]' : 'min-h-[9rem] sm:min-h-[11rem]'
+      } ${className}`}
       {...props}
     >
       <p

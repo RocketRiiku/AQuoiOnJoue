@@ -151,10 +151,12 @@ function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRe
     });
 
   return (
-    <>
+    // Centré dans la hauteur : une question et un bouton calés en haut laissaient
+    // le reste du panneau vide.
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="text-ardoise font-texte text-lg">{regles.rappel}</p>
 
-      <div className="mt-6">
+      <div className="mt-8">
         <p className="font-titre text-encre">Combien êtes-vous&nbsp;?</p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
           <Compteur
@@ -221,7 +223,7 @@ function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRe
         </div>
       </div>
 
-      <BarreActions>
+      <BarreActions className="mt-10">
         <Bouton
           variante="principal"
           icone={Play}
@@ -241,7 +243,7 @@ function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRe
           {libelleRetour}
         </Bouton>
       </BarreActions>
-    </>
+    </div>
   );
 }
 
@@ -538,7 +540,7 @@ function Classement({ etat, unite, onRejouer, onQuitter, libelleRetour }) {
   const gagnants = vainqueurs(etat);
 
   return (
-    <div className="mt-8">
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="font-titre text-3xl sm:text-4xl text-brique text-center" role="status">
         {gagnants.length > 1
           ? 'Égalité parfaite'
@@ -705,7 +707,9 @@ function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libe
               ? `${regles.seuil} avertissements et on sort`
               : 'Touchez une ligne pour marquer un point'}
           </p>
-          <div className="mt-3">
+          {/* Centrée dans la hauteur restante : à quatre joueurs, la feuille
+              collait en haut d'un panneau deux fois plus grand qu'elle. */}
+          <div className="flex-1 flex flex-col justify-center py-3">
             <FeuilleDeMatch
               etat={etat}
               seuil={regles.seuil ?? null}
@@ -804,7 +808,7 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
     .join(' · ');
 
   return (
-    <>
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="font-titre text-3xl text-brique">Une partie est en cours</p>
       <p className="text-ardoise font-texte text-lg mt-2">
         {pluriel(enJeu(etat).length, 'joueur')} encore en course sur {etat.joueurs.length}.
@@ -827,7 +831,7 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
           Abandonner la partie
         </Bouton>
       </BarreActionsSecondaire>
-    </>
+    </div>
   );
 }
 
