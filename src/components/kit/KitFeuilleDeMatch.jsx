@@ -436,7 +436,7 @@ function EcranVote({
 function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
   if (!etat.duel) {
     return (
-      <div className="text-center">
+      <div className="flex-1 flex flex-col justify-center text-center py-6">
         <p className="text-ardoise font-texte text-lg">
           Six points sur la table, deux joueurs dos à dos.
         </p>
@@ -453,7 +453,9 @@ function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
   const { etiquettes, gains } = regles.matrice;
 
   return (
-    <div>
+    // Centré comme les autres écrans de jeu : les deux noms et les quatre cases
+    // restaient calés en haut d'un panneau bien plus haut qu'eux.
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="font-titre text-2xl sm:text-3xl text-brique text-center" role="status">
         {etat.joueurs[a]} <span className="text-ardoise/60">contre</span> {etat.joueurs[b]}
       </p>
@@ -765,7 +767,7 @@ function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libe
       {regles.forme === 'duel' && (
         <>
           {bandeau}
-          <div className="mt-5">
+          <div className="mt-5 flex-1 flex flex-col">
             <PanneauDuel
               etat={etat}
               regles={regles}

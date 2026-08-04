@@ -628,6 +628,15 @@ boutons. La carte monte à 422 px sur un écran de 812, le vide se répartit de 
 et d'autre au lieu de s'accumuler dessous, et les écrans courts se centrent en
 entier.
 
+**Les quatre kits suivent la même charpente**, y compris `EcranTour` : sa racine ne
+remplissait pas le panneau, si bien que le `flex-1` de sa carte n'avait rien où
+grandir et que le mot à faire deviner restait petit au milieu d'un écran à moitié
+vide. Il passe de 144 à 230 px sur téléphone, 394 sur ordinateur, sans toucher à ce
+qui fait sa tension — les deux chiffres qui se font face en haut, les deux surfaces
+de réponse en bas. Même traitement pour l'annonce d'équipe, les trois bilans, la
+reprise, le jet de dé et les deux écrans du duel : une correction faite pour un jeu
+se rejoue partout où elle apporte quelque chose.
+
 **À partir de `lg`, une phase chronométrée passe à deux colonnes** : le nom du
 joueur d'un côté, le décompte de l'autre. Sur 1 900 px, les empiler au centre
 laissait tout le reste inoccupé ; le panneau s'élargit alors à 1 024 px, un écran

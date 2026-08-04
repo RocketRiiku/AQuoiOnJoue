@@ -354,7 +354,10 @@ function EnTete({ etat, manche, onPause }) {
  */
 function Bilan({ annonce, precision, etat, montrerVainqueur, onAjuster, onReinitialiser, children }) {
   return (
-    <div className="mt-8">
+    // Centré : les trois transitions — fin de tour, fin de manche, fin de partie
+    // — tiennent en une annonce, une grille et un bouton, et laissaient le bas du
+    // panneau vide.
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="font-titre text-3xl sm:text-4xl text-brique text-center" role="status">
         {annonce}
       </p>
@@ -454,7 +457,7 @@ function Partie({
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex flex-col flex-1">
       {/* Les actions rares dans le menu de l'en-tête : recommencer et couper le
           son servent une fois par partie, quitter et abandonner une seule fois.
           Elles encombraient l'écran d'annonce d'équipe et le voile de pause, où
@@ -488,7 +491,9 @@ function Partie({
       />
 
       {etat.phase === 'pret' && (
-        <div className="mt-10 text-center">
+        // Centré dans la hauteur libre : le nom de l'équipe et son unique bouton
+        // restaient calés en haut d'un panneau deux fois plus grand qu'eux.
+        <div className="flex-1 flex flex-col justify-center text-center py-6">
           <p className="font-titre text-4xl sm:text-5xl text-brique leading-tight">
             {equipe}
           </p>
@@ -626,7 +631,7 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
   const totaux = etat.equipes.map((nom, i) => `${nom} ${totalEquipe(etat, i)}`).join(' · ');
 
   return (
-    <>
+    <div className="flex-1 flex flex-col justify-center py-4">
       <p className="font-titre text-3xl text-brique">Une partie est en cours</p>
       <p className="text-ardoise font-texte text-lg mt-2">
         Manche {etat.manche + 1} sur {MANCHES.length}, {etat.restants.length} mot
@@ -653,7 +658,7 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
           Abandonner la partie
         </Bouton>
       </BarreActionsSecondaire>
-    </>
+    </div>
   );
 }
 

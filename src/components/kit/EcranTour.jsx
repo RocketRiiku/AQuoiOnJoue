@@ -151,7 +151,11 @@ function EcranTour({
   const engage = Math.abs(glissement) > SEUIL_GLISSEMENT;
 
   return (
-    <div className="relative flex flex-col">
+    // `flex-1` : la racine ne remplissait pas le panneau, si bien que le
+    // `flex-1` de la carte n'avait rien où grandir et que le mot restait petit au
+    // milieu d'un écran à moitié vide. Même structure en trois zones que les
+    // autres écrans de kit — l'en-tête chiffré, la scène, les surfaces de réponse.
+    <div className="relative flex flex-col flex-1">
       <div className="flex items-end gap-5">
         <div className="flex-1 min-w-0">
           <Chrono
@@ -184,10 +188,13 @@ function EcranTour({
       {/* La carte est une brique commune (CarteTiree) ; ce qui lui est propre
           ici, c'est le glissement — la transformation qui suit le doigt et
           l'anneau qui confirme le geste avant qu'on relâche. */}
-      <div className="flex-1 flex items-center justify-center py-6 touch-pan-y select-none">
+      {/* `items-center` : passé son plafond, la carte cesse de grandir et le
+          reste de la place se répartit autour d'elle. */}
+      <div className="flex-1 flex items-center justify-center py-5 touch-pan-y select-none">
         <CarteTiree
           texte={mot}
           cle={mot}
+          plein
           onTouchStart={debutGeste}
           onTouchMove={gesteEnCours}
           onTouchEnd={finGeste}

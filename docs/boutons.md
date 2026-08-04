@@ -340,6 +340,13 @@ vide de part et d'autre, et c'est ce qui donne la respiration sans rien ajouter.
 Un écran qui n'a qu'une phrase et deux boutons — un rappel de règle, un classement
 — se centre en entier.
 
+La règle vaut pour **les quatre kits**, sans exception : l'écran de tour de *Trois
+fois rien* (chiffres en haut, mot au centre, surfaces de réponse en bas),
+l'annonce d'équipe, les trois bilans, la reprise, le jet de dé, le duel, la
+matrice, le défileur et ses écrans de rappel et de pile vide. Une correction faite
+pour un jeu se rejoue partout où elle apporte quelque chose, sinon les écrans
+divergent — c'est exactement ce que ce document existe pour empêcher.
+
 Ce qui peut grandir, grandit. La carte du défileur passait sa vie à 144 px au
 milieu de 400 px de vide : elle prend maintenant la hauteur disponible, plafonnée,
 et le surplus se répartit autour d'elle plutôt que de s'accumuler dessous.

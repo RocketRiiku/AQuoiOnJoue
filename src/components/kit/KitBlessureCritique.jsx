@@ -156,7 +156,10 @@ function KitBlessureCritique({ game, ancreMenu, onQuitter, libelleRetour }) {
   const effet = roule ? null : effetDe(effets, etat.face);
 
   return (
-    <div className="flex flex-col items-center">
+    // Trois zones comme les autres kits : le menu, la scène qui prend la place
+    // libre et s'y centre, l'action en bas. Le dé et son gage restaient calés en
+    // haut d'un panneau deux fois plus grand qu'eux.
+    <div className="flex flex-col flex-1 items-center">
       {/* Sortir et effacer les jets servent une fois par soirée : ils rejoignent
           le menu de l'en-tête, et la barre du bas ne garde que le lancer. */}
       <MenuPartie
@@ -182,9 +185,8 @@ function KitBlessureCritique({ game, ancreMenu, onQuitter, libelleRetour }) {
         }
       />
 
-      <div className="py-2">
+      <div className="flex-1 flex flex-col items-center justify-center py-4 w-full">
         <De face={roule ? roulement : etat.face} roule={roule} />
-      </div>
 
       {effet ? (
         <div className="flex justify-center w-full py-6">
@@ -202,6 +204,7 @@ function KitBlessureCritique({ game, ancreMenu, onQuitter, libelleRetour }) {
             : `Vingt faces, vingt sorts. Le 20 sauve, le 1 fait finir son verre.`}
         </p>
       )}
+      </div>
 
       <BarreActions className="justify-center">
         <Bouton variante="principal" icone={Dices} onClick={jeter} disabled={roule}>
