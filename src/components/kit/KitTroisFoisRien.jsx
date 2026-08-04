@@ -18,6 +18,7 @@ import Compteur from './Compteur';
 import EcranTour from './EcranTour';
 import TableauScores from './TableauScores';
 import DialoguePot from './DialoguePot';
+import MenuPartie from './MenuPartie';
 import { contenuDuJeu } from '../../data/lancerJeu';
 import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
 import {
@@ -381,15 +382,7 @@ function Bilan({ annonce, precision, etat, montrerVainqueur, onAjuster, onReinit
 }
 
 /** Voile de pause : le chrono s'arrête, rien ne se perd. */
-function Pause({
-  onReprendre,
-  onRecommencer,
-  onAbandonner,
-  onQuitter,
-  libelleRetour,
-  son,
-  onBasculerSon
-}) {
+function Pause({ onReprendre, onRecommencer, son, onBasculerSon }) {
   return (
     // Opaque, et non translucide : à 5 % de transparence le mot en cours
     // restait lisible derrière, et une pause ne doit pas donner la réponse.
@@ -421,21 +414,26 @@ function Pause({
         <Bouton variante="discret" icone={RotateCw} onClick={onRecommencer}>
           Recommencer la partie
         </Bouton>
-        <Bouton variante="discret" icone={X} onClick={onQuitter}>
-          {libelleRetour}
-        </Bouton>
-        {/* Quitter met la partie de côté ; abandonner la supprime. Deux gestes
-            différents, deux boutons — c'est la suppression qui est destructrice,
-            pas le fait de sortir. */}
-        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
-          Abandonner la partie
-        </Bouton>
+        {/* Quitter et abandonner ont quitté ce voile pour le menu de l'en-tête,
+            qui reste atteignable par-dessus : le voile s'arrête au titre du jeu.
+            Ils y sont hors de portée du pouce, et l'abandon demande
+            confirmation — deux boutons voisins dont l'un fait perdre la partie
+            se confondaient. */}
       </BarreActionsSecondaire>
     </div>
   );
 }
 
-function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelleRetour }) {
+function Partie({
+  game,
+  mots,
+  depart,
+  reglages,
+  ancreMenu,
+  onQuitter,
+  onAbandonner,
+  libelleRetour
+}) {
   const [etat, envoyer] = useReducer(reducteur, depart);
   const [enPause, setEnPause] = useState(false);
   const [son, setSon] = useState(true);
@@ -472,6 +470,32 @@ function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelle
 
   return (
     <div className="relative">
+      {/* Les actions rares dans le menu de l'en-tête : recommencer et couper le
+          son servent une fois par partie, quitter et abandonner une seule fois.
+          Elles encombraient l'écran d'annonce d'équipe et le voile de pause, où
+          deux boutons voisins dont l'un fait tout perdre se confondaient. */}
+      <MenuPartie
+        ancre={ancreMenu}
+        slug={game.slug}
+        libelleRetour={libelleRetour}
+        onQuitter={onQuitter}
+        onAbandonner={onAbandonner}
+        extras={[
+          {
+            cle: 'recommencer',
+            libelle: 'Recommencer la partie',
+            icone: RotateCw,
+            onClick: recommencer
+          },
+          {
+            cle: 'son',
+            libelle: son ? 'Couper le son' : 'Remettre le son',
+            icone: son ? Volume2 : VolumeX,
+            onClick: () => setSon((v) => !v)
+          }
+        ]}
+      />
+
       <EnTete
         etat={etat}
         manche={manche}
@@ -498,11 +522,6 @@ function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelle
               C’est parti&nbsp;!
             </Bouton>
           </BarreActions>
-          <BarreActionsSecondaire className="justify-center">
-            <Bouton variante="discret" destructeur icone={X} onClick={onQuitter}>
-              {libelleRetour}
-            </Bouton>
-          </BarreActionsSecondaire>
         </div>
       )}
 
@@ -599,9 +618,6 @@ function Partie({ game, mots, depart, reglages, onQuitter, onAbandonner, libelle
         <Pause
           onReprendre={() => setEnPause(false)}
           onRecommencer={recommencer}
-          onAbandonner={onAbandonner}
-          onQuitter={onQuitter}
-          libelleRetour={libelleRetour}
           son={son}
           onBasculerSon={() => setSon((v) => !v)}
         />
@@ -661,7 +677,14 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
   );
 }
 
-function KitTroisFoisRien({ game, joueurs, onQuitter, onRetourAccueil, libelleRetour }) {
+function KitTroisFoisRien({
+  game,
+  joueurs,
+  ancreMenu,
+  onQuitter,
+  onRetourAccueil,
+  libelleRetour
+}) {
   const mots = useMemo(
     () => contenuDuJeu(game.slug, 'mot').map((ligne) => ligne.contenu),
     [game.slug]
@@ -708,6 +731,7 @@ function KitTroisFoisRien({ game, joueurs, onQuitter, onRetourAccueil, libelleRe
       mots={mots}
       depart={partie.etat}
       reglages={partie.reglages}
+      ancreMenu={ancreMenu}
       onQuitter={onQuitter}
       onAbandonner={() => {
         effacerPartie();

@@ -505,11 +505,27 @@ describe('parcours : lancer le kit d’un jeu', () => {
    * liste.
    */
   const quitterVersLaListe = async (u) => {
-    await u.click(screen.getByRole('button', { name: /sortir de la partie/i }));
-    // Dans le dialogue : l'écran de réglage porte aussi un « Retour à la fiche ».
-    const menu = screen.getByRole('dialog');
-    await u.click(within(menu).getByRole('button', { name: /retour à la fiche/i }));
+    const menu = screen.queryByRole('button', { name: /autres actions/i });
+    if (menu) {
+      await u.click(menu);
+      // Dans le dialogue : l'écran de réglage porte aussi un « Retour à la fiche ».
+      const dialogue = screen.getByRole('dialog');
+      await u.click(within(dialogue).getByRole('button', { name: /retour à la fiche/i }));
+    } else {
+      // Avant qu'une partie existe, la sortie reste un bouton visible : il n'y a
+      // rien à perdre, et l'écran de réglage n'a pas de menu.
+      await u.click(screen.getByRole('button', { name: /retour à la fiche/i }));
+    }
     await u.click(await screen.findByRole('button', { name: /retour aux jeux/i }));
+  };
+
+  /** Abandonne depuis le menu de la partie, confirmation comprise. */
+  const abandonnerDepuisLeMenu = async (u) => {
+    await u.click(screen.getByRole('button', { name: /autres actions/i }));
+    const dialogue = () => screen.getByRole('dialog');
+    await u.click(within(dialogue()).getByRole('button', { name: /abandonner la partie/i }));
+    // Une cible qui fait perdre une demi-heure de jeu demande confirmation.
+    await u.click(within(dialogue()).getByRole('button', { name: /oui, abandonner/i }));
   };
 
   it('sauve la partie, la signale sur la liste, et la reprend', async () => {
@@ -560,8 +576,10 @@ describe('parcours : lancer le kit d’un jeu', () => {
     await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
     await u.click(screen.getByRole('button', { name: /c’est parti/i }));
 
-    await u.click(await screen.findByRole('button', { name: /mettre le jeu en pause/i }));
-    await u.click(screen.getByRole('button', { name: /abandonner la partie/i }));
+    // L'abandon a quitté le voile de pause pour le menu de l'en-tête, qui reste
+    // atteignable par-dessus : le voile s'arrête au titre du jeu.
+    await screen.findByRole('button', { name: /mettre le jeu en pause/i });
+    await abandonnerDepuisLeMenu(u);
 
     // Retour à la liste, et plus rien à reprendre.
     expect(await screen.findByLabelText(/rechercher un jeu/i)).toBeInTheDocument();

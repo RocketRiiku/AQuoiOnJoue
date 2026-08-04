@@ -25,7 +25,7 @@ import { estRecommande, nombreJoueurs } from './utils/formatGame';
 import { TRI_PAR_DEFAUT, trierJeux } from './utils/trierJeux';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
-import { effacerPartie, lirePartie } from './utils/partieEnCours';
+import { lirePartie } from './utils/partieEnCours';
 
 function App() {
   const {
@@ -73,6 +73,15 @@ function App() {
   // les retrouver ouvertes à la partie suivante n'aurait aucun sens.
   const [reglesOuvertes, setReglesOuvertes] = useState(false);
   useEffect(() => setReglesOuvertes(false), [vue, jeuAffiche]);
+
+  /**
+   * L'emplacement du menu de la partie, dans l'en-tête du kit.
+   *
+   * Le nœud est confié au kit, qui y pose ses propres actions par un portail :
+   * l'application ne sait pas ce qu'un jeu a d'autre à offrir que la sortie, et
+   * faire remonter ces entrées jusqu'ici l'obligerait à toutes les connaître.
+   */
+  const [ancreMenu, setAncreMenu] = useState(null);
 
   /**
    * L'effectif de la soirée, saisi une fois dans le filtre « Joueurs », suit
@@ -300,21 +309,12 @@ function App() {
                           nomAccessible={`Revoir les règles de « ${jeuDuKit.title} »`}
                           onClick={() => setReglesOuvertes(true)}
                         />
-                        {/* Les sorties vivent ici, hors de portée du pouce : un
-                            coin haut est ce qu'on atteint le moins bien à une
-                            main, et c'est précisément ce qu'on veut d'une cible
-                            qui fait perdre une partie. */}
-                        <MenuPartie
-                          slug={jeuDuKit.slug}
-                          libelleRetour={
-                            etape != null ? 'Retour à la soirée' : 'Retour à la fiche'
-                          }
-                          onQuitter={fermerKit}
-                          onAbandonner={() => {
-                            effacerPartie();
-                            retourAccueil();
-                          }}
-                        />
+                        {/* L'emplacement du menu de la partie, que le kit vient
+                            remplir par un portail : c'est lui qui connaît ses
+                            propres actions, l'application ne connaît que la
+                            sortie. Hors de portée du pouce, ce qui est voulu
+                            pour des cibles qui font perdre une partie. */}
+                        <div ref={setAncreMenu} className="flex items-center" />
                       </div>
                     </div>
 
@@ -334,6 +334,7 @@ function App() {
                     <KitJeu
                       game={jeuDuKit}
                       joueurs={joueurs}
+                      ancreMenu={ancreMenu}
                       onQuitter={fermerKit}
                       onRetourAccueil={retourAccueil}
                       libelleRetour={etape != null ? 'Retour à la soirée' : 'Retour à la fiche'}

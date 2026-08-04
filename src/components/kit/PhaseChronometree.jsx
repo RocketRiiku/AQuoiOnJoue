@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
 import Chrono from './Chrono';
 
@@ -40,12 +40,14 @@ function PhaseChronometree({
   secondes = null,
   action,
   cle,
+  son = true,
   onSuivant,
+  onPrecedent,
+  libellePrecedent,
   entete
 }) {
   const [enMarche, setEnMarche] = useState(false);
   const [lance, setLance] = useState(false);
-  const [son, setSon] = useState(true);
 
   // Chaque phase repart d'un chrono neuf et à l'arrêt : la minute de questions
   // vaut pour ce tour-ci, pas pour la soirée.
@@ -84,13 +86,27 @@ function PhaseChronometree({
             son={son}
             onFini={() => setEnMarche(false)}
           />
-          <p className="text-ardoise/60 text-xs mt-2">
-            {!lance
-              ? 'Le chrono attend votre signal.'
-              : enMarche
-                ? 'Le chrono tourne.'
-                : 'Le chrono est en pause.'}
-          </p>
+          <div className="flex items-baseline justify-between gap-3 mt-2">
+            <p className="text-ardoise/60 text-xs">
+              {!lance
+                ? 'Le chrono attend votre signal.'
+                : enMarche
+                  ? 'Le chrono tourne.'
+                  : 'Le chrono est en pause.'}
+            </p>
+            {/* La pause reste accrochée au chrono, et non rangée dans la barre
+                d'actions : elle commande le décompte, elle ne fait pas avancer
+                le jeu. */}
+            {lance && (
+              <Bouton
+                variante="discret"
+                icone={enMarche ? Pause : Play}
+                onClick={() => setEnMarche((v) => !v)}
+              >
+                {enMarche ? 'Pause' : 'Reprendre'}
+              </Bouton>
+            )}
+          </div>
         </div>
       )}
 
@@ -101,8 +117,20 @@ function PhaseChronometree({
           c'est lui qui prend l'emphase principale. Une fois le temps parti, elle
           revient à la phase suivante, la table pouvant toujours couper court —
           elle a fini avant la fin du temps aussi souvent que l'inverse. */}
+      {/* Reculer à gauche, avancer à droite : la paire décide de l'ordre, comme
+          le sens de lecture. Le retour est rendu même quand il n'y a rien
+          derrière, sinon le bouton principal se déplacerait sous le pouce d'une
+          phase à l'autre. */}
       <div className="mt-auto">
         <BarreActions className="justify-center">
+          <Bouton
+            variante="discret"
+            icone={ArrowLeft}
+            disabled={!onPrecedent}
+            onClick={onPrecedent}
+          >
+            {libellePrecedent ?? 'Précédent'}
+          </Bouton>
           {secondes && !lance ? (
             <Bouton
               variante="principal"
@@ -121,32 +149,15 @@ function PhaseChronometree({
           )}
         </BarreActions>
 
-        <BarreActionsSecondaire className="justify-center">
-          {secondes && !lance && (
+        {/* Tant que le chrono n'est pas parti, le lancer occupe l'emphase
+            principale : passer outre reste possible, mais d'un cran plus bas. */}
+        {secondes && !lance && (
+          <BarreActionsSecondaire className="justify-center">
             <Bouton variante="discret" iconeApres={ArrowRight} onClick={onSuivant}>
               {action}
             </Bouton>
-          )}
-          {secondes && lance && (
-            <Bouton
-              variante="discret"
-              icone={enMarche ? Pause : Play}
-              onClick={() => setEnMarche((v) => !v)}
-            >
-              {enMarche ? 'Pause' : 'Reprendre'}
-            </Bouton>
-          )}
-          {secondes && (
-            <Bouton
-              variante="discret"
-              icone={son ? Volume2 : VolumeX}
-              onClick={() => setSon((v) => !v)}
-              aria-pressed={son}
-            >
-              {son ? 'Couper le son' : 'Remettre le son'}
-            </Bouton>
-          )}
-        </BarreActionsSecondaire>
+          </BarreActionsSecondaire>
+        )}
       </div>
     </div>
   );

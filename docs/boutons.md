@@ -270,17 +270,42 @@ document combat.
 Trois règles valent pour les quatre orchestrateurs. Elles sont venues du Liars
 Club, dont l'écran empilait tout, mais aucune ne lui est propre.
 
-**Une seule sortie visible, et elle ne fait rien perdre.** Trois chemins
-s'alignaient en bas de l'écran, dont deux qui se ressemblaient — « Terminer la
-partie » et « Abandonner la partie ». En soirée, un pouce mal placé coûtait une
-demi-heure de jeu. Seul « Terminer » reste dans la partie : il mène au classement.
-Quitter et abandonner passent par le menu `⋯` en **haut à droite**, et l'abandon
-demande confirmation. C'est la zone la moins accessible d'un téléphone tenu à une
-main, et c'est exactement ce qu'on veut d'une cible négative : une friction
+**Ce qui reste en bas sert à chaque tour ; le reste va dans le menu `⋯`.** Le
+critère est la fréquence d'usage, pas l'encombrement. Material fixe une à trois
+actions visibles, à forte fréquence, et réserve au dépassement les actions rares
+ou destructrices — en prévenant qu'un menu qui avale tout fait perdre confiance à
+la barre visible ([Material 3](https://m3.material.io/components/app-bars/guidelines),
+[NN/g](https://www.nngroup.com/articles/progressive-disclosure/)).
+
+| Sert à chaque tour, donc visible | Sert une fois par partie, donc dans le `⋯` |
+| --- | --- |
+| l'action qui avance (Suivante, Compter les points, Passer au vote) | Retour à la fiche ou à la soirée |
+| l'action qui recule, **collée** à la précédente | Abandonner la partie, avec confirmation |
+| la pause, mais accrochée au chrono et non dans la barre | Terminer, Recommencer, Remélanger |
+| | Corriger les scores, Couper le son, Effacer les jets |
+
+**Une action se montre au moment où elle devient l'étape attendue.** « Terminer la
+partie » sur chaque écran encombrait et se confondait avec « Abandonner » ; elle
+dort donc dans le menu, et remonte en bas d'écran une fois le tour de table
+complet, où conclure est précisément ce qu'on veut faire.
+
+Le menu est en **haut à droite** : la zone la moins accessible d'un téléphone tenu
+à une main, et c'est exactement ce qu'on veut d'une cible négative — une friction
 volontaire. Le bas de l'écran reste à l'interaction, le haut à la lecture et à ce
 qu'on ne doit pas toucher par accident
 ([Parachute](https://parachutedesign.ca/blog/thumb-zone-ux/),
 [Juno](https://www.junoschool.org/article/thumb-zone-design-one-handed-use/)).
+
+Le déclencheur part en **portail** dans l'en-tête, que possède `App.jsx` : chaque
+orchestrateur compose ses propres entrées et les envoie s'y poser, sans que
+l'application ait à les connaître.
+
+**Reculer et avancer forment une paire, et la paire décide de l'ordre** : retour à
+gauche, avancée à droite, comme le sens de lecture. C'est la seule exception à la
+règle du principal placé en premier — pour la même raison que la flèche qui suit
+le libellé d'un déplacement vers l'avant. Le retour reste **rendu et désactivé**
+quand il n'y a rien derrière, sans quoi le bouton principal se déplacerait sous le
+pouce d'un écran à l'autre.
 
 **Le bouton principal tombe toujours au même endroit.** Les écrans de phase sont
 des colonnes qui poussent leur barre d'actions contre le bas, quelle que soit la

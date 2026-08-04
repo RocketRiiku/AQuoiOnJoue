@@ -1,31 +1,37 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Ellipsis, Trash2 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton, BoutonIcone } from '../Bouton';
 import Dialogue from '../Dialogue';
 import { partieDuJeu } from '../../utils/partieEnCours';
 
 /**
- * Les sorties d'une partie, rangées hors de portée du pouce.
+ * Tout ce qui ne sert pas à chaque tour, rangé hors de portée du pouce.
  *
- * Les trois chemins de sortie s'alignaient en bas de l'écran, dont deux qui se
- * ressemblaient — « Terminer la partie » et « Abandonner la partie ». En soirée,
- * un pouce mal placé faisait perdre une demi-heure de jeu. Seul « Terminer »
- * reste visible dans la partie, et il ne fait rien perdre : il mène au
- * classement.
+ * **Le critère est la fréquence, pas l'encombrement.** Material fixe une à trois
+ * actions visibles, à forte fréquence, et réserve au menu de dépassement les
+ * actions rares ou destructrices — en prévenant qu'un menu qui avale tout fait
+ * perdre confiance à la barre visible
+ * ([Material 3](https://m3.material.io/components/app-bars/guidelines)). Reste
+ * donc en bas ce qui fait avancer le jeu ; passe ici ce qui sert une fois par
+ * partie : quitter, abandonner, remélanger, corriger un score, couper le son.
  *
- * Quitter et abandonner passent donc par ce menu, en **haut à droite**. C'est la
- * zone la moins accessible d'un téléphone tenu à une main, et c'est exactement
- * ce qu'on veut d'une cible négative : une friction volontaire. Le bas de
- * l'écran reste à l'interaction, le haut à la lecture et à ce qu'on ne doit pas
- * toucher par accident.
+ * **En haut à droite**, parce que c'est la zone la moins accessible d'un
+ * téléphone tenu à une main, et que c'est exactement ce qu'on veut d'une cible
+ * qui coûte une demi-heure de jeu
+ * ([Parachute](https://parachutedesign.ca/blog/thumb-zone-ux/)).
  *
- * L'abandon demande confirmation, dans le même dialogue plutôt que dans un
- * second : deux voiles empilés se referment mal, et la question tient en une
- * phrase.
+ * Le déclencheur part en **portail** dans l'en-tête du kit : cet en-tête
+ * appartient à `App`, qui ne connaît pas les actions d'un jeu, alors que chaque
+ * orchestrateur connaît les siennes. Chacun compose donc son menu et l'envoie se
+ * poser au bon endroit, sans que l'application ait à faire remonter quoi que ce
+ * soit.
  *
- * @param slug le jeu joué, pour savoir s'il y a une partie à abandonner
+ * @param ancre   le nœud de l'en-tête où poser le déclencheur
+ * @param slug    le jeu joué, pour savoir s'il y a une partie à abandonner
+ * @param extras  les entrées propres au kit : `{ cle, libelle, icone, onClick }`
  */
-function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
+function MenuPartie({ ancre, slug, libelleRetour, onQuitter, onAbandonner, extras = [] }) {
   const [ouvert, setOuvert] = useState(false);
   const [confirme, setConfirme] = useState(false);
 
@@ -35,7 +41,6 @@ function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
    * Le kit écrit sa partie dans un effet, sans que rien au-dessus de lui en soit
    * averti : une valeur calculée par le parent restait celle d'avant la première
    * tape, et le menu annonçait « rien n'est enregistré » au milieu d'une partie.
-   * Le défileur, lui, n'enregistre réellement rien.
    */
   const partieEnregistree = ouvert && Boolean(partieDuJeu(slug));
 
@@ -44,14 +49,18 @@ function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
     setConfirme(false);
   };
 
+  const declencheur = (
+    <BoutonIcone
+      icone={Ellipsis}
+      infobulle="Autres actions"
+      nomAccessible="Autres actions de la partie"
+      onClick={() => setOuvert(true)}
+    />
+  );
+
   return (
     <>
-      <BoutonIcone
-        icone={Ellipsis}
-        infobulle="Sortir de la partie"
-        nomAccessible="Sortir de la partie"
-        onClick={() => setOuvert(true)}
-      />
+      {ancre ? createPortal(declencheur, ancre) : declencheur}
 
       {ouvert &&
         (confirme ? (
@@ -78,15 +87,35 @@ function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
             </BarreActions>
           </Dialogue>
         ) : (
-          <Dialogue titre="Cette partie" onFermer={fermer}>
-            <p className="text-ardoise font-texte text-lg">
+          <Dialogue titre="Autres actions" onFermer={fermer}>
+            {/* Les entrées du jeu d'abord : ce sont les seules qu'on vient
+                parfois chercher pour continuer à jouer. La sortie ensuite. */}
+            {extras.length > 0 && (
+              <div className="flex flex-col items-start gap-2 mb-6">
+                {extras.map(({ cle, libelle, icone, onClick }) => (
+                  <Bouton
+                    key={cle}
+                    variante="discret"
+                    icone={icone}
+                    onClick={() => {
+                      fermer();
+                      onClick();
+                    }}
+                  >
+                    {libelle}
+                  </Bouton>
+                ))}
+              </div>
+            )}
+
+            <p className="text-ardoise font-texte">
               {partieEnregistree
                 ? 'Quitter met la partie de côté : vous la retrouverez en revenant. Abandonner la supprime.'
                 : 'Ce jeu ne garde aucune partie : quitter vous ramène d’où vous venez.'}
             </p>
             <BarreActions>
               <Bouton
-                variante="principal"
+                variante="secondaire"
                 icone={ArrowLeft}
                 onClick={() => {
                   fermer();
@@ -95,9 +124,7 @@ function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
               >
                 {libelleRetour}
               </Bouton>
-            </BarreActions>
-            {partieEnregistree && (
-              <BarreActionsSecondaire>
+              {partieEnregistree && (
                 <Bouton
                   variante="discret"
                   destructeur
@@ -106,8 +133,8 @@ function MenuPartie({ slug, libelleRetour, onQuitter, onAbandonner }) {
                 >
                   Abandonner la partie
                 </Bouton>
-              </BarreActionsSecondaire>
-            )}
+              )}
+            </BarreActions>
           </Dialogue>
         ))}
     </>

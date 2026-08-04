@@ -5,17 +5,21 @@ import {
   ChevronDown,
   ChevronUp,
   Flag,
+  PencilLine,
   Play,
   RotateCw,
   Settings2,
   Shuffle,
-  Trash2
+  Trash2,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
-import BandeauScores from './BandeauScores';
+import BandeauScores, { DialogueScores } from './BandeauScores';
 import Compteur from './Compteur';
 import FeuilleDeMatch from './FeuilleDeMatch';
 import LigneJoueur from './LigneJoueur';
+import MenuPartie from './MenuPartie';
 import PhaseChronometree from './PhaseChronometree';
 import Progression from './Progression';
 import TableauScores from './TableauScores';
@@ -297,7 +301,15 @@ function ApercuGains({ gains, joueurs, unite }) {
  * serait lui faire compter deux fois la même chose — on désigne, `ApercuGains`
  * montre le résultat, le réducteur l'applique.
  */
-function EcranVote({ etat, regles, unite, onResoudre, entete }) {
+function EcranVote({
+  etat,
+  regles,
+  unite,
+  onResoudre,
+  onPrecedent,
+  libellePrecedent,
+  entete
+}) {
   const [trouveurs, setTrouveurs] = useState([]);
   const courant = etat.courant;
   const participants = enJeu(etat).filter((i) => i !== courant);
@@ -353,7 +365,18 @@ function EcranVote({ etat, regles, unite, onResoudre, entete }) {
           <ApercuGains gains={gains} joueurs={etat.joueurs} unite={unite} />
         </div>
 
+        {/* Même paire qu'ailleurs : reculer à gauche, avancer à droite, et le
+            retour rendu même quand il n'y a rien derrière pour que le bouton
+            principal ne bouge pas d'un écran à l'autre. */}
         <BarreActions className="justify-center">
+          <Bouton
+            variante="discret"
+            icone={ArrowLeft}
+            disabled={!onPrecedent}
+            onClick={onPrecedent}
+          >
+            {libellePrecedent ?? 'Précédent'}
+          </Bouton>
           <Bouton
             variante="principal"
             icone={Check}
@@ -540,8 +563,10 @@ function Classement({ etat, unite, onRejouer, onQuitter, libelleRetour }) {
  * s'attribue. D'où un seul orchestrateur et trois panneaux, plutôt que trois
  * écrans qui recopieraient la même feuille.
  */
-function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
+function Partie({ game, regles, depart, ancreMenu, onQuitter, onAbandonner, libelleRetour }) {
   const [etat, envoyer] = useReducer(reducteur, depart);
+  const [scores, setScores] = useState(null);
+  const [son, setSon] = useState(true);
   const unite = uniteDe(game);
 
   // Écrite à chaque geste : une soirée de points se perd sur un onglet recyclé.
@@ -567,13 +592,61 @@ function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
   }
 
   const lignes = lignesDeScore(etat);
+  const complet = tourDeTable(etat).complet;
+
+  /**
+   * Le bandeau ne se déplie que là où le tableau apprend quelque chose.
+   *
+   * Chez un jeu « au fil de l'eau », la feuille de match *est* le tableau des
+   * scores : tous les joueurs y sont, avec leurs avertissements. Le rouvrir en
+   * modale affichait deux fois la même chose. Le bandeau garde sa ligne de
+   * résumé, et la correction passe dans le menu — elle sert une fois sur vingt.
+   */
+  const tableauUtile = regles.forme !== 'auFil';
   const bandeau = (
     <BandeauScores
-      lignes={lignes}
       resume={resumeDesScores(etat, lignes, unite)}
-      legende={`Scores par joueur, en ${unite}s`}
-      onAjuster={(joueur, delta) => envoyer({ type: 'ajuster', joueur, delta })}
-      onReinitialiser={(joueur) => envoyer({ type: 'reinitialiser', joueur })}
+      onVoir={tableauUtile ? () => setScores({ corrige: false }) : undefined}
+    />
+  );
+
+  const menu = (
+    <MenuPartie
+      ancre={ancreMenu}
+      slug={game.slug}
+      libelleRetour={libelleRetour}
+      onQuitter={onQuitter}
+      onAbandonner={onAbandonner}
+      extras={[
+        {
+          cle: 'corriger',
+          libelle: 'Corriger les scores',
+          icone: PencilLine,
+          onClick: () => setScores({ corrige: true })
+        },
+        // Terminer reste ici tant que la partie n'a pas atteint sa fin
+        // naturelle ; il remonte en bas d'écran au tour de table complet.
+        ...(etat.seuil === null && !complet
+          ? [
+              {
+                cle: 'terminer',
+                libelle: 'Terminer la partie',
+                icone: Flag,
+                onClick: () => envoyer({ type: 'clore' })
+              }
+            ]
+          : []),
+        ...(game.chronoTour
+          ? [
+              {
+                cle: 'son',
+                libelle: son ? 'Couper le son' : 'Remettre le son',
+                icone: son ? Volume2 : VolumeX,
+                onClick: () => setSon((v) => !v)
+              }
+            ]
+          : [])
+      ]}
     />
   );
 
@@ -596,6 +669,18 @@ function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
 
   return (
     <div>
+      {menu}
+      {scores && (
+        <DialogueScores
+          lignes={lignes}
+          legende={`Scores par joueur, en ${unite}s`}
+          corrigeAuDepart={scores.corrige}
+          onFermer={() => setScores(null)}
+          onAjuster={(joueur, delta) => envoyer({ type: 'ajuster', joueur, delta })}
+          onReinitialiser={(joueur) => envoyer({ type: 'reinitialiser', joueur })}
+        />
+      )}
+
       {regles.forme === 'auFil' && (
         <>
           {bandeau}
@@ -633,7 +718,12 @@ function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
             }
             action={etapeCourante.action}
             cle={`${etat.courant}-${etat.etape}`}
+            son={son}
             onSuivant={() => envoyer({ type: 'etapeSuivante' })}
+            onPrecedent={
+              etat.etape > 0 ? () => envoyer({ type: 'etapePrecedente' }) : undefined
+            }
+            libellePrecedent={regles.etapes[etat.etape - 1]?.titre}
           />
         ) : (
           <EcranVote
@@ -642,6 +732,12 @@ function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
             regles={regles}
             unite={unite}
             onResoudre={resoudre}
+            onPrecedent={
+              regles.etapes.length > 0
+                ? () => envoyer({ type: 'etapePrecedente' })
+                : undefined
+            }
+            libellePrecedent={regles.etapes.at(-1)?.titre}
           />
         ))}
 
@@ -659,20 +755,18 @@ function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
         </>
       )}
 
-      {/* Le seul point de sortie visible de la partie, et il ne fait rien
-          perdre : il mène au classement. Quitter et abandonner vivent dans le
-          menu du bandeau, hors de portée du pouce — une cible négative se tient
-          en haut de l'écran, pas là où l'on tape vite. */}
-      {etat.seuil === null && (
+      {/* Conclure ne se montre qu'au moment où c'est l'étape attendue : tout le
+          monde est passé. Le reste du temps, l'action dort dans le menu — la
+          voir sur chaque écran ne servait qu'à encombrer, et deux boutons de
+          sortie voisins finissaient par se confondre. */}
+      {etat.seuil === null && complet && (
         <BarreActionsSecondaire className="justify-center">
           <Bouton
-            variante={tourDeTable(etat).complet ? 'secondaire' : 'discret'}
+            variante="secondaire"
             icone={Flag}
             onClick={() => envoyer({ type: 'clore' })}
           >
-            {tourDeTable(etat).complet
-              ? 'Tout le monde est passé : voir le classement'
-              : 'Terminer la partie'}
+            Tout le monde est passé : voir le classement
           </Bouton>
         </BarreActionsSecondaire>
       )}
@@ -730,7 +824,14 @@ function Reprise({ partie, onReprendre, onNouvelle, onAbandonner, onQuitter, lib
  * se déduit du catalogue : `scoring` donne le mot du point, `chronoTour` décide
  * du décompte, `minPlayers` et `maxPlayers` bornent l'effectif.
  */
-function KitFeuilleDeMatch({ game, joueurs, onQuitter, onRetourAccueil, libelleRetour }) {
+function KitFeuilleDeMatch({
+  game,
+  joueurs,
+  ancreMenu,
+  onQuitter,
+  onRetourAccueil,
+  libelleRetour
+}) {
   const regles = reglesDe(game.slug);
 
   // Lue une seule fois au montage : la partie s'écrit ensuite en continu, et
@@ -766,7 +867,12 @@ function KitFeuilleDeMatch({ game, joueurs, onQuitter, onRetourAccueil, libelleR
       game={game}
       regles={regles}
       depart={depart}
+      ancreMenu={ancreMenu}
       onQuitter={onQuitter}
+      onAbandonner={() => {
+        effacerPartie();
+        onRetourAccueil();
+      }}
       libelleRetour={libelleRetour}
     />
   ) : (

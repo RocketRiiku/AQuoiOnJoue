@@ -194,9 +194,14 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
     expect(screen.getByRole('button', { name: /Compter les points/ })).toBeInTheDocument();
   });
 
-  it('dit si le chrono tourne, et ne part pas tout seul', async () => {
+  it('ne chronomètre pas le récit, et dit si le chrono des questions tourne', async () => {
     monter('liars-club', 4);
     await ouvrirLaFeuille();
+
+    // Personne ne met un conteur sous pression pendant qu'il raconte sa vie, et
+    // les règles ne prévoient de minute que pour l'interrogatoire.
+    expect(screen.queryByRole('timer')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Passer aux questions/ }));
 
     // Un décompte figé sur sa durée pleine ne se distingue pas d'un décompte en
     // attente : l'écran le dit, et le bouton nomme le geste.
@@ -206,6 +211,22 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
 
     await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
     expect(screen.getByText('Le chrono est en pause.')).toBeInTheDocument();
+  });
+
+  it('revient à la phase précédente, jusqu’au récit', async () => {
+    monter('liars-club', 4);
+    await ouvrirLaFeuille();
+
+    // Rien ne permettait de revenir : une phase sautée par erreur emportait tout
+    // le tour.
+    expect(screen.getByRole('button', { name: /Précédent/ })).toBeDisabled();
+
+    await allerAuVote();
+    await userEvent.click(screen.getByRole('button', { name: /Les questions/ }));
+    expect(screen.getByText('Les questions')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Le récit/ }));
+    expect(screen.getByText(/Joueur 1 raconte/)).toBeInTheDocument();
   });
 
   it('donne à la phase de questions la minute du catalogue', async () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import KitJeu from './KitJeu';
 import { gamesList } from '../../data/games';
@@ -26,6 +26,18 @@ const monter = ({ onQuitter = vi.fn() } = {}) => {
 };
 
 const clic = (u, motif) => u.click(screen.getByRole('button', { name: motif }));
+
+/**
+ * Ouvre le menu de l'en-tête et y clique une entrée.
+ *
+ * La sortie et l'effacement des jets ont quitté la barre du bas : ils servent
+ * une fois par soirée, là où le lancer se répète (cf. `MenuPartie`).
+ */
+const parLeMenu = async (u, motif) => {
+  await clic(u, /autres actions/i);
+  const menu = screen.getByRole('dialog');
+  await u.click(within(menu).getByRole('button', { name: motif }));
+};
 
 const attendre = (ms) =>
   act(async () => {
@@ -101,7 +113,7 @@ describe('kit de La blessure critique', () => {
     await clic(u, /jets précédents/i);
     expect(screen.getByText(EFFETS[1])).toBeInTheDocument();
 
-    await clic(u, /effacer les jets/i);
+    await parLeMenu(u, /effacer les jets/i);
     expect(screen.getByText('?')).toBeInTheDocument();
     expect(screen.queryByText(/jets précédents/i)).toBeNull();
   });
@@ -124,7 +136,7 @@ describe('kit de La blessure critique', () => {
 
   it('quitte vers l’écran d’où l’on vient', async () => {
     const { utilisateur: u, onQuitter } = monter();
-    await clic(u, /retour à la fiche/i);
+    await parLeMenu(u, /retour à la fiche/i);
     expect(onQuitter).toHaveBeenCalled();
   });
 });

@@ -76,7 +76,10 @@ const JEUX = {
         cle: 'recit',
         titre: 'Le récit',
         consigne: 'Trois anecdotes sur vous : une vraie, deux inventées. Personne ne coupe.',
-        secondes: 120,
+        // Aucun chrono : on ne met pas quelqu'un sous pression pendant qu'il
+        // raconte sa vie, et les règles n'en prévoient pas. La minute
+        // d'interrogation, elle, est bien au catalogue.
+        secondes: null,
         action: 'Passer aux questions'
       },
       {
@@ -280,6 +283,12 @@ export function reducteur(etat, action) {
     /** Phase suivante du tour en cours : récit, puis questions, puis vote. */
     case 'etapeSuivante':
       return etat.phase === 'partie' ? { ...etat, etape: etat.etape + 1 } : etat;
+
+    // On revient en arrière, parce qu'on avance vite et qu'une phase sautée par
+    // erreur emportait sinon tout le tour. Même raison que la carte précédente
+    // du défileur.
+    case 'etapePrecedente':
+      return etat.etape > 0 ? { ...etat, etape: etat.etape - 1 } : etat;
 
     /**
      * Défait le dernier geste, et lui seul.

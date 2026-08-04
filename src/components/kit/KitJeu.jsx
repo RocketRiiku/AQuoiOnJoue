@@ -6,6 +6,7 @@ import { kitDe } from './registre';
 function KitJeu({
   game,
   joueurs,
+  ancreMenu,
   onQuitter,
   onRetourAccueil,
   libelleRetour = 'Retour à la fiche'
@@ -35,6 +36,7 @@ function KitJeu({
     <Kit
       game={game}
       joueurs={joueurs}
+      ancreMenu={ancreMenu}
       onQuitter={onQuitter}
       onRetourAccueil={onRetourAccueil}
       libelleRetour={libelleRetour}

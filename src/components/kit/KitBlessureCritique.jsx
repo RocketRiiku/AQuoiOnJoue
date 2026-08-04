@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
 import CarteTiree from './CarteTiree';
+import MenuPartie from './MenuPartie';
 import { contenuDuJeu } from '../../data/lancerJeu';
 import { animationsReduites } from '../../utils/mouvement';
 import {
@@ -102,7 +103,7 @@ function De({ face, roule }) {
  * retarder — jamais l'inverse, sans quoi une minuterie perdue emporterait le
  * résultat avec elle.
  */
-function KitBlessureCritique({ game, onQuitter, libelleRetour }) {
+function KitBlessureCritique({ game, ancreMenu, onQuitter, libelleRetour }) {
   const effets = useMemo(
     () => contenuDuJeu(game.slug).map((ligne) => ligne.contenu),
     [game.slug]
@@ -156,6 +157,31 @@ function KitBlessureCritique({ game, onQuitter, libelleRetour }) {
 
   return (
     <div className="flex flex-col items-center">
+      {/* Sortir et effacer les jets servent une fois par soirée : ils rejoignent
+          le menu de l'en-tête, et la barre du bas ne garde que le lancer. */}
+      <MenuPartie
+        ancre={ancreMenu}
+        slug={game.slug}
+        libelleRetour={libelleRetour}
+        onQuitter={onQuitter}
+        onAbandonner={onQuitter}
+        extras={
+          etat.face
+            ? [
+                {
+                  cle: 'oublier',
+                  libelle: 'Effacer les jets',
+                  icone: Trash2,
+                  onClick: () => {
+                    setHistoriqueDeplie(false);
+                    envoyer({ type: 'oublier' });
+                  }
+                }
+              ]
+            : []
+        }
+      />
+
       <div className="py-2">
         <De face={roule ? roulement : etat.face} roule={roule} />
       </div>
@@ -180,9 +206,6 @@ function KitBlessureCritique({ game, onQuitter, libelleRetour }) {
       <BarreActions className="justify-center">
         <Bouton variante="principal" icone={Dices} onClick={jeter} disabled={roule}>
           {etat.face ? 'Relancer le dé' : 'Lancer le dé'}
-        </Bouton>
-        <Bouton variante="secondaire" icone={ArrowLeft} onClick={onQuitter}>
-          {libelleRetour}
         </Bouton>
       </BarreActions>
 
@@ -228,21 +251,6 @@ function KitBlessureCritique({ game, onQuitter, libelleRetour }) {
         </div>
       )}
 
-      {etat.face && (
-        <BarreActionsSecondaire className="justify-center">
-          <Bouton
-            variante="discret"
-            destructeur
-            icone={Trash2}
-            onClick={() => {
-              setHistoriqueDeplie(false);
-              envoyer({ type: 'oublier' });
-            }}
-          >
-            Effacer les jets
-          </Bouton>
-        </BarreActionsSecondaire>
-      )}
 
       {/* L'unique région live de l'écran, et elle ne s'ouvre qu'une fois le dé
           posé. Elle porte la face *et* son effet : les deux sont sur des

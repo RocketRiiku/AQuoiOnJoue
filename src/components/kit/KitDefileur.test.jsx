@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import KitJeu from './KitJeu';
 import { gamesList } from '../../data/games';
@@ -32,6 +32,19 @@ const monter = async (slug, { rappel = false, onQuitter = vi.fn() } = {}) => {
 
 const clic = (u, motif) => u.click(screen.getByRole('button', { name: motif }));
 
+/**
+ * Sort par le menu de l'en-tête.
+ *
+ * Le retour a quitté la barre du bas, où il voisinait avec le geste qu'on répète
+ * cinquante fois : il sert une fois par partie, il vit donc avec les autres
+ * actions rares (cf. `MenuPartie`).
+ */
+const sortir = async (u) => {
+  await clic(u, /autres actions/i);
+  const menu = screen.getByRole('dialog');
+  await u.click(within(menu).getByRole('button', { name: /retour à la fiche/i }));
+};
+
 const carte = () => screen.getByRole('status').textContent;
 
 describe('kit défileur', () => {
@@ -52,7 +65,7 @@ describe('kit défileur', () => {
 
   it('quitte depuis le rappel sans avoir rien tiré', async () => {
     const { utilisateur: u, onQuitter } = await monter('sang-bleu', { rappel: true });
-    await clic(u, /retour à la fiche/i);
+    await sortir(u);
     expect(onQuitter).toHaveBeenCalled();
   });
 
@@ -146,7 +159,7 @@ describe('kit défileur', () => {
 
   it('quitte vers l’écran d’où l’on vient', async () => {
     const { utilisateur: u, onQuitter } = await monter('le-joker');
-    await clic(u, /retour à la fiche/i);
+    await sortir(u);
     expect(onQuitter).toHaveBeenCalled();
   });
 });

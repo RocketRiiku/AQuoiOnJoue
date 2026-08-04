@@ -423,6 +423,16 @@ le jeu plus sûrement que d'arriver au bout d'une liste de cinquante. Une option
 de plus sur un composant partagé, pour une mécanique aussi différente, aurait
 coûté plus cher que vingt lignes à part.
 
+**La barre du bas ne garde que ce qui sert à chaque tour**, dans les quatre kits.
+« Proposition suivante » voisinait avec « Retour à la fiche » tandis que
+« Proposition précédente » vivait une rangée plus bas : reculer et avancer forment
+une paire, et sont désormais collés, retour à gauche. Remélanger, couper le son,
+quitter et abandonner sont partis dans le menu `⋯` de l'en-tête — voir
+[`docs/boutons.md`](docs/boutons.md#une-partie-prend-lécran-et-na-quune-sortie)
+pour le critère, qui est la fréquence d'usage et non l'encombrement. Le compteur
+du haut disait par ailleurs déjà ce que répétait le bas : « Proposition 1 sur 50 »
+et « Encore 49 propositions dans la pile » sont la même phrase.
+
 Le défileur **n'écrit rien dans le stockage local**, contrairement à *Trois fois
 rien*. Il n'y a pas de partie à perdre : ni score, ni pot, ni équipes, seulement
 une place dans une liste mélangée. Le tiroir des parties en cours n'en compte
@@ -499,10 +509,16 @@ moment-là.
 permanence — cinq lignes, trois commandes chacune — pour une correction qui sert
 une fois sur vingt. [`BandeauScores`](src/components/kit/BandeauScores.jsx) le
 replie derrière « Voir les scores », et la correction devient un mode qu'on
-demande. La ligne du bandeau est composée **par le jeu**, parce que le sens de la
-victoire lui appartient : un jeu à points annonce qui mène, un jeu à élimination
-annonce qui est le plus près de sortir. Annoncer le meneur y donnait « Égalité,
-0 avertissement », qui n'informe de rien.
+demande depuis le menu. La ligne du bandeau est composée **par le jeu**, parce que
+le sens de la victoire lui appartient : un jeu à points annonce qui mène, un jeu à
+élimination annonce qui est le plus près de sortir. Annoncer le meneur y donnait
+« Égalité, 0 avertissement », qui n'informe de rien.
+
+Le tableau ne se déplie que là où il apprend quelque chose. Chez un jeu « au fil
+de l'eau », la feuille de match **est** le tableau des scores : tous les joueurs y
+sont avec leurs avertissements, et le rouvrir en modale montrait deux fois la même
+chose. *Qui rit sort* n'a donc aucun bouton en bas de son écran — les quatre
+lignes de joueurs sont l'interface.
 
 **La ligne est la cible**, pour la forme `auFil`
 ([`FeuilleDeMatch.jsx`](src/components/kit/FeuilleDeMatch.jsx)). C'est le geste
@@ -983,7 +999,7 @@ npm run build:fonts
 
 ## Tests
 
-536 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+537 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 
