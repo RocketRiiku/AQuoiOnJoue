@@ -30,6 +30,24 @@ const ouvrirLaFeuille = async () => {
 
 const ligneDe = (nom) => screen.getByRole('row', { name: new RegExp(nom) });
 
+/**
+ * Traverse les phases d'un tour jusqu'au vote.
+ *
+ * Un tour du Liars Club se joue en trois écrans successifs — le récit, les
+ * questions, le vote — et non sur un empilement. Chaque phase offre de passer à
+ * la suivante sans lancer son chrono : la table finit avant le temps aussi
+ * souvent que l'inverse.
+ */
+const allerAuVote = async () => {
+  await userEvent.click(screen.getByRole('button', { name: /Passer aux questions/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Passer au vote/ }));
+};
+
+/** Ouvre le tableau des scores, replié derrière son bandeau. */
+const ouvrirLesScores = async () => {
+  await userEvent.click(screen.getByRole('button', { name: /Voir les scores/ }));
+};
+
 beforeEach(() => window.localStorage.clear());
 afterEach(() => {
   window.localStorage.clear();
@@ -158,57 +176,113 @@ describe('KitFeuilleDeMatch — la fenêtre d’annulation', () => {
 });
 
 describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => {
-  it('désigne le joueur courant et ne lui propose pas de se démasquer', async () => {
+  it('joue le tour dans l’ordre de la table : récit, questions, vote', async () => {
     monter('liars-club', 4);
     await ouvrirLaFeuille();
 
+    // L'écran suivait l'ordre inverse du jeu : on y votait avant que le conteur
+    // ait parlé. Chaque phase prend maintenant l'écran, dans l'ordre réel.
+    expect(screen.getByText('Le récit')).toBeInTheDocument();
     expect(screen.getByText(/Joueur 1 raconte/)).toBeInTheDocument();
-    // Les pastilles listent les auditeurs, jamais le conteur.
-    expect(screen.getByRole('button', { name: 'Joueur 2' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Joueur 1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Compter les points/ })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Passer aux questions/ }));
+    expect(screen.getByText('Les questions')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Passer au vote/ }));
+    expect(screen.getByText('Le vote')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Compter les points/ })).toBeInTheDocument();
+  });
+
+  it('dit si le chrono tourne, et ne part pas tout seul', async () => {
+    monter('liars-club', 4);
+    await ouvrirLaFeuille();
+
+    // Un décompte figé sur sa durée pleine ne se distingue pas d'un décompte en
+    // attente : l'écran le dit, et le bouton nomme le geste.
+    expect(screen.getByText('Le chrono attend votre signal.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Lancer le chrono/ }));
+    expect(screen.getByText('Le chrono tourne.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pause' }));
+    expect(screen.getByText('Le chrono est en pause.')).toBeInTheDocument();
+  });
+
+  it('donne à la phase de questions la minute du catalogue', async () => {
+    monter('liars-club', 4);
+    await ouvrirLaFeuille();
+    await userEvent.click(screen.getByRole('button', { name: /Passer aux questions/ }));
+
+    // chronoTour = 60 s, et les règles disent « une minute » d'interrogation.
+    expect(screen.getByRole('timer')).toHaveTextContent('60');
   });
 
   it('déduit les points du conteur du nombre de trouveurs', async () => {
     monter('liars-club', 4);
     await ouvrirLaFeuille();
+    await allerAuVote();
 
     // Un seul démasque : le conteur a trompé les deux autres.
-    await userEvent.click(screen.getByRole('button', { name: 'Joueur 3' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Joueur 3 a trouvé/ }));
     await userEvent.click(screen.getByRole('button', { name: /Compter les points/ }));
 
+    // Le tour passe au suivant, et le bandeau annonce qui mène.
+    expect(screen.getByText(/Joueur 2 raconte/)).toBeInTheDocument();
+    await ouvrirLesScores();
     expect(within(ligneDe('Joueur 1')).getByText('2')).toBeInTheDocument();
     expect(within(ligneDe('Joueur 3')).getByText('1')).toBeInTheDocument();
-    // Le tour passe au suivant.
-    expect(screen.getByText(/Joueur 2 raconte/)).toBeInTheDocument();
   });
 
-  it('propose la minute d’interrogation que le catalogue annonce', async () => {
-    monter('liars-club', 4);
+  it('montre ce que « Compter les points » va faire', async () => {
+    const { container } = monter('liars-club', 4);
     await ouvrirLaFeuille();
-    // chronoTour = 60 s : « 1:00 », lu en minutes au-delà de cent secondes ? Non
-    // — soixante secondes s'annoncent encore en secondes.
-    expect(screen.getByRole('timer')).toHaveTextContent('60');
-    expect(screen.getByRole('button', { name: /Questions/ })).toBeInTheDocument();
+    await allerAuVote();
+    const apercu = () => container.querySelector('[aria-live="polite"]').textContent;
+
+    // Personne de désigné : l'aperçu dit ce que ça vaut au conteur, ce qui est
+    // justement le calcul qu'on a retiré à la table. Rien ne l'annonçait, et on
+    // validait sans savoir ce qu'on déclenchait.
+    expect(apercu()).toContain('Joueur 1');
+    expect(apercu()).toContain('+3');
+
+    await userEvent.click(screen.getByRole('button', { name: /^Joueur 3 a trouvé/ }));
+    // Le conteur n'a plus trompé que deux personnes, et le trouveur marque.
+    expect(apercu()).toContain('+2');
+    expect(apercu()).toContain('+1');
+    expect(apercu()).toContain('Joueur 3');
   });
 
-  it('signale le tour de table complet, et clôt sur demande', async () => {
+  it('affiche le tour de table en cours, puis signale qu’il est complet', async () => {
     monter('liars-club', 3);
     await ouvrirLaFeuille();
 
-    expect(screen.getByRole('button', { name: /Terminer la partie/ })).toBeInTheDocument();
+    expect(screen.getByText('Tour 1 sur 3')).toBeInTheDocument();
     for (let tour = 0; tour < 3; tour += 1) {
+      await allerAuVote();
       await userEvent.click(screen.getByRole('button', { name: /Compter les points/ }));
     }
 
-    const conclure = screen.getByRole('button', { name: /Tout le monde est passé/ });
-    await userEvent.click(conclure);
+    expect(screen.getByText('Tour de table complet')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Tout le monde est passé/ }));
     expect(screen.getByRole('table', { name: /Classement par joueur/ })).toBeInTheDocument();
   });
 
-  it('corrige un score sans toucher aux autres', async () => {
+  it('replie le tableau derrière son bandeau, correction comprise', async () => {
     monter('tudum', 3);
     await ouvrirLaFeuille();
 
+    // Le tableau occupait la moitié de l'écran en permanence, pour une
+    // correction qui sert une fois sur vingt.
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.getByText(/Personne n’a encore marqué/)).toBeInTheDocument();
+
+    await ouvrirLesScores();
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Ajouter un point à Joueur 3' })
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Corriger un score/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Ajouter un point à Joueur 3' }));
     expect(within(ligneDe('Joueur 3')).getByText('1')).toBeInTheDocument();
     expect(within(ligneDe('Joueur 2')).getByText('0')).toBeInTheDocument();
@@ -238,6 +312,10 @@ describe('KitFeuilleDeMatch — le duel (Avez-vous confiance ?)', () => {
     await userEvent.click(
       screen.getByRole('button', { name: /pose CONFIANCE et .* pose CONFIANCE/ })
     );
+    // Le bandeau dit l'essentiel sans qu'on déplie le tableau.
+    expect(screen.getByText('Égalité · 3 points')).toBeInTheDocument();
+
+    await ouvrirLesScores();
     expect(screen.getAllByText('3')).toHaveLength(2);
   });
 
@@ -251,6 +329,7 @@ describe('KitFeuilleDeMatch — le duel (Avez-vous confiance ?)', () => {
     });
     await userEvent.click(cinqPourLePremier);
 
+    await ouvrirLesScores();
     expect(screen.getByText('5')).toBeInTheDocument();
     // Le reste de la table n'a rien touché : trois zéros pour quatre joueurs.
     expect(screen.getAllByText('0')).toHaveLength(3);
@@ -261,6 +340,7 @@ describe('KitFeuilleDeMatch — le duel (Avez-vous confiance ?)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /pose TRAHIR et .* pose TRAHIR/ }));
     // Le pot a brûlé : deux points distribués sur les six.
+    await ouvrirLesScores();
     expect(screen.getAllByText('1')).toHaveLength(2);
   });
 });

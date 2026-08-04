@@ -56,9 +56,39 @@ const JEUX = {
   'liars-club': {
     forme: 'parTour',
     roleCourant: 'raconte',
-    questionTrouveurs: 'Qui a démasqué la vraie ?',
+    questionTrouveurs: 'Qui a trouvé la vraie histoire ?',
     rappel:
       'Chacun son tour, trois anecdotes : une vraie, deux inventées. La table interroge une minute. Puis tout le monde vote en même temps.',
+    /**
+     * Un tour se joue en phases successives, et non sur un écran empilé.
+     *
+     * L'ordre de l'écran contredisait celui de la table : on y lisait le vote,
+     * puis le chrono, puis les scores, alors qu'on joue le récit, puis les
+     * questions, puis le vote. Chaque phase prend donc l'écran entier, avec son
+     * nom, sa consigne, son chrono et un seul bouton — le même à la même place.
+     *
+     * `secondes: 'chronoTour'` reprend la valeur du catalogue : les règles
+     * donnent une minute d'interrogation, et c'est ce que la colonne porte. Le
+     * temps du récit, lui, n'est nulle part ailleurs qu'ici.
+     */
+    etapes: [
+      {
+        cle: 'recit',
+        titre: 'Le récit',
+        consigne: 'Trois anecdotes sur vous : une vraie, deux inventées. Personne ne coupe.',
+        secondes: 120,
+        action: 'Passer aux questions'
+      },
+      {
+        cle: 'questions',
+        titre: 'Les questions',
+        consigne: 'La table interroge, le conteur répond. Il a le droit de mentir.',
+        secondes: 'chronoTour',
+        action: 'Passer au vote'
+      }
+    ],
+    /** Ce qui se rappelle pendant le vote, une fois les phases jouées. */
+    consigneVote: 'Tout le monde désigne en même temps, à main levée.',
     /**
      * Un point à chaque joueur qui a trouvé, et **autant de points au conteur
      * qu'il a trompé de monde**. Le second chiffre se déduit du premier : le
@@ -76,6 +106,11 @@ const JEUX = {
     questionTrouveurs: 'Qui a reconnu le son ?',
     rappel:
       'À son tour, un joueur reproduit son extrait à la voix. Les autres écrivent leur réponse sans rien dire. On révèle ensemble.',
+    // Aucune phase à annoncer : on imite, on écrit, on révèle dans le même
+    // souffle. Le vote suffit, et un écran d'attente de plus ferait poser le
+    // téléphone.
+    etapes: [],
+    consigneVote: 'On révèle toutes les réponses en même temps.',
     /**
      * Le bonus du proposeur **se substitue**, il ne s'ajoute pas : trois points
      * si toute la table a trouvé, deux si la moitié y est arrivée, rien sinon.
@@ -146,6 +181,10 @@ export function etatInitial({ joueurs, seuil = null, forme = 'auFil' }) {
     // fois » est une consigne de trois de ces jeux, et rien ne la porte sinon.
     passes: joueurs.map(() => false),
     courant: forme === 'parTour' ? 0 : null,
+    // Où en est le tour du joueur courant, dans la suite de phases que son jeu
+    // déclare. Dans l'état, et non dans le composant, pour que la reprise sache
+    // la remettre à zéro : un tour interrompu ne reprend jamais en plein chrono.
+    etape: 0,
     duel: null,
     seuil,
     // Instantané de l'état d'avant, pour défaire le dernier geste. Un seul
@@ -166,6 +205,7 @@ const instantane = (etat) => ({
   sortis: etat.sortis,
   passes: etat.passes,
   courant: etat.courant,
+  etape: etat.etape,
   duel: etat.duel,
   phase: etat.phase
 });
@@ -231,9 +271,15 @@ export function reducteur(etat, action) {
       return {
         ...apres,
         duel: null,
+        // Le tour suivant repart de sa première phase.
+        etape: action.avancer ? 0 : etat.etape,
         courant: action.avancer ? suivant(apres, etat.courant ?? 0) : etat.courant
       };
     }
+
+    /** Phase suivante du tour en cours : récit, puis questions, puis vote. */
+    case 'etapeSuivante':
+      return etat.phase === 'partie' ? { ...etat, etape: etat.etape + 1 } : etat;
 
     /**
      * Défait le dernier geste, et lui seul.
@@ -292,11 +338,26 @@ export function reducteur(etat, action) {
 /**
  * Remet une partie restaurée dans un état jouable.
  *
- * Rien à rembobiner ici — pas de chrono en cours, pas de carte tirée : on
- * oublie seulement le geste en attente d'annulation. Reprendre une soirée une
- * heure plus tard et pouvoir défaire un point d'alors n'aurait aucun sens.
+ * On oublie le geste en attente d'annulation, et le tour repart de sa première
+ * phase. Reprendre une soirée une heure plus tard et pouvoir défaire un point
+ * d'alors n'aurait aucun sens ; retomber au milieu du chrono des questions
+ * encore moins. Même règle que `reprendre` de Trois fois rien, qui ramène à
+ * l'écran d'annonce de l'équipe.
  */
-export const reprendre = (etat) => ({ ...etat, dernier: null });
+export const reprendre = (etat) => ({ ...etat, etape: 0, dernier: null });
+
+/**
+ * Le tour de table en cours : le rang du joueur courant, et le tour complet.
+ *
+ * « Un tour de table complet » pour Le Liars Club, « au moins deux tours » pour
+ * Tudum : sans repère, personne ne sait si la partie dure encore dix minutes ou
+ * une heure.
+ */
+export function tourDeTable(etat) {
+  const total = enJeu(etat).length;
+  const joues = enJeu(etat).filter((i) => etat.passes[i]).length;
+  return { rang: Math.min(joues + 1, total), total, complet: joues >= total };
+}
 
 export const tousPasses = (etat) => enJeu(etat).every((i) => etat.passes[i]);
 

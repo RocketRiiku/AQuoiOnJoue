@@ -496,6 +496,22 @@ describe('parcours : lancer le kit d’un jeu', () => {
     expect(window.location.search).toBe('?jeu=trois-fois-rien');
   });
 
+  /**
+   * Sort d'une partie et remonte jusqu'à la liste.
+   *
+   * Le titre du site est masqué pendant une partie — l'en-tête et le pied de
+   * page mangeaient un tiers de la hauteur utile sur téléphone. La sortie passe
+   * donc par le menu du bandeau, qui ramène d'où l'on venait : la fiche, puis la
+   * liste.
+   */
+  const quitterVersLaListe = async (u) => {
+    await u.click(screen.getByRole('button', { name: /sortir de la partie/i }));
+    // Dans le dialogue : l'écran de réglage porte aussi un « Retour à la fiche ».
+    const menu = screen.getByRole('dialog');
+    await u.click(within(menu).getByRole('button', { name: /retour à la fiche/i }));
+    await u.click(await screen.findByRole('button', { name: /retour aux jeux/i }));
+  };
+
   it('sauve la partie, la signale sur la liste, et la reprend', async () => {
     window.localStorage.clear();
     window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
@@ -504,8 +520,8 @@ describe('parcours : lancer le kit d’un jeu', () => {
     await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
     await u.click(screen.getByRole('button', { name: /c’est parti/i }));
 
-    // Sortie brutale, comme un doigt sur la bannière du site.
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    // Sortie par le menu, seul chemin depuis une partie.
+    await quitterVersLaListe(u);
 
     const tuile = await screen.findByRole('button', { name: /partie en cours/i });
     expect(tuile).toHaveTextContent('Trois fois rien');
@@ -526,14 +542,14 @@ describe('parcours : lancer le kit d’un jeu', () => {
     window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
     const u = rendre();
     await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await quitterVersLaListe(u);
     await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
 
     await u.click(screen.getByRole('button', { name: /nouvelle partie/i }));
 
     expect(screen.getByText(/combien êtes-vous/i)).toBeInTheDocument();
     // La sauvegarde est levée : la liste ne la propose plus.
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await quitterVersLaListe(u);
     expect(screen.queryByRole('button', { name: /partie en cours/i })).not.toBeInTheDocument();
   });
 
@@ -558,7 +574,7 @@ describe('parcours : lancer le kit d’un jeu', () => {
     window.history.replaceState({}, '', '/?jeu=trois-fois-rien&kit=1');
     const u = rendre();
     await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await quitterVersLaListe(u);
     await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
 
     // L'abandon est offert là où l'on décide du sort de la partie, sans avoir
@@ -575,11 +591,11 @@ describe('parcours : lancer le kit d’un jeu', () => {
     const u = rendre();
 
     await u.click(await screen.findByRole('button', { name: /remplir le pot/i }));
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await quitterVersLaListe(u);
     await u.click(await screen.findByRole('button', { name: /partie en cours/i }));
     await u.click(screen.getByRole('button', { name: /nouvelle partie/i }));
     await u.click(screen.getByRole('button', { name: /remplir le pot/i }));
-    await u.click(screen.getByRole('link', { name: /à quoi on joue/i }));
+    await quitterVersLaListe(u);
 
     // Une seule clé de stockage, donc une seule tuile : la partie précédente a
     // été écrasée, elle ne peut pas ressurgir à côté.

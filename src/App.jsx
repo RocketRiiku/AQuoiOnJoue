@@ -15,6 +15,7 @@ import PiedDePage from './components/PiedDePage';
 import Suggestions from './components/Suggestions';
 import MentionsLegales from './components/MentionsLegales';
 import KitJeu from './components/kit/KitJeu';
+import MenuPartie from './components/kit/MenuPartie';
 import TriJeux from './components/TriJeux';
 import { gamesList } from './data/games';
 import { DEFAULT_FILTERS } from './data/filterOptions';
@@ -24,7 +25,7 @@ import { estRecommande, nombreJoueurs } from './utils/formatGame';
 import { TRI_PAR_DEFAUT, trierJeux } from './utils/trierJeux';
 import { useIntroduction } from './utils/useIntroduction';
 import { useNavigation } from './utils/useNavigation';
-import { lirePartie } from './utils/partieEnCours';
+import { effacerPartie, lirePartie } from './utils/partieEnCours';
 
 function App() {
   const {
@@ -99,6 +100,21 @@ function App() {
 
   const aucunResultat = filteredGames.length === 0;
   const enListe = vue === 'liste';
+
+  /**
+   * Une partie prend l'écran entier.
+   *
+   * L'en-tête du site et le pied de page mangeaient près de 300 px sur
+   * téléphone, soit un tiers de la hauteur utile, pour deux choses dont on n'a
+   * aucun besoin en pleine partie : le nom du site et trois liens d'éditeur. Le
+   * kit récupère la place, ce qui permet enfin d'écrire le nom du joueur assez
+   * grand pour se lire depuis l'autre bout de la table.
+   *
+   * Le titre du site était par ailleurs le seul moyen de sortir sans passer par
+   * les boutons du kit ; c'est maintenant le rôle du menu de la partie, qui
+   * demande confirmation au lieu de tout perdre sur un clic.
+   */
+  const enKit = vue === 'kit';
 
   // Changer de vue depuis le bas de la liste laissait l'écran au milieu de nulle part.
   useEffect(() => {
@@ -191,6 +207,7 @@ function App() {
       />
 
       <div className="relative z-20 flex flex-1 flex-col">
+        {!enKit && (
         <header className="flex flex-col items-center text-center leading-tight pt-16 sm:pt-20 px-4">
           <div className="anim-entree flex flex-col items-center">
             <a
@@ -222,6 +239,7 @@ function App() {
             </p>
           </div>
         </header>
+        )}
 
         <main className="flex-1">
           {/* Une vue s'affiche d'un bloc, bandeau de recherche et filtres
@@ -230,7 +248,11 @@ function App() {
               était le « saut » visible au retour.
               Le retrait sous l'en-tête est porté ici plutôt que par la barre de
               recherche, pour que toutes les vues en bénéficient. */}
-          <div className="relative z-30 px-4 pt-8 pb-16 min-h-[70svh]">
+          <div
+            className={`relative z-30 px-4 min-h-[70svh] ${
+              enKit ? 'pt-4 pb-6' : 'pt-8 pb-16'
+            }`}
+          >
             {/* Une clé par vue : React remonte le conteneur, ce qui rejoue
                 l'animation CSS d'apparition. Un fondu CSS ne dépend d'aucun
                 cycle de vie JavaScript et ne peut pas rester bloqué. */}
@@ -268,7 +290,7 @@ function App() {
                           icône seule en haut à droite (docs/boutons.md). Elle
                           vaut pour les quatre orchestrateurs, d'où sa place
                           ici plutôt que dans chacun d'eux. */}
-                      <div className="absolute top-0 right-0 flex items-center">
+                      <div className="absolute top-0 right-0 flex items-center gap-2">
                         <BoutonIcone
                           icone={CircleHelp}
                           infobulle="Revoir les règles"
@@ -277,6 +299,21 @@ function App() {
                           // par titre à voyelle initiale serait ingérable.
                           nomAccessible={`Revoir les règles de « ${jeuDuKit.title} »`}
                           onClick={() => setReglesOuvertes(true)}
+                        />
+                        {/* Les sorties vivent ici, hors de portée du pouce : un
+                            coin haut est ce qu'on atteint le moins bien à une
+                            main, et c'est précisément ce qu'on veut d'une cible
+                            qui fait perdre une partie. */}
+                        <MenuPartie
+                          slug={jeuDuKit.slug}
+                          libelleRetour={
+                            etape != null ? 'Retour à la soirée' : 'Retour à la fiche'
+                          }
+                          onQuitter={fermerKit}
+                          onAbandonner={() => {
+                            effacerPartie();
+                            retourAccueil();
+                          }}
                         />
                       </div>
                     </div>
@@ -494,13 +531,17 @@ function App() {
           </div>
         </main>
 
-        {/* Présent sur toutes les vues : ces trois entrées portent sur le site
-            entier, pas sur l'écran affiché. */}
-        <PiedDePage
-          pageActive={vue === 'suggestions' || vue === 'mentions-legales' ? vue : null}
-          onSuggestions={() => ouvrirPage('suggestions')}
-          onMentions={() => ouvrirPage('mentions-legales')}
-        />
+        {/* Présent sur toutes les vues sauf une partie : ces trois entrées
+            portent sur le site entier, et n'ont rien à dire à qui joue. Elles
+            volaient une centaine de pixels au bas de l'écran, là où le kit place
+            justement ses boutons. */}
+        {!enKit && (
+          <PiedDePage
+            pageActive={vue === 'suggestions' || vue === 'mentions-legales' ? vue : null}
+            onSuggestions={() => ouvrirPage('suggestions')}
+            onMentions={() => ouvrirPage('mentions-legales')}
+          />
+        )}
       </div>
     </div>
   );

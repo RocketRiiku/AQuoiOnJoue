@@ -1,4 +1,4 @@
-import { Minus, Plus, RotateCcw } from 'lucide-react';
+import { Eraser, Minus, Plus } from 'lucide-react';
 
 /**
  * Micro-commande d'une ligne de score.
@@ -145,9 +145,14 @@ function TableauScores({
                     icone={Plus}
                     onClick={() => onAjuster(i, 1)}
                   />
+                  {/* Détachée des deux autres, et une gomme plutôt qu'une
+                      flèche de retour : collée au « + », la remise à zéro se
+                      confondait avec lui, et le pictogramme circulaire disait
+                      « annuler » là où il faut lire « effacer ». */}
+                  <span className="w-3 shrink-0" aria-hidden="true" />
                   <Commande
                     label={`Remettre ${ligne.nom} à zéro`}
-                    icone={RotateCcw}
+                    icone={Eraser}
                     disabled={ligne.total === 0}
                     onClick={() => onReinitialiser(i)}
                   />

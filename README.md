@@ -323,8 +323,13 @@ src/components/kit/
   Chrono.jsx                       brique : décompte d'un tour, avec pause
   Compteur.jsx                     brique : réglage d'un nombre, comme le filtre
   EcranTour.jsx                    brique : l'écran de jeu (carte + réponses)
+  PhaseChronometree.jsx            brique : une phase de tour, plein écran
+  Progression.jsx                  brique : « TOUR 3 SUR 5 », et les phases
   TableauScores.jsx                brique : grille lignes × colonnes, corrigeable
+  BandeauScores.jsx                brique : les scores en une ligne, dépliables
+  LigneJoueur.jsx                  brique : la ligne pleine largeur d'un joueur
   FeuilleDeMatch.jsx               brique : la feuille dont la ligne est la cible
+  MenuPartie.jsx                   quitter ou abandonner, hors de portée du pouce
   KitTroisFoisRien.jsx             l'orchestrateur de ce jeu
   KitDefileur.jsx                  l'orchestrateur des six « tirer et montrer »
   KitFeuilleDeMatch.jsx            l'orchestrateur des cinq « rien qu'un score »
@@ -468,8 +473,36 @@ la même feuille :
 | Forme | Jeux | Le geste |
 | --- | --- | --- |
 | `auFil` | Qui rit sort, Sur parole | l'événement tombe n'importe quand, on tape la ligne |
-| `parTour` | Le Liars Club, Tudum | un joueur désigné, on coche qui a trouvé, on résout d'un coup |
+| `parTour` | Le Liars Club, Tudum | des phases successives, puis un vote qui résout le tour |
 | `duel` | Avez-vous confiance ? | deux joueurs tirés au sort, une matrice 2×2 de gains |
+
+**Un tour se joue en écrans successifs, pas en empilement.** L'écran du Liars
+Club présentait le vote, puis le chrono, puis les scores — l'ordre inverse de
+celui de la table, qui joue le récit, puis les questions, puis le vote. Chaque
+phase prend donc l'écran entier, avec son nom, sa consigne, son chrono et un seul
+bouton. Les phases se déclarent par jeu (`etapes` dans
+[`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js)) et vivent dans l'état, pour
+qu'une partie reprise reparte du début d'un tour plutôt qu'au milieu d'un chrono.
+Tudum n'en déclare aucune : on imite, on écrit, on révèle dans le même souffle, et
+un écran d'attente de plus ferait poser le téléphone.
+[`PhaseChronometree`](src/components/kit/PhaseChronometree.jsx) porte le gabarit,
+et attend la famille « tour de table chronométré » qui en fera le même usage.
+
+**Le barème s'affiche avant qu'on le déclenche.** Rien ne disait ce que
+« Compter les points » allait faire, ni si le conteur marquait quand personne ne
+le démasque — justement le calcul qu'on avait retiré à la table. L'aperçu suit la
+sélection : « Joueur 1 +2 · Joueur 3 et Joueur 4 +1 ». Quand personne n'est
+désigné, il dit ce que ça vaut au conteur, ce qui est l'information utile à ce
+moment-là.
+
+**Les scores tiennent en une ligne.** Le tableau occupait la moitié de l'écran en
+permanence — cinq lignes, trois commandes chacune — pour une correction qui sert
+une fois sur vingt. [`BandeauScores`](src/components/kit/BandeauScores.jsx) le
+replie derrière « Voir les scores », et la correction devient un mode qu'on
+demande. La ligne du bandeau est composée **par le jeu**, parce que le sens de la
+victoire lui appartient : un jeu à points annonce qui mène, un jeu à élimination
+annonce qui est le plus près de sortir. Annoncer le meneur y donnait « Égalité,
+0 avertissement », qui n'informe de rien.
 
 **La ligne est la cible**, pour la forme `auFil`
 ([`FeuilleDeMatch.jsx`](src/components/kit/FeuilleDeMatch.jsx)). C'est le geste
@@ -538,6 +571,21 @@ lire, pour un geste unique. La matrice montre en plus ce que le texte des règle
 dit mal : les quatre issues côte à côte, donc le fait que trahir seul rapporte le
 plus et que se méfier à deux ne rapporte presque rien. C'est ce que la table doit
 voir pour que le choix ait du sel.
+
+#### Une partie prend l'écran entier
+
+L'en-tête du site et le pied de page mangeaient près de 300 px sur téléphone, un
+tiers de la hauteur utile, pour deux choses dont on n'a aucun besoin en pleine
+partie : le nom du site et trois liens d'éditeur. Ils disparaissent pendant un
+kit, ce qui a permis d'écrire le nom du joueur à 72 px — 18 % de la hauteur d'un
+écran de 812 px, au-dessus du seuil à partir duquel on peut poser le téléphone au
+milieu de la table. La feuille de match tient désormais sans un pixel de
+défilement.
+
+Le titre du site était par ailleurs le seul moyen de sortir sans passer par les
+boutons du kit. C'est maintenant le rôle du menu `⋯`, qui demande confirmation au
+lieu de tout perdre sur un clic — voir
+[`docs/boutons.md`](docs/boutons.md#une-partie-prend-lécran-et-na-quune-sortie).
 
 #### Les règles restent à portée
 
@@ -935,7 +983,7 @@ npm run build:fonts
 
 ## Tests
 
-355 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
+536 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
 plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
 composer puis dérouler une soirée, ouvrir un lien partagé.
 

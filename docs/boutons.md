@@ -265,9 +265,41 @@ au jeu suivant ne vient qu'après. Ne pas ajouter un second bouton plein pour
 éviter de déplacer les autres — ce serait exactement l'incohérence que ce
 document combat.
 
-L'action de sortie du kit est un `discret destructeur` : quitter fait perdre la
-partie en cours. Son libellé nomme l'écran où l'on retourne — « Retour à la
-fiche » ou « Retour à la soirée » — parce que le kit se pose sur les deux.
+### Une partie prend l'écran, et n'a qu'une sortie
+
+Trois règles valent pour les quatre orchestrateurs. Elles sont venues du Liars
+Club, dont l'écran empilait tout, mais aucune ne lui est propre.
+
+**Une seule sortie visible, et elle ne fait rien perdre.** Trois chemins
+s'alignaient en bas de l'écran, dont deux qui se ressemblaient — « Terminer la
+partie » et « Abandonner la partie ». En soirée, un pouce mal placé coûtait une
+demi-heure de jeu. Seul « Terminer » reste dans la partie : il mène au classement.
+Quitter et abandonner passent par le menu `⋯` en **haut à droite**, et l'abandon
+demande confirmation. C'est la zone la moins accessible d'un téléphone tenu à une
+main, et c'est exactement ce qu'on veut d'une cible négative : une friction
+volontaire. Le bas de l'écran reste à l'interaction, le haut à la lecture et à ce
+qu'on ne doit pas toucher par accident
+([Parachute](https://parachutedesign.ca/blog/thumb-zone-ux/),
+[Juno](https://www.junoschool.org/article/thumb-zone-design-one-handed-use/)).
+
+**Le bouton principal tombe toujours au même endroit.** Les écrans de phase sont
+des colonnes qui poussent leur barre d'actions contre le bas, quelle que soit la
+longueur de la consigne. C'est ce qui rend le jeu rapide au bout de trois tours :
+le pouce y va sans regarder.
+
+**Le texte de scène fait 15 % de la hauteur d'écran au moins** — le nom du joueur
+qui parle, le mot à faire deviner. En dessous, on ne peut pas poser le téléphone
+au centre de la table. D'où un `clamp()` en `svh` plutôt qu'une taille en points,
+plafonné pour qu'un ordinateur n'hérite pas d'un titre de 140 px.
+
+**Le décompte dit s'il tourne.** Un chrono figé sur sa durée pleine, barre
+comprise, ne se distingue pas d'un chrono en attente. Le bouton nomme donc le
+geste (« Lancer le chrono », puis « Pause »), et une ligne annonce l'état. Tant
+qu'il n'est pas parti, lancer le chrono *est* l'action principale de l'écran.
+
+L'action de sortie garde son emphase basse, `discret destructeur`, et son libellé
+nomme l'écran où l'on retourne — « Retour à la fiche » ou « Retour à la soirée » —
+parce que le kit se pose sur les deux.
 
 **Les règles restent à portée pendant toute la partie**, par un « ? » posé sur la
 ligne du titre du jeu. On lit la fiche, on lance le jeu, et vingt minutes plus

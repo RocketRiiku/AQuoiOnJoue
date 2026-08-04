@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Undo2 } from 'lucide-react';
+import LigneJoueur from './LigneJoueur';
 
 /**
  * Durée pendant laquelle « Annuler » reste offert après un geste.
@@ -64,66 +65,46 @@ function FeuilleDeMatch({
           const sorti = etat.sortis[i];
           return (
             <li key={`${nom}-${i}`}>
-              <button
-                type="button"
-                disabled={sorti}
+              <LigneJoueur
+                nom={nom}
+                sortie={sorti}
                 onClick={() => onMarquer(i)}
                 // L'annonce dit le geste *et* l'état : au doigt on voit la
-                // ligne, au lecteur d'écran il faut les deux.
-                //
-                // Ponctué à la virgule et non au tiret cadratin : la virgule se
-                // prononce en pause, le tiret est lu littéralement par certains
-                // lecteurs d'écran et ignoré par d'autres.
-                aria-label={
+                // ligne, au lecteur d'écran il faut les deux. Ponctuée à la
+                // virgule, qui se prononce en pause, là où le tiret cadratin est
+                // lu littéralement par certains lecteurs d'écran.
+                nomAccessible={
                   sorti
                     ? `${nom}, éliminé`
                     : `${nom} ${libelleGeste}, ${score} ${unite}${score > 1 ? 's' : ''}${
                         seuil !== null ? ` sur ${seuil}` : ''
                       }`
                 }
-                className={`w-full flex items-center gap-4 rounded-2xl px-4 py-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange ${
-                  sorti
-                    ? 'bg-ardoise/10 cursor-not-allowed'
-                    : 'bg-paille hover:bg-paille/70 active:bg-white/80'
-                }`}
-              >
-                <span
-                  className={`font-titre text-xl flex-1 min-w-0 truncate ${
-                    sorti ? 'line-through decoration-2 text-ardoise/50' : 'text-encre'
-                  }`}
-                >
-                  {nom}
-                </span>
-
-                {/* Les avertissements se comptent d'un coup d'œil quand ils sont
-                    deux ou trois : des pastilles disent « il lui en reste un »
-                    mieux qu'un chiffre à comparer au seuil de tête. */}
-                {seuil !== null ? (
-                  <span className="flex items-center gap-1.5" aria-hidden="true">
-                    {Array.from({ length: seuil }, (_, cran) => (
-                      <span
-                        key={cran}
-                        className={`w-3.5 h-3.5 rounded-full border-2 ${
-                          cran < score ? 'bg-brique border-brique' : 'border-encre/30'
-                        }`}
-                      />
-                    ))}
-                  </span>
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="font-titre text-3xl tabular-nums text-encre"
-                  >
-                    {score}
-                  </span>
-                )}
-
-                {sorti && (
-                  <span className="font-titre text-xs uppercase tracking-wide text-ardoise/60">
-                    sorti
-                  </span>
-                )}
-              </button>
+                aDroite={
+                  /* Les avertissements se comptent d'un coup d'œil quand ils
+                     sont deux ou trois : des pastilles disent « il lui en reste
+                     un » mieux qu'un chiffre à comparer au seuil de tête. */
+                  seuil !== null ? (
+                    <span className="flex items-center gap-1.5" aria-hidden="true">
+                      {Array.from({ length: seuil }, (_, cran) => (
+                        <span
+                          key={cran}
+                          className={`w-3.5 h-3.5 rounded-full border-2 ${
+                            cran < score ? 'bg-brique border-brique' : 'border-encre/30'
+                          }`}
+                        />
+                      ))}
+                    </span>
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      className="font-titre text-3xl tabular-nums text-encre"
+                    >
+                      {score}
+                    </span>
+                  )
+                }
+              />
             </li>
           );
         })}

@@ -12,10 +12,12 @@ import {
   Trash2
 } from 'lucide-react';
 import { BarreActions, BarreActionsSecondaire, Bouton } from '../Bouton';
-import Pastille from '../Pastille';
-import Chrono from './Chrono';
+import BandeauScores from './BandeauScores';
 import Compteur from './Compteur';
 import FeuilleDeMatch from './FeuilleDeMatch';
+import LigneJoueur from './LigneJoueur';
+import PhaseChronometree from './PhaseChronometree';
+import Progression from './Progression';
 import TableauScores from './TableauScores';
 import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
 import {
@@ -25,7 +27,7 @@ import {
   reducteur,
   reglesDe,
   reprendre,
-  tousPasses,
+  tourDeTable,
   vainqueurs
 } from '../../utils/feuilleDeMatch';
 
@@ -34,6 +36,12 @@ const uniteDe = (game) => (game.scoring === 'elimination' ? 'avertissement' : 'p
 
 const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
 
+/** « Joueur 1 », « Joueur 1 et Joueur 3 », « Joueur 1, Joueur 3 et Joueur 5 ». */
+function listeFr(noms) {
+  if (noms.length <= 1) return noms.join('');
+  return `${noms.slice(0, -1).join(', ')} et ${noms.at(-1)}`;
+}
+
 /**
  * L'état du jeu traduit en lignes de `TableauScores`.
  *
@@ -41,8 +49,17 @@ const pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;
  * à un classement. C'est ce second client, réel, qui a permis de la découpler de
  * « Trois fois rien » sans dessiner son interface à l'aveugle.
  */
-const lignesDeScore = (etat, { montrerVainqueur = false } = {}) => {
-  const enTete = montrerVainqueur ? vainqueurs(etat) : [];
+const lignesDeScore = (etat) => {
+  /**
+   * Qui mène, en cours de partie comme à l'arrivée : le bandeau des scores en
+   * vit. Personne n'est mis en tête quand tout le monde est à égalité — au
+   * premier tour, souligner cinq joueurs sur cinq ne dit rien.
+   *
+   * `vainqueurs` connaît le sens du jeu : le plus gros total quand on marque des
+   * points, le moins puni quand on encaisse des avertissements.
+   */
+  const meilleurs = vainqueurs(etat);
+  const enTete = meilleurs.length === enJeu(etat).length ? [] : meilleurs;
   return etat.joueurs.map((nom, i) => ({
     nom,
     total: etat.scores[i],
@@ -51,6 +68,44 @@ const lignesDeScore = (etat, { montrerVainqueur = false } = {}) => {
     retraitPossible: etat.scores[i] > 0
   }));
 };
+
+/**
+ * La ligne que lit le bandeau des scores.
+ *
+ * **Elle ne dit pas la même chose selon le sens du jeu.** Quand on marque des
+ * points, ce qui compte est qui mène. Quand on encaisse des avertissements, le
+ * meneur est celui qui n'a rien pris — l'annoncer donnerait « Égalité, 0
+ * avertissement », qui n'informe de rien. C'est alors le joueur le plus près de
+ * sortir qu'on affiche, parce que c'est là qu'est la tension.
+ */
+function resumeDesScores(etat, lignes, unite) {
+  const enCourse = enJeu(etat);
+
+  if (etat.seuil !== null) {
+    const menace = enCourse.reduce(
+      (pire, i) => (etat.scores[i] > etat.scores[pire] ? i : pire),
+      enCourse[0]
+    );
+    const encaisses = etat.scores[menace] ?? 0;
+    // Personne en danger : c'est l'effectif restant qui informe. La ligne vivait
+    // sous la feuille, où elle répétait ce que le bandeau aurait pu dire.
+    return encaisses === 0
+      ? { texte: `${pluriel(enCourse.length, 'joueur')} encore en course` }
+      : { texte: `${etat.joueurs[menace]} : ${encaisses} sur ${etat.seuil}` };
+  }
+
+  const meneurs = lignes.filter((l) => l.enTete);
+  if (meneurs.length === 0 || meneurs[0].total === 0) {
+    return { texte: 'Personne n’a encore marqué.' };
+  }
+  return {
+    texte: `${meneurs.length > 1 ? 'Égalité' : meneurs[0].nom} · ${pluriel(
+      meneurs[0].total,
+      unite
+    )}`,
+    couronne: true
+  };
+}
 
 /**
  * Écran d'avant-partie : combien êtes-vous, et le rappel de la règle.
@@ -185,19 +240,64 @@ function Reglage({ game, regles, joueursConnus, onDemarrer, onQuitter, libelleRe
 }
 
 /**
- * Panneau de résolution d'un tour : un joueur désigné, on coche qui a trouvé.
+ * L'aperçu du barème, en clair, avant de valider.
  *
- * **C'est là que le barème disparaît de la table.** Le Liars Club veut « autant
- * de points au conteur qu'il a trompé de monde », Tudum « trois points si tout
- * le monde a reconnu le son » : demander ces chiffres à qui tient le téléphone
- * serait lui faire compter deux fois la même chose. On coche les trouveurs, le
- * reste se déduit.
+ * **Rien ne disait ce que « Compter les points » allait faire.** Ni ce que
+ * rapporte une bonne réponse, ni si le conteur marque quand personne ne le
+ * démasque — alors que c'est justement le calcul qu'on lui a retiré. L'aperçu le
+ * rend : les gains sont groupés par valeur, dans l'ordre décroissant, et ils
+ * suivent la sélection au fil des tapes.
  *
- * Des `Pastille` parce que ce sont des contrôles de formulaire portant un état
- * sélectionné, pas des actions — le premier kit à s'en servir, comme
- * docs/boutons.md l'annonçait.
+ * Il remplace du même coup le « Personne, pour l'instant » : quand aucun joueur
+ * n'est désigné, la ligne dit ce que ça vaut au conteur, ce qui est l'information
+ * utile à ce moment-là.
  */
-function PanneauTour({ etat, regles, onResoudre }) {
+function ApercuGains({ gains, joueurs, unite }) {
+  const parValeur = new Map();
+  for (const { joueur, points } of gains) {
+    if (points === 0) continue;
+    if (!parValeur.has(points)) parValeur.set(points, []);
+    parValeur.get(points).push(joueurs[joueur]);
+  }
+
+  if (parValeur.size === 0) {
+    return (
+      <p className="text-ardoise/80 text-sm text-center">
+        Personne ne marque de {unite} sur ce tour.
+      </p>
+    );
+  }
+
+  const groupes = [...parValeur.entries()].sort((a, b) => b[0] - a[0]);
+
+  return (
+    <p className="text-sm text-center text-encre" aria-live="polite">
+      {groupes.map(([points, noms], i) => (
+        <span key={points}>
+          {i > 0 && <span className="text-ardoise/40 mx-1.5">·</span>}
+          <span className="text-ardoise/80">{listeFr(noms)}</span>{' '}
+          <span className="font-titre text-brique">+{points}</span>
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * Écran de vote : on désigne, on voit ce que ça donne, on valide.
+ *
+ * **Des lignes pleine largeur et non des pastilles à cocher.** On désigne
+ * quelqu'un autour d'une table, souvent debout : la cible fait toute la largeur
+ * et cinquante pixels de haut, comme la feuille de match dont elle reprend la
+ * brique (docs/boutons.md).
+ *
+ * C'est là que le barème disparaît de la table : Le Liars Club veut « autant de
+ * points au conteur qu'il a trompé de monde », Tudum « trois points si tout le
+ * monde a reconnu le son ». Demander ces chiffres à qui tient le téléphone
+ * serait lui faire compter deux fois la même chose — on désigne, `ApercuGains`
+ * montre le résultat, le réducteur l'applique.
+ */
+function EcranVote({ etat, regles, unite, onResoudre, entete }) {
   const [trouveurs, setTrouveurs] = useState([]);
   const courant = etat.courant;
   const participants = enJeu(etat).filter((i) => i !== courant);
@@ -211,46 +311,61 @@ function PanneauTour({ etat, regles, onResoudre }) {
       actuels.includes(joueur) ? actuels.filter((i) => i !== joueur) : [...actuels, joueur]
     );
 
-  return (
-    <div>
-      <p className="font-titre text-3xl sm:text-4xl text-brique text-center" role="status">
-        {etat.joueurs[courant]} {regles.roleCourant}
-      </p>
+  const gains = regles.resoudre({ courant, trouveurs, enJeu: enJeu(etat) });
 
-      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-8">
+  return (
+    <div className="flex flex-col min-h-[62svh]">
+      {entete}
+
+      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-4 text-center">
+        Le vote
+      </p>
+      <p
+        className="font-titre text-brique text-center leading-none mt-2 text-[clamp(1.75rem,11svh,3rem)] break-words"
+        role="status"
+      >
         {regles.questionTrouveurs}
       </p>
-      <div className="flex flex-wrap gap-2 mt-2">
-        {participants.map((joueur) => (
-          <Pastille
-            key={joueur}
-            actif={trouveurs.includes(joueur)}
-            onClick={() => basculer(joueur)}
-          >
-            {etat.joueurs[joueur]}
-          </Pastille>
-        ))}
-      </div>
-      <p className="text-ardoise/60 text-xs mt-2">
-        {trouveurs.length === 0
-          ? 'Personne, pour l’instant.'
-          : `${pluriel(trouveurs.length, 'joueur')} sur ${participants.length}.`}
-      </p>
+      {regles.consigneVote && (
+        <p className="text-ardoise font-texte mt-3 max-w-md mx-auto text-center">
+          {regles.consigneVote}
+        </p>
+      )}
 
-      <BarreActions>
-        <Bouton
-          variante="principal"
-          icone={Check}
-          onClick={() => {
-            onResoudre(
-              regles.resoudre({ courant, trouveurs, enJeu: enJeu(etat) })
-            );
-            setTrouveurs([]);
-          }}
-        >
-          Compter les points
-        </Bouton>
-      </BarreActions>
+      <ul className="flex flex-col gap-2 mt-6 list-none">
+        {participants.map((joueur) => (
+          <li key={joueur}>
+            <LigneJoueur
+              nom={etat.joueurs[joueur]}
+              selectionnable
+              actif={trouveurs.includes(joueur)}
+              nomAccessible={`${etat.joueurs[joueur]} a trouvé`}
+              onClick={() => basculer(joueur)}
+            />
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-auto">
+        {/* L'aperçu se lit juste au-dessus du bouton : c'est là que le pouce
+            s'arrête avant de valider. */}
+        <div className="mt-6">
+          <ApercuGains gains={gains} joueurs={etat.joueurs} unite={unite} />
+        </div>
+
+        <BarreActions className="justify-center">
+          <Bouton
+            variante="principal"
+            icone={Check}
+            onClick={() => {
+              onResoudre(gains);
+              setTrouveurs([]);
+            }}
+          >
+            Compter les points
+          </Bouton>
+        </BarreActions>
+      </div>
     </div>
   );
 }
@@ -382,9 +497,8 @@ function PanneauDuel({ etat, regles, onTirer, onResoudre }) {
 }
 
 /** Le classement, et ce qu'on en fait. */
-function Classement({ etat, game, onRejouer, onQuitter, libelleRetour }) {
+function Classement({ etat, unite, onRejouer, onQuitter, libelleRetour }) {
   const gagnants = vainqueurs(etat);
-  const unite = uniteDe(game);
 
   return (
     <div className="mt-8">
@@ -401,7 +515,7 @@ function Classement({ etat, game, onRejouer, onQuitter, libelleRetour }) {
 
       <div className="mt-6 overflow-x-auto">
         <TableauScores
-          lignes={lignesDeScore(etat, { montrerVainqueur: true })}
+          lignes={lignesDeScore(etat)}
           legende={`Classement par joueur, en ${unite}s`}
         />
       </div>
@@ -426,7 +540,7 @@ function Classement({ etat, game, onRejouer, onQuitter, libelleRetour }) {
  * s'attribue. D'où un seul orchestrateur et trois panneaux, plutôt que trois
  * écrans qui recopieraient la même feuille.
  */
-function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }) {
+function Partie({ game, regles, depart, onQuitter, libelleRetour }) {
   const [etat, envoyer] = useReducer(reducteur, depart);
   const unite = uniteDe(game);
 
@@ -444,7 +558,7 @@ function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }
     return (
       <Classement
         etat={etat}
-        game={game}
+        unite={unite}
         onRejouer={() => envoyer({ type: 'rejouer' })}
         onQuitter={onQuitter}
         libelleRetour={libelleRetour}
@@ -452,18 +566,45 @@ function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }
     );
   }
 
-  const complet = tousPasses(etat);
+  const lignes = lignesDeScore(etat);
+  const bandeau = (
+    <BandeauScores
+      lignes={lignes}
+      resume={resumeDesScores(etat, lignes, unite)}
+      legende={`Scores par joueur, en ${unite}s`}
+      onAjuster={(joueur, delta) => envoyer({ type: 'ajuster', joueur, delta })}
+      onReinitialiser={(joueur) => envoyer({ type: 'reinitialiser', joueur })}
+    />
+  );
+
+  /**
+   * L'en-tête d'un tour : où l'on en est, et les scores en une ligne.
+   *
+   * Passé aux écrans plutôt que posé au-dessus d'eux, pour qu'ils gardent la
+   * main sur leur mise en page — la barre d'actions doit tomber au même endroit
+   * d'un écran à l'autre, ce qu'un empilement extérieur casserait.
+   */
+  const entete = regles.forme === 'auFil' ? bandeau : (
+    <div className="flex flex-col gap-3">
+      <Progression {...tourDeTable(etat)} etapes={regles.etapes} etape={etat.etape} />
+      {bandeau}
+    </div>
+  );
+
+  // Une phase déclarée par le jeu, ou le vote qui clôt le tour.
+  const etapeCourante = regles.etapes?.[etat.etape] ?? null;
 
   return (
     <div>
       {regles.forme === 'auFil' && (
         <>
-          <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70">
+          {bandeau}
+          <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-5">
             {regles.seuil !== null
               ? `${regles.seuil} avertissements et on sort`
               : 'Touchez une ligne pour marquer un point'}
           </p>
-          <div className="mt-4">
+          <div className="mt-3">
             <FeuilleDeMatch
               etat={etat}
               seuil={regles.seuil ?? null}
@@ -475,94 +616,66 @@ function Partie({ game, regles, depart, onQuitter, onAbandonner, libelleRetour }
               onAnnuler={() => envoyer({ type: 'annuler' })}
             />
           </div>
-          <p className="text-ardoise/60 text-xs text-center">
-            {pluriel(enJeu(etat).length, 'joueur')} encore en course.
-          </p>
         </>
       )}
 
-      {regles.forme !== 'auFil' && (
+      {regles.forme === 'parTour' &&
+        (etapeCourante ? (
+          <PhaseChronometree
+            entete={entete}
+            titre={etapeCourante.titre}
+            nom={`${etat.joueurs[etat.courant]} ${regles.roleCourant}`}
+            consigne={etapeCourante.consigne}
+            secondes={
+              etapeCourante.secondes === 'chronoTour'
+                ? game.chronoTour
+                : etapeCourante.secondes
+            }
+            action={etapeCourante.action}
+            cle={`${etat.courant}-${etat.etape}`}
+            onSuivant={() => envoyer({ type: 'etapeSuivante' })}
+          />
+        ) : (
+          <EcranVote
+            entete={entete}
+            etat={etat}
+            regles={regles}
+            unite={unite}
+            onResoudre={resoudre}
+          />
+        ))}
+
+      {regles.forme === 'duel' && (
         <>
-          {regles.forme === 'parTour' ? (
-            <PanneauTour etat={etat} regles={regles} onResoudre={resoudre} />
-          ) : (
+          {bandeau}
+          <div className="mt-5">
             <PanneauDuel
               etat={etat}
               regles={regles}
               onTirer={() => envoyer({ type: 'tirerDuel' })}
               onResoudre={resoudre}
             />
-          )}
-
-          {/* Le chrono ne vient pas d'ici : `chronoTour` est au catalogue, et
-              c'est la minute d'interrogation du Liars Club. Rien à cadencer
-              chez les autres, donc rien ne s'affiche. */}
-          {game.chronoTour && <MinuteDeQuestions secondes={game.chronoTour} cle={etat.courant} />}
-
-          <div className="mt-8 overflow-x-auto">
-            <TableauScores
-              lignes={lignesDeScore(etat)}
-              legende={`Scores par joueur, en ${unite}s`}
-              onAjuster={(joueur, delta) => envoyer({ type: 'ajuster', joueur, delta })}
-              onReinitialiser={(joueur) => envoyer({ type: 'reinitialiser', joueur })}
-            />
           </div>
-          <p className="text-ardoise/60 text-xs text-center mt-2">
-            Un point de trop&nbsp;? Corrigez-le ici, la partie continue.
-          </p>
         </>
       )}
 
-      <BarreActionsSecondaire className="justify-center">
-        {/* Aucune règle ne dit quand s'arrêter faute de seuil : la table
-            tranche. Le bouton se met en avant une fois le tour de table
-            complet, ce que trois de ces jeux demandent explicitement. */}
-        {etat.seuil === null && (
+      {/* Le seul point de sortie visible de la partie, et il ne fait rien
+          perdre : il mène au classement. Quitter et abandonner vivent dans le
+          menu du bandeau, hors de portée du pouce — une cible négative se tient
+          en haut de l'écran, pas là où l'on tape vite. */}
+      {etat.seuil === null && (
+        <BarreActionsSecondaire className="justify-center">
           <Bouton
-            variante={complet ? 'secondaire' : 'discret'}
+            variante={tourDeTable(etat).complet ? 'secondaire' : 'discret'}
             icone={Flag}
             onClick={() => envoyer({ type: 'clore' })}
           >
-            {complet ? 'Tout le monde est passé : voir le classement' : 'Terminer la partie'}
+            {tourDeTable(etat).complet
+              ? 'Tout le monde est passé : voir le classement'
+              : 'Terminer la partie'}
           </Bouton>
-        )}
-        <Bouton variante="discret" icone={ArrowLeft} onClick={onQuitter}>
-          {libelleRetour}
-        </Bouton>
-        <Bouton variante="discret" destructeur icone={Trash2} onClick={onAbandonner}>
-          Abandonner la partie
-        </Bouton>
-      </BarreActionsSecondaire>
-    </div>
-  );
-}
-
-/**
- * La minute d'interrogation, quand le catalogue en annonce une.
- *
- * Volontairement pas `EcranTour` : personne ne court après le temps, et il n'y a
- * ni carte ni glissement. La minute borne un interrogatoire, elle ne met pas la
- * table sous pression — d'où un simple décompte qu'on lance et qu'on arrête.
- */
-function MinuteDeQuestions({ secondes, cle }) {
-  const [enMarche, setEnMarche] = useState(false);
-
-  // Chaque tour repart d'un décompte neuf et à l'arrêt.
-  useEffect(() => setEnMarche(false), [cle]);
-
-  return (
-    <div className="flex items-end gap-4 max-w-md w-full mx-auto mt-8">
-      <div className="flex-1 min-w-0">
-        <Chrono secondes={secondes} enMarche={enMarche} cle={cle} onFini={() => setEnMarche(false)} />
-      </div>
-      <Bouton
-        variante="discret"
-        icone={Play}
-        onClick={() => setEnMarche((v) => !v)}
-        className="mb-1"
-      >
-        {enMarche ? 'Pause' : 'Questions'}
-      </Bouton>
+        </BarreActionsSecondaire>
+      )}
     </div>
   );
 }
@@ -654,10 +767,6 @@ function KitFeuilleDeMatch({ game, joueurs, onQuitter, onRetourAccueil, libelleR
       regles={regles}
       depart={depart}
       onQuitter={onQuitter}
-      onAbandonner={() => {
-        effacerPartie();
-        onRetourAccueil();
-      }}
       libelleRetour={libelleRetour}
     />
   ) : (
