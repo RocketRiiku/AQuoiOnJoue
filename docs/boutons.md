@@ -405,6 +405,36 @@ au-dessus de lui grandit avec son contenu. Les écrans qui doivent loger plusieu
 blocs bornent donc les leurs en `svh`, comme les hauteurs minimales du site. À
 revoir le jour où le panneau aura une hauteur propre.
 
+### Une zone qui défile le dit
+
+**Une zone coupée net passe pour une zone finie.** Le résumé du Fitch s'arrêtait
+au milieu d'un mot sans rien annoncer des dix lignes suivantes, et une liste de
+seize joueurs bornée à quatre lignes laissait croire qu'il n'y avait que quatre
+joueurs. Dès qu'une zone déborde, elle porte donc un dégradé et une flèche à ce
+bord — [`OmbreDefilement`](../src/components/kit/OmbreDefilement.jsx), piloté par
+[`useDefilement`](../src/utils/useDefilement.js).
+
+Quatre règles :
+
+- **seulement quand il y a quelque chose au-delà**, et de ce côté-là. Une flèche
+  qui reste allumée en bout de course ne veut plus rien dire, et devient un décor
+  qu'on ne regarde plus ;
+- **un dégradé, pas une barre.** Le texte s'éteint dans la couleur du fond — celle
+  de la carte, ou celle du panneau sous une liste. Plus haut qu'une ligne, sinon la
+  dernière se lit encore au travers et la flèche lui passe dessus ;
+- **posé hors de la zone qui défile.** Un calque absolu placé *dans* un conteneur
+  défilant suit le contenu et sort du cadre au premier geste. Et l'enveloppe doit
+  épouser la zone : un `flex-1` de trop mettait la flèche du bas cent pixels sous
+  la dernière ligne ;
+- **décoratif**, `aria-hidden`. Le contenu entier est déjà dans l'arbre
+  d'accessibilité et lu d'un bloc : un lecteur d'écran n'a rien à faire défiler.
+
+Attention au piège qui a motivé tout ça : une zone défilante dont le contenu est
+centré (`items-center`, `justify-center`) déborde **des deux côtés**, et le haut
+devient inatteignable — `scrollTop` ne descend pas sous zéro. Le début du texte
+est alors perdu pour de bon, pas seulement masqué. Des marges `auto` sur l'enfant
+centrent quand il y a de la place et se résorbent quand il n'y en a plus.
+
 ### Pendant un tour, l'écran n'est plus un panneau
 
 Les trente secondes d'un tour ne se pilotent pas comme un formulaire. « Trouvé »

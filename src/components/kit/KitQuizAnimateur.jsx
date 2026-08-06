@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useReducer, useState } from 'react';
+import { useEffect, useId, useMemo, useReducer, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -21,6 +21,7 @@ import BandeauScores, { DialogueScores } from './BandeauScores';
 import CarteTiree from './CarteTiree';
 import Chrono from './Chrono';
 import Compteur from './Compteur';
+import OmbreDefilement from './OmbreDefilement';
 import LigneJoueur from './LigneJoueur';
 import MenuPartie from './MenuPartie';
 import Progression from './Progression';
@@ -29,6 +30,7 @@ import { contenuDuJeu } from '../../data/lancerJeu';
 import { libelles } from '../../utils/pioche';
 import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
 import { enJeu, nomsJoueurs, vainqueurs } from '../../utils/feuilleDeMatch';
+import { useDefilement } from '../../utils/useDefilement';
 import {
   avancement,
   baremeDe,
@@ -245,6 +247,8 @@ function ApercuGains({ gains, joueurs, unite }) {
  */
 function Designation({ etat, regles, bareme, unite, onValider }) {
   const [tapes, setTapes] = useState(() => etat.joueurs.map(() => 0));
+  const liste = useRef(null);
+  const resteJoueurs = useDefilement(liste, [etat.joueurs.length]);
 
   // Chaque carte repart d'une ardoise vide : les points du tour d'avant sont
   // déjà comptés.
@@ -278,8 +282,22 @@ function Designation({ etat, regles, bareme, unite, onValider }) {
           joueurs, le bouton passait sous la ligne de flottaison. Le `svh` borne
           ce que la liste peut réclamer, comme il borne la carte juste au-dessus.
           À revoir le jour où le panneau aura une hauteur propre : tout ceci
-          redeviendra alors inutile. */}
-      <ul className="flex-1 min-h-0 max-h-[18svh] overflow-y-auto flex flex-col gap-2 mt-3 list-none">
+          redeviendra alors inutile.
+
+          L'enveloppe ne défile pas, la liste dedans si : c'est ce qui permet aux
+          repères de rester plaqués aux bords. À seize joueurs — le maximum du
+          juste chiffre — une liste coupée net laissait croire qu'il n'y en avait
+          que quatre. */}
+      {/* L'enveloppe épouse la liste au lieu de prendre la place restante : les
+          repères se plaquent à ses bords, et un `flex-1` ici mettait la flèche du
+          bas cent pixels sous la dernière ligne. Le vide se reporte sur la marge
+          automatique du bloc d'en dessous, qui garde le bouton contre le bas. */}
+      <div className="relative min-h-0 mt-3">
+        {resteJoueurs.dessus && <OmbreDefilement position="haut" fond="creme" />}
+        <ul
+          ref={liste}
+          className="max-h-[18svh] overflow-y-auto flex flex-col gap-2 list-none"
+        >
         {etat.joueurs.map((nom, joueur) => (
           <li key={nom}>
             {bareme.saisie ? (
@@ -319,7 +337,9 @@ function Designation({ etat, regles, bareme, unite, onValider }) {
             )}
           </li>
         ))}
-      </ul>
+        </ul>
+        {resteJoueurs.dessous && <OmbreDefilement position="bas" fond="creme" />}
+      </div>
 
       <div className="mt-auto max-w-sm w-full mx-auto">
         <div className="mt-3">

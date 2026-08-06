@@ -332,12 +332,14 @@ src/utils/feuilleDeMatch.js        le décompte de cinq jeux, en réducteur pur
 src/utils/quizAnimateur.js         le déroulé de six quiz, en réducteur pur
 src/utils/blessureCritique.js      le jet de dé, en réducteur pur
 src/utils/sonKit.js                tic-tac et vibration, sans fichier son
+src/utils/useDefilement.js         une zone déborde-t-elle, et de quel côté
 src/utils/partieEnCours.js         la partie conservée entre deux visites
 src/components/kit/DialoguePot.jsx l'édition des mots, en modale
 src/components/kit/
   registre.js                      slug → composant, et « ce kit est-il prêt ? »
   KitJeu.jsx                       aiguillage + repli si le kit manque
   CarteTiree.jsx                   brique : le papier qu'on vient de tirer
+  OmbreDefilement.jsx              brique : le bord d'une zone qui continue
   Chrono.jsx                       brique : décompte d'un tour, avec pause
   Compteur.jsx                     brique : réglage d'un nombre, comme le filtre
   EcranTour.jsx                    brique : l'écran de jeu (carte + réponses)
@@ -698,6 +700,20 @@ c'est de toute façon le geste du jeu : on annonce la réponse, puis on relit
 l'énoncé pour montrer où était le piège. Les mots appartiennent au jeu — « Le
 résumé » et « Les cinq erreurs » chez Le Fitch, « L'énoncé » et « La réponse »
 ailleurs.
+
+**Une zone qui déborde le dit.** Le résumé du Fitch s'arrêtait au milieu d'un mot
+sans rien annoncer des dix lignes suivantes, et une liste de seize joueurs bornée à
+quatre lignes laissait croire qu'il n'y avait que quatre joueurs. Un dégradé et une
+flèche bordent donc toute zone qui continue, du côté où elle continue
+([`OmbreDefilement`](src/components/kit/OmbreDefilement.jsx),
+[`useDefilement`](src/utils/useDefilement.js)) — voir
+[`docs/boutons.md`](docs/boutons.md#une-zone-qui-défile-le-dit).
+
+Le défaut derrière était pire que l'absence de repère : une zone défilante dont le
+contenu est **centré** déborde des *deux* côtés, et le haut devient inatteignable —
+`scrollTop` ne descend pas sous zéro. Le début du résumé était donc perdu, pas
+seulement masqué. Des marges `auto` centrent quand il y a de la place et se
+résorbent quand il n'y en a plus.
 
 **Le barème, lui, ne se déduit pas de `scoring`.** Les six portent `compteur`, et
 la colonne dit « +1 / −1 par joueur » : vrai pour quatre d'entre eux. *Sorry mon
@@ -1121,7 +1137,7 @@ npm run build:fonts
 
 ## Tests
 
-445 tests. Ce paragraphe en a annoncé 537, chiffre gonflé par un worktree
+455 tests. Ce paragraphe en a annoncé 537, chiffre gonflé par un worktree
 oublié — le piège décrit dans [Pièges connus](#pièges-connus), auquel le README
 avait donc cédé lui-même. Si le compte s'envole à nouveau, c'est là qu'il faut
 regarder avant de se réjouir. [`src/App.test.jsx`](src/App.test.jsx) suit des
