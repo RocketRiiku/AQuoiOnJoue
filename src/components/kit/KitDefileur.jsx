@@ -169,8 +169,8 @@ function KitDefileur({ game, ancreMenu, onQuitter, onRetourAccueil, libelleRetou
   return (
     <div className="flex flex-col flex-1">
       {menu}
-      {/* Le compteur dit où l'on en est dans la pile. Sans lui, cinquante-cinq
-          questions se ressemblent et rien n'indique qu'elles s'épuisent. */}
+      {/* Le compteur dit où l'on en est dans la pile. Sans lui, cent questions
+          se ressemblent et rien n'indique qu'elles s'épuisent. */}
       <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70">
         {mots.nom} {etat.index + 1} sur {etat.pile.length}
       </p>

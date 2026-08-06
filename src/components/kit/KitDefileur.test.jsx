@@ -14,7 +14,7 @@ const jeu = (slug) => gamesList.find((g) => g.slug === slug);
  * Le parcours dans la pile est couvert à part (defileur.test.js) : ce qui se
  * joue ici, c'est ce que le réducteur ne voit pas — le libellé déduit du type
  * de contenu, le chrono qui n'apparaît que pour les jeux qui en déclarent un,
- * et le fait qu'on aille au bout des cinquante cartes sans se coincer.
+ * et le fait qu'on aille au bout de la pile sans se coincer.
  */
 const monter = async (slug, { rappel = false, onQuitter = vi.fn() } = {}) => {
   const utilisateur = userEvent.setup({
@@ -60,7 +60,7 @@ describe('kit défileur', () => {
     expect(screen.queryByText(/proposition 1 sur/i)).toBeNull();
 
     await clic(u, /c’est parti/i);
-    expect(screen.getByText(/proposition 1 sur 50/i)).toBeInTheDocument();
+    expect(screen.getByText(/proposition 1 sur 240/i)).toBeInTheDocument();
   });
 
   it('quitte depuis le rappel sans avoir rien tiré', async () => {
@@ -71,7 +71,7 @@ describe('kit défileur', () => {
 
   it('tire la première carte sitôt le rappel passé', async () => {
     await monter('oui-ou-non');
-    expect(screen.getByText(/proposition 1 sur 50/i)).toBeInTheDocument();
+    expect(screen.getByText(/proposition 1 sur 240/i)).toBeInTheDocument();
     expect(carte().length).toBeGreaterThan(0);
   });
 
@@ -97,7 +97,7 @@ describe('kit défileur', () => {
     await clic(u, /question suivante/i);
     const deuxieme = carte();
     expect(deuxieme).not.toBe(premiere);
-    expect(screen.getByText(/question 2 sur 55/i)).toBeInTheDocument();
+    expect(screen.getByText(/question 2 sur 142/i)).toBeInTheDocument();
 
     // Une carte tournée par erreur emporte sinon une question que personne
     // n'a entendue.
@@ -154,7 +154,7 @@ describe('kit défileur', () => {
     expect(screen.getByText(new RegExp(`tour des ${total} sujets`, 'i'))).toBeInTheDocument();
 
     await clic(u, /remélanger/i);
-    expect(screen.getByText(/sujet 1 sur 25/i)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`sujet 1 sur ${total}`, 'i'))).toBeInTheDocument();
   });
 
   it('quitte vers l’écran d’où l’on vient', async () => {

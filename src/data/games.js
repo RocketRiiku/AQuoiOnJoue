@@ -210,7 +210,7 @@ export const gamesList = [
     slug: 'sorry-mon-french',
     description: 'Google Traduction est passé sur les paroles. Bon courage !',
     rules:
-      "Un joueur lit des paroles de chansons connues passées à la moulinette d'une traduction automatique, sans chanter. Il pioche dans la liste, ou lit sa propre sélection s'il en a préparé une. Les autres cherchent le titre, l'artiste, ou les deux. Le premier à répondre juste marque un point, deux s'il donne les deux. En équipe, on se concerte avant d'annoncer : si quelqu'un fait une proposition fausse, c'est à l'autre équipe de jouer.",
+      "Un joueur lit des paroles de chansons internationales connues passées à la moulinette d'une traduction automatique, sans chanter. Il pioche dans la liste, ou traduit sa propre sélection s'il en a préparé une. Les autres cherchent le titre, l'artiste, ou les deux. Le premier à répondre juste marque un point, deux s'il donne les deux. En équipe, on se concerte avant d'annoncer : si quelqu'un fait une proposition fausse, c'est à l'autre équipe de jouer.",
     minPlayers: 4,
     maxPlayers: 14,
     idealPlayersMin: 5,
@@ -230,7 +230,7 @@ export const gamesList = [
     slug: 'lost-in-translation',
     description: "Au Québec, Very Bad Trip s'appelle Lendemain de veille. À vous de faire le chemin inverse à chaque fois.",
     rules:
-      "Au Québec, on francise tout, et les titres d'œuvres y changent souvent. Un joueur annonce le titre québécois, « Folie de graduation » ou « Danse lascive », et les autres cherchent le titre connu en France. Le premier qui trouve marque le point. En équipe, on annonce chacun son tour et une erreur passe la main.",
+      "Au Québec, on francise tout, et les titres d'œuvres y changent souvent. Un joueur annonce d'abord le thème, film ou série, puis le titre québécois, « Folie de graduation » ou « Patrouille du cosmos », et les autres cherchent le titre connu en France. Le premier qui trouve marque le point. En équipe, on annonce chacun son tour et une erreur passe la main.",
     minPlayers: 2,
     maxPlayers: 12,
     idealPlayersMin: 3,
@@ -401,7 +401,7 @@ export const gamesList = [
     slug: 'emo-quiz',
     description: 'Une œuvre entière résumée en cinq emojis.',
     rules:
-      "Un joueur affiche un premier emoji, puis en révèle un de plus chaque fois que personne ne trouve. L'énigme vaut cinq points au départ et en perd un à chaque emoji supplémentaire. Chacun propose un titre quand il veut : film, série, chanson ou jeu vidéo. Le premier à trouver empoche ce qui reste. En équipe, une seule proposition par énigme.",
+      "Un joueur pioche une énigme de cinq emojis et annonce d'abord le thème à voix haute : film, série, jeu vidéo, animé ou chanson. Il n'affiche ensuite qu'un seul emoji, et en révèle un de plus chaque fois que personne ne trouve, jusqu'aux cinq. L'énigme vaut cinq points au départ et en perd un à chaque emoji supplémentaire. Chacun propose un titre quand il veut, dans le thème annoncé. Le premier à trouver empoche ce qui reste. En équipe, une seule proposition par énigme.",
     minPlayers: 2,
     maxPlayers: 12,
     idealPlayersMin: 3,
@@ -593,7 +593,7 @@ export const gamesList = [
     slug: 'oui-ou-non',
     description: 'Répondez par oui ou par non, sans rien justifier.',
     rules:
-      "Un joueur lit une proposition à voix haute, parfois anodine mais surtout embarrassante. Les autres répondent en même temps, à main levée, par oui ou par non, sans jamais justifier ni nuancer. On enchaîne (tant que l'ambiance le permet).",
+      "Un joueur lit une proposition à voix haute : un comportement, parfois anodin mais surtout embarrassant, ou une opinion bien tranchée. Les autres répondent en même temps, à main levée, par oui ou par non, sans jamais justifier ni nuancer. On enchaîne (tant que l'ambiance le permet).",
     minPlayers: 3,
     maxPlayers: 14,
     idealPlayersMin: 4,

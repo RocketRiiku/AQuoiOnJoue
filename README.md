@@ -144,6 +144,21 @@ kit : sans quoi le bouton « Lancer le jeu » surgirait avant l'écran qui va av
 Un jeu du tableur qui déclare `prompts` mais n'a pas encore son kit n'a donc
 aucun de ces champs ici, et c'est un état normal.
 
+**La typographie se normalise au passage**, et c'est à refaire à chaque import.
+Le tableur écrit l'apostrophe courbe, le site l'apostrophe droite dans les
+`rules`, les `description` et le contenu tiré — seuls les `title` gardent la
+courbe, puisqu'ils sont la clé de jointure. Les guillemets deviennent des
+chevrons, et le tiret cadratin disparaît des textes affichés
+(cf. [`docs/boutons.md`](docs/boutons.md#la-ponctuation-des-libellés)) : c'est le
+seul endroit où le site s'écarte volontairement du tableur, la correction étant
+ensuite rapatriée là-bas. `La blessure critique` perd en plus le numéro `N —`
+qui préfixe chacun de ses effets, la position dans le tableau portant la face.
+
+**Une resynchronisation remplace, elle ne fusionne pas.** Une passe d'écriture
+réécrit les lignes en place autant qu'elle en ajoute : *Le Joker* n'a gardé que
+8 de ses 55 questions d'origine, *Du Coq à l'Âne* 7 sur 50. Reprendre le jeu
+entier depuis le tableur est le seul geste sûr.
+
 **En cas de contradiction, l'ordre est : le site, puis le tableur, puis la
 documentation.** Le code et le tableur sont les deux sources vivantes ; ce
 README et le document de référence sont ce qui vieillit — décomptes, listes de
@@ -1044,9 +1059,12 @@ npm run build:fonts
 
 ## Tests
 
-537 tests. [`src/App.test.jsx`](src/App.test.jsx) suit des **parcours complets**
-plutôt que des fonctions isolées : consulter un jeu et revenir, filtrer,
-composer puis dérouler une soirée, ouvrir un lien partagé.
+358 tests, comptés avec `npx vitest run --dir src`. Un `npm test` nu en annonce
+537 tant que le worktree oublié décrit dans [Pièges
+connus](#pièges-connus) traîne : c'est le même piège, et le chiffre de ce
+paragraphe y était tombé. [`src/App.test.jsx`](src/App.test.jsx) suit des
+**parcours complets** plutôt que des fonctions isolées : consulter un jeu et
+revenir, filtrer, composer puis dérouler une soirée, ouvrir un lien partagé.
 
 Ils existent parce que deux régressions bloquantes sont parties en production
 sans qu'aucun test unitaire ne les voie — aucun ne cliquait sur une carte. Toute
