@@ -329,26 +329,41 @@ function EcranVote({
 
   const gains = regles.resoudre({ courant, trouveurs, enJeu: enJeu(etat) });
 
+  // Le rôle suit la phase, et le vote en est une : « Joueur 3 imite », « Joueur 1
+  // a raconté ». Sans rôle déclaré, le nom seul valait mieux que rien.
+  const nomCourant = etat.joueurs[courant];
+  const annonceCourant = regles.roleCourant
+    ? `${nomCourant} ${regles.roleCourant}`
+    : nomCourant;
+
   return (
     // `flex-1` et non une hauteur minimale : le panneau donne sa hauteur, l'écran
     // la remplit. Une valeur fixe laissait du décor à nu sous les écrans courts.
     <div className="flex flex-col flex-1">
       {entete}
 
-      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-4 text-center">
-        Le vote
-      </p>
-      {/* Deux crans sous la scène des phases : ici, ce qu'on doit lire de loin,
-          ce sont les noms qu'on désigne, pas la question. En 48 px elle prenait
-          trois lignes et poussait le bouton sous la ligne de flottaison. */}
+      {/* **Le joueur dont c'est le tour, nommé.** L'écran demandait « Qui a
+          reconnu le son ? » sans jamais dire qui l'avait produit. Chez Le Liars
+          Club on arrivait au moins d'une phase qui l'annonçait ; Tudum n'en
+          déclare aucune, si bien que son joueur courant n'apparaissait nulle part
+          — d'où l'impression d'un écran manquant.
+
+          C'est la scène de l'écran, donc le grand corps : « le nom du joueur qui
+          parle » est ce qu'on doit lire de loin, téléphone posé au milieu de la
+          table (docs/boutons.md). La question passe en petites capitales à sa
+          place, et remplace le libellé « Le vote » — elle dit déjà de quoi il
+          s'agit, et trois textes empilés poussaient le bouton trop bas. */}
       <p
-        className="font-titre text-brique text-center leading-tight mt-2 text-2xl sm:text-3xl break-words"
+        className="font-titre text-brique text-center leading-tight mt-4 text-2xl sm:text-3xl break-words"
         role="status"
       >
+        {annonceCourant}
+      </p>
+      <p className="font-titre text-sm uppercase tracking-wide text-ardoise/70 mt-2 text-center">
         {regles.questionTrouveurs}
       </p>
       {regles.consigneVote && (
-        <p className="text-ardoise font-texte text-sm mt-2 max-w-md mx-auto text-center">
+        <p className="text-ardoise font-texte text-sm mt-1 max-w-md mx-auto text-center">
           {regles.consigneVote}
         </p>
       )}

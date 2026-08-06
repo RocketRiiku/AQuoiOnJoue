@@ -34,6 +34,12 @@ import { melangeAleatoire } from './pioche';
  * - `auFil` — l'événement tombe n'importe quand, on tape la ligne du joueur ;
  * - `parTour` — un joueur désigné, tout le monde répond, on résout d'un coup ;
  * - `duel` — deux joueurs tirés au sort s'affrontent.
+ *
+ * **`roleCourant` nomme celui dont c'est le tour, sur l'écran de vote.** Sans lui,
+ * l'écran demandait « Qui a reconnu le son ? » sans jamais dire qui l'avait
+ * produit — et Tudum ne déclarant aucune phase, son joueur courant n'était annoncé
+ * nulle part de toute la partie. Le champ existait déjà pour ça et n'était lu par
+ * personne : c'est ce qui donnait l'impression d'un écran manquant.
  */
 const JEUX = {
   'qui-rit-sort': {
@@ -56,6 +62,9 @@ const JEUX = {
   'liars-club': {
     forme: 'parTour',
     questionTrouveurs: 'Qui a trouvé la vraie histoire ?',
+    // Au passé : au moment du vote, les trois anecdotes sont racontées. Le rôle
+    // suit la phase, et le vote en est une (voir `roleCourant`).
+    roleCourant: 'a raconté',
     rappel:
       'Chacun son tour, trois anecdotes : une vraie, deux inventées. La table interroge une minute. Puis tout le monde vote en même temps.',
     /**

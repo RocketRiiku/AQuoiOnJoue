@@ -317,4 +317,16 @@ describe('feuille de match — les barèmes écrits jeu par jeu', () => {
     expect(reglesDe('qui-rit-sort').seuil).toBe(2);
     expect(reglesDe('sur-parole').seuil).toBe(3);
   });
+
+  it('tout jeu joué par tours nomme celui dont c’est le tour', () => {
+    // `roleCourant` a vécu un temps déclaré et jamais lu : l'écran de vote
+    // demandait « Qui a reconnu le son ? » sans dire qui l'avait produit, et
+    // Tudum, qui ne déclare aucune phase, n'annonçait son joueur courant nulle
+    // part de toute la partie. Un champ mort ne se voit pas — celui-ci, oui.
+    for (const slug of ['liars-club', 'tudum']) {
+      const regles = reglesDe(slug);
+      expect(regles.forme, slug).toBe('parTour');
+      expect(regles.roleCourant, slug).toBeTruthy();
+    }
+  });
 });

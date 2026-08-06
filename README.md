@@ -516,6 +516,14 @@ bouton. **Le rôle du joueur suit la phase** : « Joueur 1 raconte », puis
 « Joueur 1 répond ». L'écran annonçait qu'il racontait sous le titre « LES
 QUESTIONS », où il ne raconte plus.
 
+**Le vote est une phase comme les autres, et nomme donc son joueur** : « Joueur 1
+a raconté », « Joueur 3 imite ». Il demandait « Qui a reconnu le son ? » sans
+jamais dire qui l'avait produit — et Tudum ne déclarant aucune phase, son joueur
+courant n'apparaissait nulle part de toute la partie. On avait l'impression d'un
+écran manquant. Le champ `roleCourant` existait pour ça depuis le début et
+n'était lu par personne : un test le réclame maintenant pour tout jeu joué par
+tours, parce qu'une donnée morte ne se voit pas.
+
 La progression n'affiche **qu'une échelle**. « Tour 1 sur 5 » surmontait trois
 segments dont deux remplis, qui comptaient en fait les phases : deux comptes
 superposés sans qu'on sache lequel on lisait. Les segments comptent désormais les

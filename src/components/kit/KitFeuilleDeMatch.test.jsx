@@ -190,7 +190,10 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
     expect(screen.getByText('Les questions')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /Passer au vote/ }));
-    expect(screen.getByText('Le vote')).toBeInTheDocument();
+    // Le vote nomme celui dont on juge les anecdotes, et la question dit ce qu'on
+    // cherche : le libellé « Le vote » ne portait ni l'un ni l'autre.
+    expect(screen.getByText('Joueur 1 a raconté')).toBeInTheDocument();
+    expect(screen.getByText('Qui a trouvé la vraie histoire ?')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Compter les points/ })).toBeInTheDocument();
   });
 
@@ -286,6 +289,26 @@ describe('KitFeuilleDeMatch — le tour qu’on résout (Le Liars Club)', () => 
     expect(screen.getByText('Tour de table complet')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Tout le monde est passé/ }));
     expect(screen.getByRole('table', { name: /Classement par joueur/ })).toBeInTheDocument();
+  });
+
+  it('annonce qui doit imiter, et suit le tour de table', async () => {
+    /**
+     * Tudum ne déclare aucune phase : l'écran de vote est le seul écran d'un tour,
+     * et il n'annonçait nulle part le joueur dont c'était le tour. On lisait « Qui
+     * a reconnu le son ? » sans savoir qui devait le produire — l'impression d'un
+     * écran manquant, alors que `roleCourant` existait déjà et n'était lu par
+     * personne.
+     */
+    monter('tudum', 3);
+    await ouvrirLaFeuille();
+
+    expect(screen.getByText('Joueur 1 imite')).toBeInTheDocument();
+    // Et celui qui imite ne figure pas parmi ceux qu'on désigne.
+    expect(screen.queryByRole('button', { name: /^Joueur 1 a trouvé$/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Joueur 2 a trouvé$/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /Compter les points/ }));
+    expect(screen.getByText('Joueur 2 imite')).toBeInTheDocument();
   });
 
   it('replie le tableau derrière son bandeau, correction comprise', async () => {
