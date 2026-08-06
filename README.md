@@ -1059,10 +1059,10 @@ npm run build:fonts
 
 ## Tests
 
-358 tests, comptés avec `npx vitest run --dir src`. Un `npm test` nu en annonce
-537 tant que le worktree oublié décrit dans [Pièges
-connus](#pièges-connus) traîne : c'est le même piège, et le chiffre de ce
-paragraphe y était tombé. [`src/App.test.jsx`](src/App.test.jsx) suit des
+358 tests. Ce paragraphe en a annoncé 537, chiffre gonflé par un worktree
+oublié — le piège décrit dans [Pièges connus](#pièges-connus), auquel le README
+avait donc cédé lui-même. Si le compte s'envole à nouveau, c'est là qu'il faut
+regarder avant de se réjouir. [`src/App.test.jsx`](src/App.test.jsx) suit des
 **parcours complets** plutôt que des fonctions isolées : consulter un jeu et
 revenir, filtrer, composer puis dérouler une soirée, ouvrir un lien partagé.
 
