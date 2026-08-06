@@ -701,13 +701,19 @@ l'énoncé pour montrer où était le piège. Les mots appartiennent au jeu — 
 résumé » et « Les cinq erreurs » chez Le Fitch, « L'énoncé » et « La réponse »
 ailleurs.
 
-**Une zone qui déborde le dit.** Le résumé du Fitch s'arrêtait au milieu d'un mot
-sans rien annoncer des dix lignes suivantes, et une liste de seize joueurs bornée à
-quatre lignes laissait croire qu'il n'y avait que quatre joueurs. Un dégradé et une
-flèche bordent donc toute zone qui continue, du côté où elle continue
+**Un texte qui continue dans son cadre le dit.** Le résumé du Fitch s'arrêtait au
+milieu d'un mot sans rien annoncer des dix lignes suivantes : un dégradé et une
+flèche bordent donc la carte, du côté où elle continue
 ([`OmbreDefilement`](src/components/kit/OmbreDefilement.jsx),
-[`useDefilement`](src/utils/useDefilement.js)) — voir
-[`docs/boutons.md`](docs/boutons.md#une-zone-qui-défile-le-dit).
+[`useDefilement`](src/utils/useDefilement.js)).
+
+**La liste des joueurs, elle, s'affiche en entier**, quitte à ce que la page défile.
+Elle a été plafonnée et bordée du même repère un temps : sous une liste de lignes
+qu'on tape, une flèche ressemble à un bouton et donne envie d'être cliquée, là où
+dans une carte elle se lit comme du texte. Et un joueur caché est un joueur qui ne
+marque pas. On y perd le bouton principal toujours au même endroit à effectif
+élevé — arbitrage assumé, voir
+[`docs/boutons.md`](docs/boutons.md#ce-qui-défile-dans-un-cadre-le-dit--le-reste-ne-défile-pas).
 
 Le défaut derrière était pire que l'absence de repère : une zone défilante dont le
 contenu est **centré** déborde des *deux* côtés, et le haut devient inatteignable —

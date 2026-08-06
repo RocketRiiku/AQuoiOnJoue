@@ -405,27 +405,37 @@ au-dessus de lui grandit avec son contenu. Les écrans qui doivent loger plusieu
 blocs bornent donc les leurs en `svh`, comme les hauteurs minimales du site. À
 revoir le jour où le panneau aura une hauteur propre.
 
-### Une zone qui défile le dit
+### Ce qui défile dans un cadre le dit ; le reste ne défile pas
 
-**Une zone coupée net passe pour une zone finie.** Le résumé du Fitch s'arrêtait
-au milieu d'un mot sans rien annoncer des dix lignes suivantes, et une liste de
-seize joueurs bornée à quatre lignes laissait croire qu'il n'y avait que quatre
-joueurs. Dès qu'une zone déborde, elle porte donc un dégradé et une flèche à ce
-bord — [`OmbreDefilement`](../src/components/kit/OmbreDefilement.jsx), piloté par
+**Une zone coupée net passe pour une zone finie.** Le résumé du Fitch s'arrêtait au
+milieu d'un mot sans rien annoncer des dix lignes suivantes. Un texte qui continue
+dans son cadre porte donc un dégradé et une flèche à ce bord —
+[`OmbreDefilement`](../src/components/kit/OmbreDefilement.jsx), piloté par
 [`useDefilement`](../src/utils/useDefilement.js).
 
-Quatre règles :
+**Mais ce repère n'appartient qu'à ce qui a un cadre.** Sous une liste de lignes
+qu'on tape, la même flèche ressemble à un bouton et donne envie d'être cliquée ;
+dans une carte, entourée de son bord et de son fond, elle se lit comme du texte qui
+continue. La liste des joueurs du quiz d'animateur a fait les deux, et c'est la
+seconde version qui tient : **une liste s'affiche en entier**, quitte à ce que la
+page défile. Un joueur caché est un joueur qui ne marque pas, et c'est plus grave
+qu'un écran trop long.
+
+On y perd le bouton principal toujours au même endroit, à effectif élevé. C'est un
+arbitrage assumé, pas un oubli : à seize joueurs il passe sous la ligne de
+flottaison, et on descend le chercher.
+
+Quatre règles pour le repère, là où il s'applique :
 
 - **seulement quand il y a quelque chose au-delà**, et de ce côté-là. Une flèche
   qui reste allumée en bout de course ne veut plus rien dire, et devient un décor
   qu'on ne regarde plus ;
-- **un dégradé, pas une barre.** Le texte s'éteint dans la couleur du fond — celle
-  de la carte, ou celle du panneau sous une liste. Plus haut qu'une ligne, sinon la
-  dernière se lit encore au travers et la flèche lui passe dessus ;
+- **un dégradé, pas une barre.** Le texte s'éteint dans la couleur du fond. Plus
+  haut qu'une ligne, sinon la dernière se lit encore au travers et la flèche lui
+  passe dessus ;
 - **posé hors de la zone qui défile.** Un calque absolu placé *dans* un conteneur
-  défilant suit le contenu et sort du cadre au premier geste. Et l'enveloppe doit
-  épouser la zone : un `flex-1` de trop mettait la flèche du bas cent pixels sous
-  la dernière ligne ;
+  défilant suit le contenu et sort du cadre au premier geste ; et l'enveloppe doit
+  épouser la zone, sans quoi la flèche du bas flotte loin sous la dernière ligne ;
 - **décoratif**, `aria-hidden`. Le contenu entier est déjà dans l'arbre
   d'accessibilité et lu d'un bloc : un lecteur d'écran n'a rien à faire défiler.
 

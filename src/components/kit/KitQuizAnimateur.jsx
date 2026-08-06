@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useReducer, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useReducer, useState } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -21,7 +21,6 @@ import BandeauScores, { DialogueScores } from './BandeauScores';
 import CarteTiree from './CarteTiree';
 import Chrono from './Chrono';
 import Compteur from './Compteur';
-import OmbreDefilement from './OmbreDefilement';
 import LigneJoueur from './LigneJoueur';
 import MenuPartie from './MenuPartie';
 import Progression from './Progression';
@@ -30,7 +29,6 @@ import { contenuDuJeu } from '../../data/lancerJeu';
 import { libelles } from '../../utils/pioche';
 import { ecrirePartie, effacerPartie, partieDuJeu } from '../../utils/partieEnCours';
 import { enJeu, nomsJoueurs, vainqueurs } from '../../utils/feuilleDeMatch';
-import { useDefilement } from '../../utils/useDefilement';
 import {
   avancement,
   baremeDe,
@@ -247,8 +245,6 @@ function ApercuGains({ gains, joueurs, unite }) {
  */
 function Designation({ etat, regles, bareme, unite, onValider }) {
   const [tapes, setTapes] = useState(() => etat.joueurs.map(() => 0));
-  const liste = useRef(null);
-  const resteJoueurs = useDefilement(liste, [etat.joueurs.length]);
 
   // Chaque carte repart d'une ardoise vide : les points du tour d'avant sont
   // déjà comptés.
@@ -274,30 +270,20 @@ function Designation({ etat, regles, bareme, unite, onValider }) {
         </p>
       )}
 
-      {/* La liste défile dans sa propre zone, et son plafond est en hauteur
-          d'écran.
-          `flex-1` ne suffisait pas : rien dans la charpente du site ne donne au
-          panneau d'un kit une hauteur définie, si bien qu'un `flex-1` grandit
-          avec son contenu au lieu de se partager une place finie — et à cinq
-          joueurs, le bouton passait sous la ligne de flottaison. Le `svh` borne
-          ce que la liste peut réclamer, comme il borne la carte juste au-dessus.
-          À revoir le jour où le panneau aura une hauteur propre : tout ceci
-          redeviendra alors inutile.
-
-          L'enveloppe ne défile pas, la liste dedans si : c'est ce qui permet aux
-          repères de rester plaqués aux bords. À seize joueurs — le maximum du
-          juste chiffre — une liste coupée net laissait croire qu'il n'y en avait
-          que quatre. */}
-      {/* L'enveloppe épouse la liste au lieu de prendre la place restante : les
-          repères se plaquent à ses bords, et un `flex-1` ici mettait la flèche du
-          bas cent pixels sous la dernière ligne. Le vide se reporte sur la marge
-          automatique du bloc d'en dessous, qui garde le bouton contre le bas. */}
-      <div className="relative min-h-0 mt-3">
-        {resteJoueurs.dessus && <OmbreDefilement position="haut" fond="creme" />}
-        <ul
-          ref={liste}
-          className="max-h-[18svh] overflow-y-auto flex flex-col gap-2 list-none"
-        >
+      {/**
+       * La liste entière, quitte à ce que la page défile.
+       *
+       * Elle a été plafonnée et défilante un temps, avec un repère à chaque bord
+       * comme la carte : c'était une erreur. Sous une liste de lignes qu'on tape,
+       * une flèche ressemble à un bouton et donne envie d'être cliquée — alors que
+       * dans une carte, entourée de son cadre, elle se lit comme du texte qui
+       * continue. Et un joueur caché est un joueur qui ne marque pas.
+       *
+       * On y perd le bouton toujours au même endroit, à effectif élevé : le
+       * `mt-auto` du bloc d'en dessous ne le tient plus contre le bas de l'écran
+       * dès que la liste dépasse. C'est le choix assumé — voir docs/boutons.md.
+       */}
+      <ul className="flex flex-col gap-2 mt-3 list-none">
         {etat.joueurs.map((nom, joueur) => (
           <li key={nom}>
             {bareme.saisie ? (
@@ -337,9 +323,7 @@ function Designation({ etat, regles, bareme, unite, onValider }) {
             )}
           </li>
         ))}
-        </ul>
-        {resteJoueurs.dessous && <OmbreDefilement position="bas" fond="creme" />}
-      </div>
+      </ul>
 
       <div className="mt-auto max-w-sm w-full mx-auto">
         <div className="mt-3">
