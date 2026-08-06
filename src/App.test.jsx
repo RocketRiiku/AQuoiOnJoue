@@ -646,6 +646,28 @@ describe('parcours : lancer le kit d’un jeu', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('Jeu 1 sur 2');
   });
 
+  it('déroule un quiz d’animateur de la fiche au point marqué', async () => {
+    // Le parcours entier de la cinquième famille : on lit, on révèle, on désigne,
+    // et on repart vers la fiche. Les six jeux partagent cet enchaînement.
+    window.history.replaceState({}, '', '/?jeu=le-souffleur');
+    const u = rendre();
+    await screen.findByRole('heading', { name: 'Le souffleur', level: 2 });
+
+    await u.click(screen.getByRole('button', { name: /lancer le jeu/i }));
+    await u.click(await screen.findByRole('button', { name: /première carte/i }));
+
+    expect(await screen.findByText(/réplique 1 sur 156/i)).toBeInTheDocument();
+    await u.click(screen.getByRole('button', { name: /révéler la réponse/i }));
+    await u.click(screen.getByRole('button', { name: /joueur 2 a trouvé/i }));
+    await u.click(screen.getByRole('button', { name: /compter les points/i }));
+
+    expect(await screen.findByText(/joueur 2 · 1 point/i)).toBeInTheDocument();
+    expect(screen.getByText(/réplique 2 sur 156/i)).toBeInTheDocument();
+
+    await quitterVersLaListe(u);
+    expect(window.location.search).toBe('');
+  });
+
   it('le dit franchement sur un lien de kit qui n’existe pas encore', async () => {
     window.history.replaceState({}, '', '/?jeu=undercover&kit=1');
     const u = rendre();

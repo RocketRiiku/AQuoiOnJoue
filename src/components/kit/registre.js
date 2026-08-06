@@ -2,6 +2,7 @@ import { kitJouable } from '../../utils/kit';
 import KitBlessureCritique from './KitBlessureCritique';
 import KitDefileur from './KitDefileur';
 import KitFeuilleDeMatch from './KitFeuilleDeMatch';
+import KitQuizAnimateur from './KitQuizAnimateur';
 import KitTroisFoisRien from './KitTroisFoisRien';
 
 /**
@@ -19,7 +20,8 @@ import KitTroisFoisRien from './KitTroisFoisRien';
  * voix haute, et tout ce qui les distingue — le mot du bouton de tirage, la
  * présence d'un chrono — se déduit du catalogue. Ajouter un septième jeu de
  * cette forme ne coûterait qu'une ligne. Cinq autres pointent vers
- * `KitFeuilleDeMatch` : celles-là ne tirent rien du tout, elles comptent.
+ * `KitFeuilleDeMatch` : celles-là ne tirent rien du tout, elles comptent. Six
+ * enfin vers `KitQuizAnimateur`, qui fait les deux — tirer, révéler, compter.
  *
  * La blessure critique est de la même famille que le défileur et garde pourtant
  * son écran : son tirage est un jet de dé, donc **avec remise**. Le défileur,
@@ -32,6 +34,12 @@ import KitTroisFoisRien from './KitTroisFoisRien';
 const KITS = {
   'liars-club': KitFeuilleDeMatch,
   'le-joker': KitDefileur,
+  'sorry-mon-french': KitQuizAnimateur,
+  'lost-in-translation': KitQuizAnimateur,
+  'le-fitch': KitQuizAnimateur,
+  'le-souffleur': KitQuizAnimateur,
+  'soyez-logique': KitQuizAnimateur,
+  'le-juste-chiffre': KitQuizAnimateur,
   'avez-vous-confiance': KitFeuilleDeMatch,
   'la-blessure-critique': KitBlessureCritique,
   'oui-ou-non': KitDefileur,

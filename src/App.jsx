@@ -310,9 +310,13 @@ function App() {
                       <div className="w-10 h-14 shrink-0 rounded-lg overflow-hidden shadow-md -rotate-2 bg-paille">
                         <GameThumb game={jeuDuKit} />
                       </div>
+                      {/* Le retrait à droite réserve la place des **deux** icônes
+                          du coin, le « ? » des règles et le « ⋯ » du menu. Il n'en
+                          comptait qu'une, et les titres longs passaient dessous —
+                          « La blessure critique », « Sorry mon french ». */}
                       <h2
                         id="titre-kit"
-                        className="font-titre text-2xl text-brique leading-tight pr-11"
+                        className="font-titre text-2xl text-brique leading-tight pr-24"
                       >
                         {jeuDuKit.title}
                       </h2>
@@ -324,7 +328,7 @@ function App() {
 
                           Une action qui porte sur l'objet affiché, donc une
                           icône seule en haut à droite (docs/boutons.md). Elle
-                          vaut pour les quatre orchestrateurs, d'où sa place
+                          vaut pour les cinq orchestrateurs, d'où sa place
                           ici plutôt que dans chacun d'eux. */}
                       <div className="absolute top-0 right-0 flex items-center gap-2">
                         <BoutonIcone

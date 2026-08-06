@@ -222,7 +222,9 @@ export const gamesList = [
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Intermédiaire',
     alcohol: false,
-    image: '/CarteSorrymonfrench.png'
+    image: '/CarteSorrymonfrench.png',
+    kit: ['prompts'],
+    scoring: 'compteur'
   },
   {
     id: 9,
@@ -241,7 +243,9 @@ export const gamesList = [
     material: [],
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Intermédiaire',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    scoring: 'compteur'
   },
   {
     id: 10,
@@ -336,7 +340,9 @@ export const gamesList = [
     material: [],
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Intermédiaire',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    scoring: 'compteur'
   },
   {
     id: 15,
@@ -374,7 +380,9 @@ export const gamesList = [
     material: [],
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Intermédiaire',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    scoring: 'compteur'
   },
   {
     id: 17,
@@ -431,7 +439,10 @@ export const gamesList = [
     material: ['Papier & stylo'],
     typeGame: ['Chacun pour soi'],
     level: 'Expert',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    scoring: 'compteur',
+    chronoTour: 60
   },
   {
     id: 20,
@@ -450,7 +461,9 @@ export const gamesList = [
     material: ['Papier & stylo'],
     typeGame: ['Quiz', 'Chacun pour soi'],
     level: 'Intermédiaire',
-    alcohol: false
+    alcohol: false,
+    kit: ['prompts'],
+    scoring: 'compteur'
   },
   {
     id: 21,

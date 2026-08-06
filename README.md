@@ -151,8 +151,10 @@ courbe, puisqu'ils sont la clé de jointure. Les guillemets deviennent des
 chevrons, et le tiret cadratin disparaît des textes affichés
 (cf. [`docs/boutons.md`](docs/boutons.md#la-ponctuation-des-libellés)) : c'est le
 seul endroit où le site s'écarte volontairement du tableur, la correction étant
-ensuite rapatriée là-bas. `La blessure critique` perd en plus le numéro `N —`
-qui préfixe chacun de ses effets, la position dans le tableau portant la face.
+ensuite rapatriée là-bas. Deux jeux ont leur règle propre : *La blessure
+critique* perd le numéro `N —` qui préfixe chacun de ses effets, la position dans
+le tableau portant la face, et *Sorry mon french* voit ses « / » devenir de vrais
+sauts de ligne — ses paroles se lisent vers par vers.
 
 **Une resynchronisation remplace, elle ne fusionne pas.** Une passe d'écriture
 réécrit les lignes en place autant qu'elle en ajoute : *Le Joker* n'a gardé que
@@ -308,7 +310,7 @@ Certains jeux ne se contentent pas de règles à lire : il faut tirer des mots,
 tenir un chrono, compter les points. C'est le rôle du kit, ouvert par le bouton
 **« Lancer le jeu »** de la fiche et du déroulé de soirée.
 
-**Treize jeux ont leur kit écrit**, portés par quatre orchestrateurs. Le bouton
+**Dix-neuf jeux ont leur kit écrit**, portés par cinq orchestrateurs. Le bouton
 est attendu par 41 jeux du catalogue : 36 déclarent un module de `kit`, cinq
 n'ont qu'un score ou un chrono. Le premier kit écrit fut celui de *Trois fois rien*,
 choisi comme banc d'essai parce que c'est le plus exigeant du catalogue :
@@ -323,10 +325,11 @@ Les suivants arrivent **par famille de mécanique**, pas jeu par jeu — voir
 ```
 src/data/lancerJeu.js              le contenu tiré (l'onglet « LancerJeu »)
 src/utils/kit.js                   règles d'affichage et invariants, sans JSX
-src/utils/pioche.js                le mélange, commun à tous les kits
+src/utils/pioche.js                le mélange et le nom de ce qu'on tire
 src/utils/troisFoisRien.js         le déroulé d'un jeu, en réducteur pur
 src/utils/defileur.js              le déroulé de six jeux, en réducteur pur
 src/utils/feuilleDeMatch.js        le décompte de cinq jeux, en réducteur pur
+src/utils/quizAnimateur.js         le déroulé de six quiz, en réducteur pur
 src/utils/blessureCritique.js      le jet de dé, en réducteur pur
 src/utils/sonKit.js                tic-tac et vibration, sans fichier son
 src/utils/partieEnCours.js         la partie conservée entre deux visites
@@ -348,6 +351,7 @@ src/components/kit/
   KitTroisFoisRien.jsx             l'orchestrateur de ce jeu
   KitDefileur.jsx                  l'orchestrateur des six « tirer et montrer »
   KitFeuilleDeMatch.jsx            l'orchestrateur des cinq « rien qu'un score »
+  KitQuizAnimateur.jsx             l'orchestrateur des six « tirer et corriger »
   KitBlessureCritique.jsx          l'orchestrateur du jet de dé
 ```
 
@@ -390,10 +394,11 @@ sont de courts segments gris.
 rend testable la mécanique délicate — le pot qui se vide met fin à la manche
 même s'il reste du temps, un mot passé repart au fond, l'équipe qui n'a pas fini
 ouvre la manche suivante. Vingt-quatre tests couvrent ces règles sans monter une
-seule ligne de DOM. La règle vaut pour les quatre kits :
+seule ligne de DOM. La règle vaut pour les cinq kits :
 [`troisFoisRien.js`](src/utils/troisFoisRien.js),
 [`defileur.js`](src/utils/defileur.js),
-[`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js) et
+[`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js),
+[`quizAnimateur.js`](src/utils/quizAnimateur.js) et
 [`blessureCritique.js`](src/utils/blessureCritique.js) ne contiennent pas une
 ligne de rendu. Le dernier va plus loin : ses cinq **barèmes** y sont des
 fonctions pures, si bien que « le conteur marque ce qu'il a trompé » se vérifie
@@ -438,7 +443,7 @@ le jeu plus sûrement que d'arriver au bout d'une liste de cinquante. Une option
 de plus sur un composant partagé, pour une mécanique aussi différente, aurait
 coûté plus cher que vingt lignes à part.
 
-**La barre du bas ne garde que ce qui sert à chaque tour**, dans les quatre kits.
+**La barre du bas ne garde que ce qui sert à chaque tour**, dans les cinq kits.
 « Proposition suivante » voisinait avec « Retour à la fiche » tandis que
 « Proposition précédente » vivait une rangée plus bas : reculer et avancer forment
 une paire, et sont désormais collés, retour à gauche. Remélanger, couper le son,
@@ -643,7 +648,7 @@ boutons. La carte monte à 422 px sur un écran de 812, le vide se répartit de 
 et d'autre au lieu de s'accumuler dessous, et les écrans courts se centrent en
 entier.
 
-**Les quatre kits suivent la même charpente**, y compris `EcranTour` : sa racine ne
+**Les cinq kits suivent la même charpente**, y compris `EcranTour` : sa racine ne
 remplissait pas le panneau, si bien que le `flex-1` de sa carte n'avait rien où
 grandir et que le mot à faire deviner restait petit au milieu d'un écran à moitié
 vide. Il passe de 144 à 230 px sur téléphone, 394 sur ordinateur, sans toucher à ce
@@ -669,19 +674,59 @@ Un « ? » sur la ligne du titre rouvre les règles du jeu en modale, pendant to
 la partie. On lit la fiche, on lance le jeu, et vingt minutes plus tard quelqu'un
 arrive : sans lui, il faut quitter le kit — donc mettre la partie de côté — pour
 relire trois phrases. Il vit dans [`App.jsx`](src/App.jsx), sur le bandeau commun
-aux quatre orchestrateurs, et la coquille de la modale est celle de
+aux cinq orchestrateurs, et la coquille de la modale est celle de
 [`Dialogue.jsx`](src/components/Dialogue.jsx), sortie de `DialoguePot` à cette
 occasion : les quinze lignes de piège à focus n'ont pas à exister deux fois.
 
+### Le quiz d'animateur
+
+Six jeux où quelqu'un pose et corrige : *Le souffleur*, *Le juste chiffre*,
+*Sorry mon french*, *Lost in translation*, *Soyez logique*, *Le Fitch*. Un tour y
+tient en trois gestes — on tire, on révèle, on désigne qui marque — et c'est la
+seule famille à réclamer les trois. Elle est la composition des deux précédentes :
+la pile vient du défileur, le score de la feuille de match, et l'état porte les
+champs que `enJeu` et `vainqueurs` attendent pour que ces deux fonctions servent
+telles quelles. La nouveauté tient en un booléen, `revele`, qui coupe le tour en
+deux : avant, la table cherche ; après, elle compte.
+
+**Une seule carte à l'écran, jamais les deux textes.** *Le Fitch* l'imposait —
+cinq cents signes de résumé contre deux cents de correction — et ce qui valait
+pour lui vaut pour les six : voir la question, la réponse *et* les joueurs à
+désigner poussait l'écran de trois cents pixels, bouton principal compris. La
+carte porte donc les deux textes tour à tour, avec un bouton pour basculer, et
+c'est de toute façon le geste du jeu : on annonce la réponse, puis on relit
+l'énoncé pour montrer où était le piège. Les mots appartiennent au jeu — « Le
+résumé » et « Les cinq erreurs » chez Le Fitch, « L'énoncé » et « La réponse »
+ailleurs.
+
+**Le barème, lui, ne se déduit pas de `scoring`.** Les six portent `compteur`, et
+la colonne dit « +1 / −1 par joueur » : vrai pour quatre d'entre eux. *Sorry mon
+french* donne deux points à qui trouve le titre *et* l'artiste, ce qu'une seconde
+tape sur la même ligne suffit à dire. *Le Fitch* compte cinq erreurs moins les
+fausses alertes, soit un solde de −5 à +5 : ce n'est plus une désignation mais une
+**saisie de nombre**, d'où le compteur `< n >` par joueur plutôt que la ligne à
+taper. Les deux formes vivent dans
+[`quizAnimateur.js`](src/utils/quizAnimateur.js), comme les trois `forme`s de la
+feuille de match.
+
+**Une seule échelle à la fois.** *Le juste chiffre* annonce cinq questions par
+partie : c'est ce compte-là que la table suit, et son écran affiche donc
+`Progression` sans le compteur de pile. Les cinq autres n'ont pas de longueur
+déclarée : leur repère est la pile, et « Terminer » dort dans le menu.
+
+Les paroles de *Sorry mon french* portent de **vrais sauts de ligne** : on lit une
+chanson vers par vers, et d'un bloc elle ne veut plus rien dire. Le « / » du
+tableur devient un retour à la ligne à l'import, et la carte les rend tels quels.
+
 ### Les familles qui restent
 
-Les 28 kits restants ont été regroupés par **ce que l'écran doit savoir faire**,
+Les 22 kits restants ont été regroupés par **ce que l'écran doit savoir faire**,
 pas par thème de jeu — c'est ça qui décide si deux jeux partagent un
 orchestrateur. Par ordre de rendement :
 
 | Famille | Jeux | Ce que l'écran fait |
 | --- | --- | --- |
-| Le quiz d'animateur | 10 | tire → « Révéler » → on désigne qui marque le point |
+| Le quiz d'animateur à média | 4 | idem quiz, mais l'énoncé est une image, une vidéo ou un lien |
 | La distribution secrète | 5 | le téléphone tourne, chacun révèle puis masque |
 | Le classement à corriger | 3 | tous répondent, on révèle, on saisit des points variables |
 | Le tour de table chronométré | 3 | un thème, le chrono part, le joueur courant marque ou saute |
@@ -691,11 +736,11 @@ orchestrateur. Par ordre de rendement :
 
 Le détail, jeu par jeu :
 
-- **quiz d'animateur** — Sorry mon french, Lost in translation, Plan pas plan
-  plan, Le souffleur, Le blindlo-fi, ETSY c'était ça ?!, Le juste chiffre, Le
-  Fitch, Soyez logique, Cacophonie. C'est le défileur *plus* la brique de
-  désignation du [tableau de scores seul](#le-tableau-de-scores-seul), plus une
-  seule chose neuve : la révélation ;
+- **quiz d'animateur à média** — Plan pas plan plan (110 images film-grab), Harry
+  Cover (65 pochettes Discogs), Le blindlo-fi (70 vidéos YouTube), ETSY c'était ça
+  ?! (60 liens de recherche), Cacophonie (45 lignes de cinq vidéos). L'écran est
+  écrit, le contenu non : voir [Ce qu'il faudra régler
+  avant](#ce-quil-faudra-régler-avant-les-quiz-à-média) ;
 - **distribution secrète** — Undercover, Insider, Cow-boy, La Murder party, et
   Psycho (`regle-secrete`, la même primitive en un seul écran) ;
 - **classement à corriger** — Best-sold, Qui vient avant ?, Duo carré ou cash ? ;
@@ -703,12 +748,29 @@ Le détail, jeu par jeu :
   la chanson. C'est la famille qui recycle le plus d'`EcranTour` ;
 - **points dégressifs** — Emo'Quiz, Harry Cover.
 
-L'ordre conseillé fait de chaque étape une extension stricte de la précédente.
-Le **tableau de scores seul** a joué ce rôle et il est écrit : il a posé le
-compteur par joueur et la désignation des marqueurs sur cinq jeux sans contenu à
-tirer. Le **quiz d'animateur** n'est donc plus que la composition du défileur et
-de cette feuille, plus la révélation — c'est la prochaine étape, et la plus
-rentable du lot.
+L'ordre conseillé fait de chaque étape une extension stricte de la précédente. Les
+deux premières sont écrites : le **tableau de scores seul** a posé le compteur par
+joueur et la désignation des marqueurs, le **quiz d'animateur** n'a eu qu'à y
+ajouter la pile et la révélation. La **distribution secrète** est la prochaine, et
+la seule des grandes familles qui n'attende rien côté données.
+
+#### Ce qu'il faudra régler avant les quiz à média
+
+Trois choses, et aucune n'est un problème d'interface :
+
+1. **Plan pas plan plan fuite sa réponse dans 28 URL sur 110** : `Snowpiercer_021.jpg`,
+   `The_Joker_021.jpg`. La barre d'adresse ou un appui long donne le film. Les
+   autres jeux à média sont propres, leurs URL étant des identifiants opaques.
+2. **Les mentions légales deviendraient fausses.** Elles écrivent qu'aucune image
+   n'est chargée depuis un service tiers — c'est le principe qui a justifié
+   d'auto-héberger les polices. Rapatrier les 175 images de Plan pas plan plan et
+   Harry Cover dans `public/`, renommées, règle ce point et le précédent d'un seul
+   geste. YouTube et Etsy resteront des tiers : un paragraphe à écrire.
+3. **Cacophonie met sa réponse dans `contenu`.** Ses 45 lignes listent cinq titres
+   avec leurs artistes à côté des liens : l'arbitre a besoin des titres pour savoir
+   quoi lancer, mais rien ne peut être montré. C'est le défaut d'origine du Fitch,
+   et il faut couper `contenu` / `reponse` côté tableur. Seul jeu du catalogue dans
+   ce cas : les vingt autres sans `reponse` n'ont réellement rien à révéler.
 
 ### Ce qui reste à découpler
 
@@ -740,7 +802,7 @@ Restent deux dettes que la prochaine famille rencontrera :
   Tudum, Avez-vous confiance ?, Carte blanche. Le kit les porte jeu par jeu dans
   [`feuilleDeMatch.js`](src/utils/feuilleDeMatch.js), comme `RAPPELS` porte la
   phrase d'avant-partie du défileur : trois colonnes de plus au tableur pour cinq
-  jeux coûteraient plus cher à tenir. **À rouvrir si les 28 kits restants en
+  jeux coûteraient plus cher à tenir. **À rouvrir si les 22 kits restants en
   réclament autant** — c'est le seuil au-delà duquel la donnée doit remonter au
   tableur.
 
@@ -1059,7 +1121,7 @@ npm run build:fonts
 
 ## Tests
 
-358 tests. Ce paragraphe en a annoncé 537, chiffre gonflé par un worktree
+445 tests. Ce paragraphe en a annoncé 537, chiffre gonflé par un worktree
 oublié — le piège décrit dans [Pièges connus](#pièges-connus), auquel le README
 avait donc cédé lui-même. Si le compte s'envole à nouveau, c'est là qu'il faut
 regarder avant de se réjouir. [`src/App.test.jsx`](src/App.test.jsx) suit des
@@ -1162,22 +1224,28 @@ erreur en console : le rendu retombe simplement sur une police système.
 
 Par ordre d'intérêt selon la dernière revue :
 
-1. **Les kits de jeu** — treize sont écrits sur les 41 jeux qui attendent un
-   bouton. Les 28 restants sont regroupés par famille de mécanique, avec l'ordre
-   conseillé, dans [Les familles qui restent](#les-familles-qui-restent) : le
-   **quiz d'animateur** vient ensuite, et compte dix jeux à lui seul. Les règles
-   de sept jeux mentionnent déjà une « liste » qui n'existera qu'avec leur kit.
-2. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
+1. **Les kits de jeu** — dix-neuf sont écrits sur les 41 jeux qui attendent un
+   bouton. Les 22 restants sont regroupés par famille de mécanique, avec l'ordre
+   conseillé, dans [Les familles qui restent](#les-familles-qui-restent) : la
+   **distribution secrète** vient ensuite, cinq jeux, et c'est la seule grande
+   famille qui n'attende rien côté données.
+2. **Donner une hauteur propre au panneau d'un kit.** Rien ne le plafonne
+   aujourd'hui : `flex-1` ne partage que la place *libre*, si bien qu'un écran à
+   deux blocs pousse la page au lieu de faire défiler l'un des deux. Le quiz
+   d'animateur s'en sort avec des plafonds en `svh`, jeu par jeu, mais les 22 kits
+   à venir rencontreront le même mur — et un `overflow-y-auto` posé sous un
+   parent sans hauteur définie ne sert à rien.
+3. **Les illustrations** — 42 jeux sur 50 affichent la carte au point
    d'interrogation.
-3. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable
+4. **Tri et filtres dans l'URL** : ni l'un ni l'autre n'est partageable
    aujourd'hui, et un lien vers « les jeux courts à six » aurait du sens.
-4. **Ajout à l'écran d'accueil** (manifest + service worker) : le site est
+5. **Ajout à l'écran d'accueil** (manifest + service worker) : le site est
    léger, s'utilise sur téléphone en soirée, et fonctionnerait hors ligne.
-5. **Images en WebP** — même méthode que les polices.
-6. **Pondérer la recherche** : elle couvre aussi les règles, ce qui devient
+6. **Images en WebP** — même méthode que les polices.
+7. **Pondérer la recherche** : elle couvre aussi les règles, ce qui devient
    bruyant à cinquante jeux.
-7. **Purger les polices commerciales de l'historique Git** si le dépôt est public.
-8. **Rendre le site référençable** quand il sera prêt à être trouvé.
+8. **Purger les polices commerciales de l'historique Git** si le dépôt est public.
+9. **Rendre le site référençable** quand il sera prêt à être trouvé.
 
 ## Contribuer
 

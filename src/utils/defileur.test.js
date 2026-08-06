@@ -3,7 +3,6 @@ import {
   carteCourante,
   epuise,
   etatInitial,
-  libelles,
   rappelDe,
   reducteur,
   restantes
@@ -89,25 +88,6 @@ describe('défileur', () => {
     const cartes = [...CARTES];
     etatInitial({ cartes });
     expect(cartes).toEqual(CARTES);
-  });
-});
-
-describe('libellés du bouton de tirage', () => {
-  it.each([
-    ['question', 'Question suivante', 'Question précédente'],
-    ['proposition', 'Proposition suivante', 'Proposition précédente'],
-    ['dilemme', 'Dilemme suivant', 'Dilemme précédent'],
-    ['phrase de départ', 'Phrase suivante', 'Phrase précédente'],
-    ['sujet de débat', 'Sujet suivant', 'Sujet précédent']
-  ])('accorde « %s »', (type, suivante, precedente) => {
-    expect(libelles(type).suivante).toBe(suivante);
-    expect(libelles(type).precedente).toBe(precedente);
-  });
-
-  it('retombe sur un nom neutre pour un type inconnu', () => {
-    // Un type ajouté au tableur ne doit pas rendre le kit muet.
-    expect(libelles('haïku').suivante).toBe('Carte suivante');
-    expect(libelles(undefined).nom).toBe('Carte');
   });
 });
 

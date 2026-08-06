@@ -13,11 +13,11 @@ import CarteTiree from './CarteTiree';
 import Chrono from './Chrono';
 import MenuPartie from './MenuPartie';
 import { contenuDuJeu } from '../../data/lancerJeu';
+import { libelles } from '../../utils/pioche';
 import {
   carteCourante,
   epuise,
   etatInitial,
-  libelles,
   rappelDe,
   reducteur,
   restantes

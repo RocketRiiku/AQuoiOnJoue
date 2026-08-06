@@ -10,6 +10,9 @@
  * seul réducteur pour les six, plutôt que six copies du même écran. Seul le
  * rappel d'avant-partie s'écrit jeu par jeu (`RAPPELS`, plus bas).
  *
+ * Le nom de ce qu'on tire vit dans `pioche.js` : le quiz d'animateur en a eu
+ * besoin à son tour, et c'est le vocabulaire de LancerJeu, pas celui d'ici.
+ *
  * **La pile ne se recharge pas toute seule.** Elle est mélangée une fois au
  * départ et se parcourt sans répétition : revoir la même proposition à vingt
  * minutes d'intervalle casse le jeu bien plus sûrement que d'arriver au bout
@@ -21,36 +24,6 @@
  * retomber, et c'est précisément le sel du jeu. Voir `blessureCritique.js`.
  */
 import { melangeAleatoire } from './pioche';
-
-/**
- * Le vocabulaire du bouton de tirage, tiré du `type` de la ligne LancerJeu.
- *
- * « Question suivante » plutôt que « Suivant » : le bouton dit ce qu'il va
- * tirer, comme le déclencheur de tri dit l'ordre en cours (docs/boutons.md).
- * Le genre est porté ici parce qu'il ne se devine pas depuis le libellé.
- */
-const NOMS = {
-  question: ['Question', 'f'],
-  proposition: ['Proposition', 'f'],
-  dilemme: ['Dilemme', 'm'],
-  'phrase de départ': ['Phrase', 'f'],
-  'sujet de débat': ['Sujet', 'm']
-};
-
-/** Un type inconnu ne casse rien : il retombe sur un nom neutre. */
-const NEUTRE = ['Carte', 'f'];
-
-export function libelles(type) {
-  const [nom, genre] = NOMS[type] ?? NEUTRE;
-  const e = genre === 'f' ? 'e' : '';
-  return {
-    nom,
-    suivante: `${nom} suivant${e}`,
-    precedente: `${nom} précédent${e}`,
-    // Pour les décomptes : « 3 questions restantes ».
-    pluriel: `${nom.toLowerCase()}s`
-  };
-}
 
 /**
  * Le geste ou la règle à rappeler avant la première carte, par jeu.

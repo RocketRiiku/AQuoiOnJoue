@@ -237,6 +237,7 @@ gardent leur traitement propre, chacune cohérente en interne :
 | Compteurs `< n >` | `Header.jsx`, `kit/Compteur.jsx` | réglage d'un nombre : même famille que les pastilles, un état et non une action |
 | Zones de réponse | `kit/EcranTour.jsx` | pendant un tour, « Trouvé » et « Passer » ne sont pas des actions de panneau mais **la table de jeu** — voir ci-dessous |
 | Lignes d'une feuille de match | `kit/FeuilleDeMatch.jsx` | la ligne entière marque le point : c'est le geste du jeu, répété toute la soirée, pas une commande de panneau — même famille que les zones de réponse |
+| Lignes de désignation d'un quiz | `kit/KitQuizAnimateur.jsx` | même geste, une carte plus tard : on tape qui vient de trouver. Une seconde tape vaut deux points là où le jeu les donne (`LigneJoueur`, la brique commune) |
 | Cases d'une matrice de gains | `kit/KitFeuilleDeMatch.jsx` | les quatre issues d'un duel : on tape celle qui s'est produite. La matrice est à la fois le barème qu'on lit et la commande qu'on presse, ce qu'aucun bouton de panneau ne sait faire |
 | Contrôles de ligne | `SoireePage.jsx` | monter, descendre, retirer un jeu : micro-commandes de 16 px propres à une liste ordonnée |
 | Carte de jeu | `GameCard.jsx` | la carte entière est la zone cliquable ; le `+` en coin est une affordance de carte, pas une action de panneau |
@@ -375,6 +376,34 @@ C'est une action qui porte sur l'objet affiché, donc une icône seule en haut �
 droite — la place que ce document lui assigne, et la seule où une icône sans
 libellé est admise. Elle vit dans `App.jsx`, sur le bandeau commun aux quatre
 orchestrateurs, plutôt que dans chacun d'eux.
+
+### Un écran ne montre qu'une chose à la fois
+
+**Quand un second bloc arrive, le premier cède la place — il ne s'empile pas.**
+Le quiz d'animateur l'a appris à ses frais : la carte à lire d'un côté, la
+réponse de l'autre, et les joueurs à désigner en dessous, l'écran dépassait de
+trois cents pixels et le bouton principal tombait hors de portée. La carte porte
+donc les deux textes tour à tour, avec un bouton pour basculer.
+
+C'est aussi le geste du jeu — on annonce la réponse, puis on relit l'énoncé pour
+montrer où était le piège — et les mots de la bascule appartiennent au jeu :
+« Le résumé » et « Les cinq erreurs » chez Le Fitch, « L'énoncé » et « La
+réponse » partout ailleurs.
+
+Deux règles en découlent, valables pour tout écran de kit :
+
+- **ce qui n'est plus la vedette rapetisse**, et défile s'il ne rentre plus. Une
+  carte qui garde sa pleine hauteur après avoir cédé le premier rôle vole la
+  place de ce qui l'a remplacée ;
+- **une action qui a un meilleur endroit s'en va.** « Précédente » vivait sous
+  les joueurs à désigner, où elle ne sert jamais : elle est déjà là avant la
+  révélation, et deux rangées de boutons de moins, c'est autant rendu au jeu.
+
+Rien dans la charpente du site ne plafonne la hauteur d'un panneau de kit :
+`flex-1` ne partage que la place *libre*, et un bloc sans hauteur définie
+au-dessus de lui grandit avec son contenu. Les écrans qui doivent loger plusieurs
+blocs bornent donc les leurs en `svh`, comme les hauteurs minimales du site. À
+revoir le jour où le panneau aura une hauteur propre.
 
 ### Pendant un tour, l'écran n'est plus un panneau
 
